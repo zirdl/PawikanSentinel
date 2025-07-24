@@ -18,6 +18,8 @@ class RTSPClient:
         self.rtsp_url = rtsp_url
         self.cap: Optional[cv2.VideoCapture] = None
         self.is_connected = False
+        self.frame_rate: Optional[int] = None
+        self.resolution: Optional[Tuple[int, int]] = None
 
     def connect(self) -> bool:
         """
@@ -32,6 +34,10 @@ class RTSPClient:
                 print(f"Error: Could not open RTSP stream at {self.rtsp_url}")
                 self.is_connected = False
                 return False
+            # Set buffer size to 1 to always get the latest frame
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            self.frame_rate = int(self.cap.get(cv2.CAP_PROP_FPS))
+            self.resolution = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
             self.is_connected = True
             print("Successfully connected to RTSP stream.")
             return True
@@ -52,7 +58,12 @@ class RTSPClient:
             print("Error: Not connected to the stream.")
             return False, None
         
-        success, frame = self.cap.read()
+        # Read multiple frames to ensure we always get the latest one
+        # This helps to prevent processing old frames if the system is slow
+        for _ in range(5):  # Skip 5 frames to get closer to real-time
+            success, frame = self.cap.read()
+            if not success:
+                return False, None
         return success, frame
 
     def release(self):
@@ -111,12 +122,11 @@ if __name__ == '__main__':
                 # For this example, we'll preprocess the frame and display it.
                 if frame is not None:
                     preprocessed = preprocess_frame(frame, (640, 480))
-                    cv2.imshow("RTSP Stream", frame)
-                frame_count += 1
-                
-                # Press 'q' to exit the loop
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                    cv2.imshow("RTSP Stream", preprocessed)
+
+                    # Exit if 'q' is pressed
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
             
             print(f"Processed {frame_count} frames.")
 

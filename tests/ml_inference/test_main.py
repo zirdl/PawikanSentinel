@@ -17,7 +17,11 @@ class TestMLInference(unittest.TestCase):
         mock_interpreter.get_input_details.return_value = [{'index': 0, 'shape': [1, 100, 100, 3]}]
         mock_interpreter.get_output_details.return_value = [{'name': 'output', 'index': 0}]
 
-        engine = InferenceEngine(mock_interpreter)
+        mock_model_loader = MagicMock(spec=ModelLoader)
+        mock_model_loader.model_type = 'tflite'  # Or 'onnx' depending on what you want to test
+        mock_model_loader.interpreter = mock_interpreter # For tflite
+        # mock_model_loader.session = mock_session # For onnx
+        engine = InferenceEngine(mock_model_loader)
         dummy_input = np.zeros((1, 100, 100, 3), dtype=np.float32)
         engine.run(dummy_input)
 

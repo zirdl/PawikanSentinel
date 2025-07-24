@@ -1,7 +1,11 @@
 # PawikanSentinel specific
 /.venv/
+/config.ini
+/captures/
 /contextfiles/
 /GEMINI.md
 /RPI_SETUP.md
+__pycache__/
+*.pyc
 /WEB_DASHBOARD_PLAN.md
 /exp/

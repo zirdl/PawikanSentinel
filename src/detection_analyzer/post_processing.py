@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import cv2
 
 def non_max_suppression(boxes, scores, iou_threshold):
     """
@@ -19,6 +20,48 @@ def non_max_suppression(boxes, scores, iou_threshold):
         max_output_size=100,  # Adjust as needed
         iou_threshold=iou_threshold
     ).numpy()
+
+def draw_detections(frame, detections, class_names=None):
+    """
+    Draws bounding boxes and labels on the frame.
+
+    Args:
+        frame (np.ndarray): The image frame to draw on.
+        detections (list): A list of dictionaries, where each dictionary represents a detected object.
+                           Each dict should have 'box', 'confidence', and 'class_id'.
+        class_names (list, optional): A list of class names corresponding to class_id. Defaults to None.
+    """
+    if class_names is None:
+        class_names = {0: "turtle"} # Default to turtle if no class names provided
+
+    for det in detections:
+        x1, y1, x2, y2 = [int(b) for b in det['box']]
+        confidence = det['confidence']
+        class_id = det['class_id']
+        
+        # Get class name, default to "Class X" if not found
+        class_name = class_names.get(class_id, f"Class {class_id}")
+
+        color = (0, 255, 0)  # Green color for bounding box
+        thickness = 2
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.7
+        font_thickness = 2
+
+        # Draw bounding box
+        cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
+
+        # Prepare label
+        label = f"{class_name}: {confidence:.2f}"
+
+        # Get text size for background rectangle
+        (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
+
+        # Draw background rectangle for label
+        cv2.rectangle(frame, (x1, y1 - text_height - baseline), (x1 + text_width, y1), color, -1)
+
+        # Put label text
+        cv2.putText(frame, label, (x1, y1 - baseline), font, font_scale, (0, 0, 0), font_thickness, cv2.LINE_AA)
 
 def post_process_detections(raw_output: dict, confidence_threshold: float, iou_threshold: float, original_frame_width: int, original_frame_height: int) -> list:
     """

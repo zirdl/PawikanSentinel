@@ -12,7 +12,10 @@ class TestDetectionAnalyzer(unittest.TestCase):
                 [0.2, 0.2, 0.3, 0.3, 0.7, 0.8, 0.2]   # Example detection 2
             ], dtype=np.float32).reshape(1, 2, 7) # Reshape to (1, N, 7) to simulate model output
         }
-        detections = post_process_detections(dummy_output, 0.8, 0.5)
+        # Assuming a dummy frame size for testing
+        original_frame_width = 640
+        original_frame_height = 480
+        detections = post_process_detections(dummy_output, 0.8, 0.5, original_frame_width, original_frame_height)
         self.assertEqual(len(detections), 1)
 
     def test_object_tracker(self):

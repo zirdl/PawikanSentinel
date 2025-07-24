@@ -54,6 +54,8 @@ if __name__ == '__main__':
         f.write("AUTH_TOKEN = your_auth_token\n")
         f.write("PHONE_NUMBER = +1234567890\n")
         f.write("RECIPIENT_NUMBER = +1987654321\n")
+        f.write("SAVE_ANNOTATED_FRAMES = False\n")
+        f.write("ANNOTATED_FRAMES_DIR = /tmp/pawikan_sentinel/annotated_frames\n")
 
     # Test loading from file
     config = ConfigManager('config.ini')

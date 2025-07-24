@@ -22,7 +22,7 @@ def preprocess_frame(frame: np.ndarray, target_size: tuple[int, int]) -> np.ndar
     normalized_frame = rgb_frame / 255.0
 
     # Add a batch dimension
-    # The model expects input in the shape (1, height, width, 3)
-    preprocessed_frame = np.expand_dims(normalized_frame, axis=0)
+    # Add a batch dimension and transpose to (1, channels, height, width) for ONNX
+    preprocessed_frame = np.expand_dims(normalized_frame, axis=0).transpose(0, 3, 1, 2)
 
     return preprocessed_frame.astype(np.float32)

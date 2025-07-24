@@ -1,6 +1,10 @@
+import logging
 from datetime import datetime, timedelta
 import time
 from typing import Optional
+import uuid
+
+logger = logging.getLogger(__name__)
 
 class AlertGenerator:
     """
@@ -48,10 +52,13 @@ class AlertGenerator:
 
         if self.should_send_alert():
             self.last_alert_time = datetime.now()
+            event_id = str(uuid.uuid4())
             if num_turtles == 1:
-                return "A sea turtle has been detected."
+                message = "A sea turtle has been detected."
             else:
-                return f"{num_turtles} sea turtles have been detected."
+                message = f"{num_turtles} sea turtles have been detected."
+            logger.info(f"Detection Event ID: {event_id} - {message}")
+            return message
         
         return ""
 
