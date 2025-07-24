@@ -1,5 +1,6 @@
 # Ignore files specified by the user
 /contextfiles/
+/.venv/
 /GEMINI.md
 /RPI_SETUP.md
 /WEB_DASHBOARD_PLAN.md
