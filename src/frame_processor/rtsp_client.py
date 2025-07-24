@@ -58,7 +58,7 @@ class RTSPClient:
         """
         Releases the video capture object and disconnects from the stream.
         """
-        if self.cap is not in None:
+        if self.cap is not None:
             self.cap.release()
         self.is_connected = False
         print("RTSP stream connection released.")
@@ -86,6 +86,7 @@ class RTSPClient:
         return False
 
 if __name__ == '__main__':
+    from preprocessing import preprocess_frame
     # --- Example Usage ---
     # IMPORTANT: Replace this with the actual URL of your RTSP camera.
     # For testing without a camera, you can use a local video file path.
@@ -107,7 +108,8 @@ if __name__ == '__main__':
                     continue
 
                 # --- Your processing logic would go here ---
-                # For this example, we'll just display the frame.
+                # For this example, we'll preprocess the frame and display it.
+                preprocessed = preprocess_frame(frame, (640, 480))
                 cv2.imshow("RTSP Stream", frame)
                 frame_count += 1
                 
