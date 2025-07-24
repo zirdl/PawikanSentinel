@@ -3,7 +3,7 @@ ML Inference Engine Component
 """
 
 import numpy as np
-import tflite_runtime.interpreter as tflite
+import tflite_runtime.interpreter as tflite # type: ignore
 from typing import List, Dict
 
 class MLInferenceEngine:
@@ -40,9 +40,6 @@ class MLInferenceEngine:
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
 
-        # Post-process results (example)
-        raw_detections = self.interpreter.get_tensor(self.output_details[0]['index'])
-        
         # Dummy processing for now
         detections = [] # Process raw_detections to get bounding boxes, scores, etc.
         return detections

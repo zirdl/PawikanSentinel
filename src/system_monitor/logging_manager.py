@@ -1,6 +1,5 @@
 import logging
 import logging.handlers
-import time
 
 class LoggingManager:
     """

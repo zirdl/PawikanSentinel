@@ -1,5 +1,5 @@
 import os
-from twilio.rest import Client
+from twilio.rest import Client # type: ignore
 
 class TwilioClient:
     """

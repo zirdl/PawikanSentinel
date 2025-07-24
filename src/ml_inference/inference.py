@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow as tf
+from src.ml_inference.model_loader import ModelLoader
 
 class InferenceEngine:
     """
@@ -40,8 +40,6 @@ class InferenceEngine:
         return output_data
 
 if __name__ == '__main__':
-    from model_loader import ModelLoader
-
     # --- Example Usage ---
     # IMPORTANT: Replace this with the actual path to your TFLite model.
     MODEL_PATH = "path/to/your/model.tflite"

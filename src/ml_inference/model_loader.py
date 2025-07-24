@@ -24,7 +24,8 @@ class ModelLoader:
         """
         try:
             self.interpreter = tf.lite.Interpreter(model_path=self.model_path)
-            self.interpreter.allocate_tensors()
+            if self.interpreter:
+                self.interpreter.allocate_tensors()
             print("TFLite model loaded successfully.")
             return True
         except Exception as e:

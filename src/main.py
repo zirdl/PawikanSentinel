@@ -1,5 +1,4 @@
 import time
-import os
 from src.frame_processor.rtsp_client import RTSPClient
 from src.frame_processor.preprocessing import preprocess_frame
 from src.ml_inference.model_loader import ModelLoader
@@ -65,8 +64,10 @@ def main():
                     break
                 continue
 
+            # Get original frame dimensions
+            original_frame_height, original_frame_width, _ = frame.shape
+
             # Preprocess frame
-            # Assuming model input size is 640x640, adjust as needed
             preprocessed_frame = preprocess_frame(frame, (640, 640))
 
             # Run inference
@@ -74,7 +75,7 @@ def main():
 
             # Post-process detections
             processed_detections = post_process_detections(
-                raw_detections, CONFIDENCE_THRESHOLD, IOU_THRESHOLD
+                raw_detections, CONFIDENCE_THRESHOLD, IOU_THRESHOLD, original_frame_width, original_frame_height
             )
 
             # Update object tracker
@@ -82,15 +83,6 @@ def main():
             # Need to convert processed_detections to this format
             bboxes_for_tracker = []
             for det in processed_detections:
-                # Assuming det["box"] is [x, y, w, h] normalized
-                x, y, w, h = det["box"]
-                # Convert normalized [x, y, w, h] to absolute [x1, y1, x2, y2]
-                # Assuming original frame resolution is needed for absolute coordinates
-                # For now, let's use a dummy resolution or pass it from rtsp_client
-                # For simplicity, let's assume the model output is already in pixel coordinates or handle scaling later
-                # For the tracker, we need absolute pixel coordinates.
-                # Let's assume for now that the 'box' from post_process_detections is already in a usable format for the tracker.
-                # This will need refinement based on actual model output and image dimensions.
                 bboxes_for_tracker.append(det["box"])
 
             tracked_objects = object_tracker.update(bboxes_for_tracker)

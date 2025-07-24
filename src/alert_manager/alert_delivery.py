@@ -17,7 +17,7 @@ class AlertDelivery:
             retry_delay (int): The delay in seconds between retries.
         """
         self.notification_service = notification_service
-        self.alert_queue = deque()
+        self.alert_queue: deque[tuple[str, int]] = deque()
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 

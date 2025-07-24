@@ -2,7 +2,7 @@
 Notification Service for sending alerts via Twilio.
 """
 
-from twilio.rest import Client
+from twilio.rest import Client # type: ignore
 
 class NotificationService:
     """

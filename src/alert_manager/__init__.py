@@ -11,7 +11,7 @@ class AlertManager:
     """
     def __init__(self, deduplication_window: int = 600): # 10 minutes
         self.deduplication_window = deduplication_window
-        self.last_alert_time = 0
+        self.last_alert_time = 0.0
 
     def generate_alert(self, detections: List[Dict]):
         """

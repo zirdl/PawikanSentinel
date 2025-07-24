@@ -1,5 +1,6 @@
 import psutil
 import time
+from typing import Optional
 
 class ResourceMonitor:
     """
@@ -24,7 +25,7 @@ class ResourceMonitor:
         """
         return psutil.virtual_memory().percent
 
-    def get_cpu_temperature(self) -> float:
+    def get_cpu_temperature(self) -> Optional[float]:
         """
         Gets the CPU temperature in Celsius.
 

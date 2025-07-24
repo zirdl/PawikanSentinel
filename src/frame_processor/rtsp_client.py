@@ -1,6 +1,7 @@
 import cv2
 import time
 from typing import Optional, Tuple
+from src.frame_processor.preprocessing import preprocess_frame
 
 class RTSPClient:
     """
@@ -15,7 +16,7 @@ class RTSPClient:
             rtsp_url (str): The URL of the RTSP stream.
         """
         self.rtsp_url = rtsp_url
-        self.cap = None
+        self.cap: Optional[cv2.VideoCapture] = None
         self.is_connected = False
 
     def connect(self) -> bool:
@@ -39,7 +40,7 @@ class RTSPClient:
             self.is_connected = False
             return False
 
-    def read_frame(self) -> Optional[Tuple[bool, cv2.typing.MatLike]]:
+    def read_frame(self) -> Tuple[bool, Optional[cv2.typing.MatLike]]:
         """
         Reads a single frame from the stream.
 
@@ -49,7 +50,7 @@ class RTSPClient:
         """
         if not self.is_connected or self.cap is None:
             print("Error: Not connected to the stream.")
-            return None
+            return False, None
         
         success, frame = self.cap.read()
         return success, frame
@@ -86,7 +87,6 @@ class RTSPClient:
         return False
 
 if __name__ == '__main__':
-    from preprocessing import preprocess_frame
     # --- Example Usage ---
     # IMPORTANT: Replace this with the actual URL of your RTSP camera.
     # For testing without a camera, you can use a local video file path.
@@ -109,8 +109,9 @@ if __name__ == '__main__':
 
                 # --- Your processing logic would go here ---
                 # For this example, we'll preprocess the frame and display it.
-                preprocessed = preprocess_frame(frame, (640, 480))
-                cv2.imshow("RTSP Stream", frame)
+                if frame is not None:
+                    preprocessed = preprocess_frame(frame, (640, 480))
+                    cv2.imshow("RTSP Stream", frame)
                 frame_count += 1
                 
                 # Press 'q' to exit the loop

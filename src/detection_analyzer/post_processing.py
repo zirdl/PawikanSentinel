@@ -20,7 +20,7 @@ def non_max_suppression(boxes, scores, iou_threshold):
         iou_threshold=iou_threshold
     ).numpy()
 
-def post_process_detections(raw_output: dict, confidence_threshold: float, iou_threshold: float) -> list:
+def post_process_detections(raw_output: dict, confidence_threshold: float, iou_threshold: float, original_frame_width: int, original_frame_height: int) -> list:
     """
     Post-processes the raw output from the inference engine.
 
@@ -50,12 +50,21 @@ def post_process_detections(raw_output: dict, confidence_threshold: float, iou_t
     boxes = confident_detections[:, :4]  # [x, y, w, h]
     scores = confident_detections[:, 4]
 
-    # Convert boxes from [center_x, center_y, width, height] to [y1, x1, y2, x2]
-    x, y, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
-    y1 = y - h / 2
-    x1 = x - w / 2
-    y2 = y + h / 2
-    x2 = x + w / 2
+    # Convert boxes from [center_x, center_y, width, height] to [x1, y1, x2, y2] (absolute pixels)
+    x_center, y_center, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+
+    # Denormalize coordinates
+    x1 = (x_center - w / 2) * original_frame_width
+    y1 = (y_center - h / 2) * original_frame_height
+    x2 = (x_center + w / 2) * original_frame_width
+    y2 = (y_center + h / 2) * original_frame_height
+
+    # Ensure coordinates are within frame boundaries
+    x1 = np.maximum(0, x1)
+    y1 = np.maximum(0, y1)
+    x2 = np.minimum(original_frame_width, x2)
+    y2 = np.minimum(original_frame_height, y2)
+
     boxes_for_nms = np.stack([y1, x1, y2, x2], axis=1)
 
     # Apply non-maximum suppression
@@ -64,11 +73,15 @@ def post_process_detections(raw_output: dict, confidence_threshold: float, iou_t
     # Create a list of detected objects
     detected_objects = []
     for index in selected_indices:
-        detection = confident_detections[index]
+        # Use the denormalized [x1, y1, x2, y2] for the output
+        box = [x1[index], y1[index], x2[index], y2[index]]
+        confidence = confident_detections[index, 4]
+        class_id = np.argmax(confident_detections[index, 5:]) # Assuming class probabilities start from index 5
+
         detected_objects.append({
-            "box": detection[:4].tolist(),
-            "confidence": detection[4],
-            "class_id": np.argmax(detection[5:])
+            "box": box,
+            "confidence": confidence,
+            "class_id": class_id
         })
 
     return detected_objects
@@ -88,7 +101,7 @@ if __name__ == '__main__':
 
     # 3. Run post-processing
     detected_objects = post_process_detections(
-        dummy_output, CONFIDENCE_THRESHOLD, IOU_THRESHOLD
+        dummy_output, CONFIDENCE_THRESHOLD, IOU_THRESHOLD, 640, 480
     )
 
     # 4. Print the results

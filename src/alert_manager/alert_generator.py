@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import time
+from typing import Optional
 
 class AlertGenerator:
     """
@@ -14,7 +15,7 @@ class AlertGenerator:
             deduplication_window_minutes (int): The time window in minutes for deduplicating alerts.
         """
         self.deduplication_window = timedelta(minutes=deduplication_window_minutes)
-        self.last_alert_time = None
+        self.last_alert_time: Optional[datetime] = None
 
     def should_send_alert(self) -> bool:
         """
