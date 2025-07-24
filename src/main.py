@@ -13,7 +13,7 @@ from src.detection_analyzer.post_processing import post_process_detections, draw
 from src.detection_analyzer.object_tracker import ObjectTracker
 from src.alert_manager.alert_generator import AlertGenerator
 from src.alert_manager.alert_delivery import AlertDelivery
-from src.notification_service.mock_service import MockNotificationService # Using mock for now
+from src.notification_service.twilio_client import TwilioClient
 from src.system_monitor.resource_monitor import ResourceMonitor
 from src.system_monitor.logging_manager import LoggingManager
 from src.config import ConfigManager
@@ -60,7 +60,7 @@ def main():
     object_tracker = ObjectTracker()
 
     # Initialize Alert Manager
-    notification_service = MockNotificationService() # Use Mock for now
+    notification_service = TwilioClient(config)
     alert_generator = AlertGenerator(DEDUPLICATION_WINDOW_MINUTES)
     alert_delivery = AlertDelivery(notification_service)
 

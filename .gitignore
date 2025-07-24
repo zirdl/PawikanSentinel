@@ -1,6 +1,5 @@
 # PawikanSentinel specific
 /.venv/
-/config.ini
 /captures/
 /contextfiles/
 /GEMINI.md
