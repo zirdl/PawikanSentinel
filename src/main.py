@@ -1,80 +1,123 @@
-"""
-Main Application for Pawikan Sentinel
-"""
-
 import time
-from frame_processor import FrameProcessor
-from ml_inference import MLInferenceEngine
-from detection_analyzer import DetectionAnalyzer
-from alert_manager import AlertManager
-from notification_service import NotificationService
-from system_monitor import SystemMonitor
+import os
+from src.frame_processor.rtsp_client import RTSPClient
+from src.frame_processor.preprocessing import preprocess_frame
+from src.ml_inference.model_loader import ModelLoader
+from src.ml_inference.inference import InferenceEngine
+from src.detection_analyzer.post_processing import post_process_detections
+from src.detection_analyzer.object_tracker import ObjectTracker
+from src.alert_manager.alert_generator import AlertGenerator
+from src.alert_manager.alert_delivery import AlertDelivery
+from src.notification_service.mock_service import MockNotificationService # Using mock for now
+from src.system_monitor.resource_monitor import ResourceMonitor
+from src.system_monitor.logging_manager import LoggingManager
+from src.config import ConfigManager
 
 def main():
-    """
-    Main application loop.
-    """
-    # Configuration
-    rtsp_url = "rtsp://your_camera_url"
-    model_path = "path/to/your/model.tflite"
-    twilio_sid = "your_twilio_sid"
-    twilio_token = "your_twilio_token"
-    twilio_phone_number = "your_twilio_phone_number"
-    recipient_phone_number = "recipient_phone_number"
+    # Load Configuration
+    config = ConfigManager()
 
-    # Initialization
-    frame_processor = FrameProcessor(rtsp_url=rtsp_url)
-    ml_inference = MLInferenceEngine(model_path=model_path)
-    detection_analyzer = DetectionAnalyzer()
-    alert_manager = AlertManager()
-    notification_service = NotificationService(
-        sid=twilio_sid,
-        token=twilio_token,
-        phone_number=twilio_phone_number
-    )
-    system_monitor = SystemMonitor()
+    RTSP_URL = config.get("APP", "RTSP_URL", "rtsp://your_camera_url")
+    MODEL_PATH = config.get("APP", "MODEL_PATH", "./model.tflite")
+    CONFIDENCE_THRESHOLD = config.get_float("APP", "CONFIDENCE_THRESHOLD", 0.5)
+    IOU_THRESHOLD = config.get_float("APP", "IOU_THRESHOLD", 0.5)
+    DEDUPLICATION_WINDOW_MINUTES = config.get_int("APP", "DEDUPLICATION_WINDOW_MINUTES", 10)
+    LOG_FILE = config.get("APP", "LOG_FILE", "pawikan_sentinel.log")
 
-    # Load ML model
-    try:
-        ml_inference.load_model()
-    except Exception as e:
-        print(f"Failed to load model: {e}")
+    # Initialize Logging
+    log_manager = LoggingManager(LOG_FILE)
+    logger = log_manager.get_logger()
+    logger.info("Pawikan Sentinel application started.")
+
+    # Initialize Resource Monitor
+    resource_monitor = ResourceMonitor()
+
+    # Initialize RTSP Client
+    rtsp_client = RTSPClient(RTSP_URL)
+    if not rtsp_client.connect():
+        logger.error(f"Failed to connect to RTSP stream at {RTSP_URL}. Exiting.")
         return
 
-    # Start frame processor
-    frame_processor.start()
+    # Initialize ML Inference Engine
+    model_loader = ModelLoader(MODEL_PATH)
+    if not model_loader.load():
+        logger.error(f"Failed to load TFLite model from {MODEL_PATH}. Exiting.")
+        rtsp_client.release()
+        return
+    inference_engine = InferenceEngine(model_loader.interpreter)
+
+    # Initialize Detection Analyzer
+    object_tracker = ObjectTracker()
+
+    # Initialize Alert Manager
+    notification_service = MockNotificationService() # Use Mock for now
+    alert_generator = AlertGenerator(DEDUPLICATION_WINDOW_MINUTES)
+    alert_delivery = AlertDelivery(notification_service)
 
     try:
         while True:
-            # System monitoring
-            cpu_usage = system_monitor.get_cpu_usage()
-            mem_usage = system_monitor.get_memory_usage()
-            temp = system_monitor.get_temperature()
-            print(f"CPU: {cpu_usage}%, Memory: {mem_usage['percent']}%, Temp: {temp}°C")
-
-            # Get frame
-            frame = frame_processor.get_frame()
-            if frame is None:
-                time.sleep(1)
+            # Read frame
+            success, frame = rtsp_client.read_frame()
+            if not success:
+                logger.warning("Failed to read frame. Attempting to reconnect...")
+                if not rtsp_client.reconnect():
+                    logger.error("Failed to reconnect to RTSP stream. Exiting.")
+                    break
                 continue
 
+            # Preprocess frame
+            # Assuming model input size is 640x640, adjust as needed
+            preprocessed_frame = preprocess_frame(frame, (640, 640))
+
             # Run inference
-            detections = ml_inference.run_inference(frame)
+            raw_detections = inference_engine.run(preprocessed_frame)
 
-            # Analyze detections
-            analyzed_detections = detection_analyzer.analyze(detections)
+            # Post-process detections
+            processed_detections = post_process_detections(
+                raw_detections, CONFIDENCE_THRESHOLD, IOU_THRESHOLD
+            )
 
-            # Generate alerts
-            alert_manager.generate_alert(analyzed_detections)
+            # Update object tracker
+            # The object tracker expects a list of bounding boxes in [x1, y1, x2, y2] format
+            # Need to convert processed_detections to this format
+            bboxes_for_tracker = []
+            for det in processed_detections:
+                # Assuming det["box"] is [x, y, w, h] normalized
+                x, y, w, h = det["box"]
+                # Convert normalized [x, y, w, h] to absolute [x1, y1, x2, y2]
+                # Assuming original frame resolution is needed for absolute coordinates
+                # For now, let's use a dummy resolution or pass it from rtsp_client
+                # For simplicity, let's assume the model output is already in pixel coordinates or handle scaling later
+                # For the tracker, we need absolute pixel coordinates.
+                # Let's assume for now that the 'box' from post_process_detections is already in a usable format for the tracker.
+                # This will need refinement based on actual model output and image dimensions.
+                bboxes_for_tracker.append(det["box"])
 
-            # Optional: Add a delay to control the loop speed
-            time.sleep(0.1)
+            tracked_objects = object_tracker.update(bboxes_for_tracker)
+
+            # Generate alert
+            alert_message = alert_generator.generate_alert(tracked_objects)
+            if alert_message:
+                alert_delivery.enqueue_alert(alert_message)
+
+            # Process alert queue
+            alert_delivery.process_queue()
+
+            # Monitor system resources
+            cpu_usage = resource_monitor.get_cpu_usage()
+            memory_usage = resource_monitor.get_memory_usage()
+            cpu_temp = resource_monitor.get_cpu_temperature()
+            logger.info(f"CPU: {cpu_usage}%, Mem: {memory_usage}%, Temp: {cpu_temp}°C")
+
+            time.sleep(1) # Process frame every second
 
     except KeyboardInterrupt:
-        print("Shutting down...")
+        logger.info("Application stopped by user.")
+    except Exception as e:
+        logger.critical(f"An unhandled error occurred: {e}", exc_info=True)
     finally:
-        frame_processor.stop()
+        rtsp_client.release()
+        logger.info("Pawikan Sentinel application terminated.")
 
 if __name__ == "__main__":
     main()
-
