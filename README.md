@@ -17,12 +17,36 @@ The model was trained on a combination of the following datasets:
 
 ```mermaid
 graph TD
-    A[RTSP Camera] -->|Video Stream| B[Frame Processor]
-    B --> C[ML Inference Engine]
-    C --> D[Detection Analyzer]
-    D -->|Turtle Detected| E[Alert Manager]
-    E -->|API Call| F[Twilio API]
-    F -->|SMS| G[Conservation Team]
-    H[Model Training Pipeline] -.->|Deploy Model| C
-    I[System Monitor] -->|Status| E
+    subgraph "On-Site Hardware"
+        A[/"📹\nInfrared Camera"/];
+    end
+
+    subgraph "Raspberry Pi: The Brain"
+        direction LR
+        B["Frame Processor\n(Grabs video frames)"];
+        C["AI Turtle Detection\n(YOLOv5n TFLite)"];
+        D["Detection Analyzer\n(Filters results, avoids false alarms)"];
+        E["Smart Alert Manager\n(Sends one alert per event)"];
+    end
+
+    subgraph "Cloud Services"
+        F[/"☁️\nTwilio API"/];
+    end
+
+    subgraph "Conservation Team"
+        G[/"📱\nTeam's Phones"/];
+    end
+
+    subgraph "Development & Training (Offline)"
+        H["Model Training\n(Google Colab, Python)"];
+    end
+
+    A -- "Live RTSP Video Stream" --> B;
+    B -- "Frames" --> C;
+    C -- "Detection Data (Boxes, Scores)" --> D;
+    D -- "Confirmed Turtle Sighting" --> E;
+    E -- "API Call (HTTP Request)" --> F;
+    F -- "Sends SMS Notification" --> G;
+    H -. "Optimized .tflite Model" .-> C;
+
 ```
