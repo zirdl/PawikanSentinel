@@ -1,0 +1,10 @@
+# Core application dependencies
+opencv-python-headless
+numpy
+# For SMS notifications
+twilio
+
+# For ML inference
+tensorflow
+# Or if using TFLite runtime
+# tflite-runtime
