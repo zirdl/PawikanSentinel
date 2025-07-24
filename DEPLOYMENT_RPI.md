@@ -42,13 +42,21 @@ The application requires sensitive information, such as API keys and camera URLs
 2.  Add the necessary configuration variables (e.g., Twilio SID, Auth Token, RTSP URL).
 3.  **Crucially, ensure this file is listed in your `.gitignore` file to prevent it from being committed to version control.**
 
-Example `.env` file:
-```
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=+15017122661
-RECIPIENT_PHONE_NUMBER=+15558675309
-RTSP_URL=rtsp://user:pass@your_camera_ip:554/stream1
+Example `config.ini` file:
+```ini
+[APP]
+RTSP_URL = rtsp://user:pass@your_camera_ip:554/stream1
+MODEL_PATH = /path/to/your/model.tflite
+CONFIDENCE_THRESHOLD = 0.5
+IOU_THRESHOLD = 0.5
+DEDUPLICATION_WINDOW_MINUTES = 10
+LOG_FILE = pawikan_sentinel.log
+
+[TWILIO]
+ACCOUNT_SID = ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AUTH_TOKEN = your_auth_token
+PHONE_NUMBER = +15017122661
+RECIPIENT_PHONE_NUMBER = +15558675309
 ```
 
 ## 4. Running the Application

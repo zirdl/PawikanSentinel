@@ -6,5 +6,6 @@ twilio
 
 # For ML inference
 tensorflow
+onnxruntime
 # Or if using TFLite runtime
 # tflite-runtime

@@ -43,7 +43,7 @@ def main():
         logger.error(f"Failed to load TFLite model from {MODEL_PATH}. Exiting.")
         rtsp_client.release()
         return
-    inference_engine = InferenceEngine(model_loader.interpreter)
+    inference_engine = InferenceEngine(model_loader)
 
     # Initialize Detection Analyzer
     object_tracker = ObjectTracker()

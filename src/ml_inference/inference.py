@@ -3,17 +3,18 @@ from src.ml_inference.model_loader import ModelLoader
 
 class InferenceEngine:
     """
-    Performs inference using a loaded TFLite model.
+    Performs inference using a loaded TFLite or ONNX model.
     """
 
-    def __init__(self, interpreter):
+    def __init__(self, model_loader: ModelLoader):
         """
         Initializes the InferenceEngine.
 
         Args:
-            interpreter: The loaded TFLite interpreter.
+            model_loader: The ModelLoader instance with a loaded model.
         """
-        self.interpreter = interpreter
+        self.model_loader = model_loader
+        self.model_type = model_loader.model_type
 
     def run(self, input_data: np.ndarray) -> dict:
         """
@@ -25,18 +26,32 @@ class InferenceEngine:
         Returns:
             dict: A dictionary containing the raw detection results.
         """
-        input_details = self.interpreter.get_input_details()
-        output_details = self.interpreter.get_output_details()
+        if self.model_type == 'tflite':
+            return self._run_tflite(input_data)
+        elif self.model_type == 'onnx':
+            return self._run_onnx(input_data)
+        else:
+            raise ValueError("Unsupported model type")
 
-        self.interpreter.set_tensor(input_details[0]['index'], input_data)
-        self.interpreter.invoke()
+    def _run_tflite(self, input_data: np.ndarray) -> dict:
+        interpreter = self.model_loader.interpreter
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
 
-        # The output is a dictionary with keys corresponding to the output tensor names
-        # and values as the output tensors.
-        # For YOLOv5, this will typically be a single tensor with shape (1, N, 85)
-        # where N is the number of detections and 85 is [x, y, w, h, confidence, class_probs...]
-        output_data = {output['name']: self.interpreter.get_tensor(output['index']) for output in output_details}
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
 
+        output_data = {output['name']: interpreter.get_tensor(output['index']) for output in output_details}
+        return output_data
+
+    def _run_onnx(self, input_data: np.ndarray) -> dict:
+        session = self.model_loader.session
+        input_name = session.get_inputs()[0].name
+        output_names = [output.name for output in session.get_outputs()]
+
+        results = session.run(output_names, {input_name: input_data})
+
+        output_data = {name: res for name, res in zip(output_names, results)}
         return output_data
 
 if __name__ == '__main__':
