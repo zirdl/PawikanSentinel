@@ -11,3 +11,18 @@ __pycache__/
 *.log
 
 # Application output
+
+# Secrets and configuration files
+config.ini
+
+# Local environment
+.python-version
+
+# Build artifacts
+src/pawikansentinel.egg-info/
+
+# Jupyter notebooks
+notebooks/
+
+# Context files
+contextfiles/
