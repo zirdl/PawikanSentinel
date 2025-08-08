@@ -1,6 +1,0 @@
-# Core application dependencies
-opencv-python-headless
-numpy
-
-# For SMS notifications
-twilio
