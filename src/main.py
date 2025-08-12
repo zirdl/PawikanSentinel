@@ -1,6 +1,7 @@
 import warnings
 import time
 import cv2
+from datetime import datetime
 from src.frame_processor.rtsp_client import RTSPClient
 
 warnings.filterwarnings("ignore", message="The value of the smallest subnormal for <class 'numpy.float32'> type is zero.")
@@ -30,6 +31,7 @@ def main():
     LOG_FILE = config.get("APP", "LOG_FILE", "pawikan_sentinel.log")
     SAVE_ANNOTATED_FRAMES = config.get_boolean("APP", "SAVE_ANNOTATED_FRAMES", False)
     ANNOTATED_FRAMES_DIR = config.get("APP", "ANNOTATED_FRAMES_DIR", "/tmp/pawikan_sentinel/annotated_frames")
+    DISPLAY_VIDEO_FEED = config.get_boolean("APP", "DISPLAY_VIDEO_FEED", False)
 
     if SAVE_ANNOTATED_FRAMES and not os.path.exists(ANNOTATED_FRAMES_DIR):
         os.makedirs(ANNOTATED_FRAMES_DIR)
@@ -122,10 +124,11 @@ def main():
 
             # Display the frame (optional, for debugging/monitoring on Pi)
             # This part can be commented out or made configurable if not needed for deployment
-            cv2.imshow("Pawikan Sentinel", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                logger.info("Display closed by user.")
-                break
+            if DISPLAY_VIDEO_FEED:
+                cv2.imshow("Pawikan Sentinel", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    logger.info("Display closed by user.")
+                    break
             # --- End Visualization ---
 
             # Monitor system resources
@@ -142,7 +145,8 @@ def main():
         logger.critical(f"An unhandled error occurred: {e}", exc_info=True)
     finally:
         rtsp_client.release()
-        cv2.destroyAllWindows() # Destroy all OpenCV windows
+        if DISPLAY_VIDEO_FEED:
+            cv2.destroyAllWindows() # Destroy all OpenCV windows
         logger.info("Pawikan Sentinel application terminated.")
 
 if __name__ == "__main__":
