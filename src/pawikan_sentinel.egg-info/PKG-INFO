@@ -1,0 +1,164 @@
+Metadata-Version: 2.4
+Name: pawikan-sentinel
+Version: 0.1.0
+Summary: A web-based management application for sea turtle monitoring on Raspberry Pi.
+Author-email: Pawikan Sentinel Team <contact@pawikan.org>
+License: MIT License
+        
+        Copyright (c) 2025 Pawikan Sentinel Team
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: passlib[bcrypt]
+Requires-Dist: python-multipart
+Requires-Dist: jinja2
+Requires-Dist: itsdangerous
+Requires-Dist: opencv-python-headless
+Requires-Dist: tflite-runtime
+Requires-Dist: python-json-logger
+Requires-Dist: python-dotenv
+Requires-Dist: tenacity
+Requires-Dist: twilio
+Requires-Dist: pyserial
+Requires-Dist: numpy<2
+Requires-Dist: toml
+Requires-Dist: ultralytics>=8.3.185
+Requires-Dist: sqlalchemy
+Requires-Dist: ai-edge-litert>=1.4.0
+Dynamic: license-file
+
+# Pawikan Sentinel
+
+**A PyQt desktop application for sea turtle monitoring and conservation on Raspberry Pi.**
+
+Pawikan Sentinel is designed for non-technical users to monitor sea turtle nesting sites using RTSP cameras and AI-powered detection. It features a background service for continuous inference and a simple PyQt GUI for viewing live feeds, detection galleries, and managing settings.
+
+## Features
+
+- **Live RTSP Feed**: Monitor camera streams in real-time.
+- **AI-Powered Detection**: Uses a quantized TFLite model to detect sea turtles.
+- **Detection Gallery**: Automatically saves annotated frames when turtles are detected.
+- **SMS Alerts**: Notifies personnel via Twilio or a GSM modem upon detection.
+- **Structured Logging**: Keeps detailed JSON logs for diagnostics and review.
+- **User-Friendly GUI**: Simple tab-based interface to manage the system.
+
+## Target Hardware
+
+- **Raspberry Pi 4B (8GB RAM)**
+- Raspberry Pi OS (64-bit, Bookworm recommended)
+- Stable LAN/Wi-Fi connection
+
+## Installation
+
+This project uses `uv` for Python environment and package management.
+
+1.  **Install `uv`**:
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+2.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/your-repo/PawikanSentinel.git
+    cd PawikanSentinel
+    ```
+
+3.  **Create a virtual environment and sync dependencies**:
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    uv sync
+    ```
+
+4.  **Setup Configuration**:
+    - Create the configuration directory:
+      ```bash
+      mkdir -p ~/.config/pawikan
+      ```
+    - Copy the example configuration file:
+      ```bash
+      cp config/config.example.toml ~/.config/pawikan/config.toml
+      ```
+    - Edit `~/.config/pawikan/config.toml` to set your RTSP URL, model path, and notification provider credentials (Twilio or GSM).
+
+5.  **Setup Data Directories**:
+    The application will attempt to create these directories, but you can create them manually.
+    ```bash
+    mkdir -p ~/.local/share/pawikan/gallery
+    mkdir -p ~/.local/share/pawikan/models
+    sudo mkdir -p /var/log/pawikan
+    sudo chown $USER:$USER /var/log/pawikan
+    ```
+    Place your `pawikan_int8.tflite` model in `~/.local/share/pawikan/models/`.
+
+## Usage
+
+### Running the GUI
+
+To start the Pawikan Sentinel desktop application, run:
+```bash
+uv run pawikan-gui
+```
+
+### Running the Inference Service
+
+The inference service is designed to run in the background, managed by `systemd`.
+
+1.  **Link the systemd service file**:
+    ```bash
+    sudo ln -s /home/pi/PawikanSentinel/config/pawikan-inference.service /etc/systemd/system/pawikan-inference.service
+    ```
+
+2.  **Reload the systemd daemon, enable, and start the service**:
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl enable pawikan-inference.service
+    sudo systemctl start pawikan-inference.service
+    ```
+
+3.  **Check the service status**:
+    ```bash
+    sudo systemctl status pawikan-inference.service
+    ```
+
+4.  **View logs**:
+    ```bash
+    journalctl -u pawikan-inference.service -f
+    ```
+    Or view the JSON logs directly:
+    ```bash
+    tail -f /var/log/pawikan/pawikan.json.log
+    ```
+
+### Desktop Launcher
+
+To add a desktop icon for the GUI, link the `.desktop` file:
+```bash
+mkdir -p ~/.local/share/applications
+ln -s /home/pi/PawikanSentinel/config/pawikan-gui.desktop ~/.local/share/applications/
+```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

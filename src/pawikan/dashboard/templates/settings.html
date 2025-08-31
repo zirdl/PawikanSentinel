@@ -1,0 +1,110 @@
+{% extends "_base.html" %}
+
+{% block title %}Settings - Pawikan Sentinel{% endblock %}
+
+{% block content %}
+    <h2 class="text-2xl font-bold mb-6 text-center">System Settings</h2>
+
+    {% if message %}
+        <p class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">{{ message }}</p>
+    {% endif %}
+    {% if error %}
+        <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{{ error }}</p>
+    {% endif %}
+
+    <div class="max-w-2xl mx-auto space-y-8">
+        <div class="bg-white p-6 rounded-lg shadow-accent">
+            <h3 class="text-xl font-semibold mb-4 text-center">User Management</h3>
+            <form method="post" action="/settings/update-user" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div>
+                    <label for="new_username" class="block text-sm font-medium text-gray-700">Current Username: <span class="font-bold">{{ current_user.username }}</span></label>
+                    <input type="text" id="new_username" name="new_username" placeholder="Enter new username (optional)"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <div>
+                    <label for="current_password_user" class="block text-sm font-medium text-gray-700">Current Password (required to change username)</label>
+                    <input type="password" id="current_password_user" name="current_password_user" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <button type="submit" class="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 transition-colors duration-300">
+                    Update Username
+                </button>
+            </form>
+
+            <hr class="my-8 border-gray-200">
+
+            <h3 class="text-xl font-semibold mb-4 text-center">Change Password</h3>
+            <form method="post" action="/settings/update-password" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div>
+                    <label for="current_password_pass" class="block text-sm font-medium text-gray-700">Current Password</label>
+                    <input type="password" id="current_password_pass" name="current_password_pass" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <div>
+                    <label for="new_password" class="block text-sm font-medium text-gray-700">New Password</label>
+                    <input type="password" id="new_password" name="new_password" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <div>
+                    <label for="confirm_new_password" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                    <input type="password" id="confirm_new_password" name="confirm_new_password" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <button type="submit" class="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 transition-colors duration-300">
+                    Update Password
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-accent">
+            <h3 class="text-xl font-semibold mb-4 text-center">Notification Settings</h3>
+            <form method="post" action="/settings/update-notifications" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div>
+                    <label for="notify_enabled" class="block text-sm font-medium text-gray-700">Enable Notifications:</label>
+                    <select id="notify_enabled" name="notify_enabled"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                        <option value="true" {% if notify_enabled == 'true' %}selected{% endif %}>Enabled</option>
+                        <option value="false" {% if notify_enabled == 'false' %}selected{% endif %}>Disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="notify_provider" class="block text-sm font-medium text-gray-700">Notification Provider:</label>
+                    <select id="notify_provider" name="notify_provider"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                        <option value="none" {% if notify_provider == 'none' %}selected{% endif %}>None</option>
+                        <option value="twilio" {% if notify_provider == 'twilio' %}selected{% endif %}>Twilio (SMS)</option>
+                        <!-- <option value="gsm" {% if notify_provider == 'gsm' %}selected{% endif %}>GSM Modem (SMS)</option> -->
+                    </select>
+                </div>
+                <div>
+                    <label for="notification_cooldown_seconds" class="block text-sm font-medium text-gray-700">Notification Cooldown (seconds):</label>
+                    <input type="number" id="notification_cooldown_seconds" name="notification_cooldown_seconds" value="{{ notification_cooldown_seconds }}" required min="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+
+                <h4 class="text-lg font-semibold mt-6 mb-2 text-center">Twilio Credentials (if Twilio provider selected)</h4>
+                <div>
+                    <label for="twilio_account_sid" class="block text-sm font-medium text-gray-700">Account SID:</label>
+                    <input type="text" id="twilio_account_sid" name="twilio_account_sid" value="{{ twilio_account_sid }}"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <div>
+                    <label for="twilio_auth_token" class="block text-sm font-medium text-gray-700">Auth Token:</label>
+                    <input type="password" id="twilio_auth_token" name="twilio_auth_token" value="{{ twilio_auth_token }}"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <div>
+                    <label for="twilio_from_number" class="block text-sm font-medium text-gray-700">Twilio Phone Number (E.164 format):</label>
+                    <input type="text" id="twilio_from_number" name="twilio_from_number" value="{{ twilio_from_number }}"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                </div>
+                <button type="submit" class="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 transition-colors duration-300">
+                    Update Notification Settings
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

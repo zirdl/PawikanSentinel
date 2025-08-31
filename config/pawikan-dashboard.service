@@ -1,0 +1,16 @@
+[Unit]
+Description=Pawikan Sentinel Web Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/gio/Projects/PawikanSentinel
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/gio/Projects/PawikanSentinel/.venv/bin/uv run uvicorn pawikan.dashboard.main:app --host 0.0.0.0 --port 8000 --app-dir src
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

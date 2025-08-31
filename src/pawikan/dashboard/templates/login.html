@@ -1,0 +1,28 @@
+{% extends "_base.html" %}
+
+{% block title %}Login - Pawikan Sentinel{% endblock %}
+
+{% block content %}
+    <div class="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-accent">
+        <h2 class="text-2xl font-bold text-center mb-6">Admin Login</h2>
+        {% if error %}
+            <p class="text-red-500 text-center mb-4">{{ error }}</p>
+        {% endif %}
+        <form method="post" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" id="username" name="username" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" name="password" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+            </div>
+            <button type="submit" class="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 transition-colors duration-300">
+                Login
+            </button>
+        </form>
+    </div>
+{% endblock %}

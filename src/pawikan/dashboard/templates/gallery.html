@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+
+{% block title %}Detection Gallery - Pawikan Sentinel{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-accent">
+        <h2 class="text-2xl font-bold mb-4 text-center">Detection Frame Gallery</h2>
+        <p class="mb-6 text-center">Browse saved annotated detection frames here.</p>
+
+        <div class="image-gallery grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for image in gallery_images %}
+                <div class="gallery-item border rounded-lg shadow-md overflow-hidden">
+                    <a href="/gallery-images/{{ image }}" class="glightbox" data-gallery="gallery1">
+                        <img src="/gallery-images/{{ image }}" alt="Detection Image" class="w-full h-48 object-cover">
+                    </a>
+                    <div class="p-2 text-sm text-gray-600">{{ image }}</div>
+                </div>
+            {% else %}
+                <p class="col-span-full text-center text-gray-500">No detection images found yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

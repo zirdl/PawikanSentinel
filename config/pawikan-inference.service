@@ -1,0 +1,23 @@
+[Unit]
+Description=Pawikan Sentinel Inference Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Change this to the user you are running the service as
+User=pi
+# Change this to the absolute path of your project directory
+WorkingDirectory=/home/pi/PawikanSentinel
+Environment=PYTHONUNBUFFERED=1
+# This assumes uv is in the user's path. Use an absolute path if needed.
+# /home/pi/.local/bin/uv
+ExecStart=/home/pi/.local/bin/uv run pawikan-inference
+Restart=always
+RestartSec=5
+# These are for systemd v235+. They create the log directory.
+# If using an older systemd, you must create /var/log/pawikan manually.
+LogsDirectory=pawikan
+
+[Install]
+WantedBy=multi-user.target

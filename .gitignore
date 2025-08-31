@@ -1,0 +1,8 @@
+.venv/
+data/
+detections/
+models/
+*.db
+*.log
+GEMINI.md
+implementation.md

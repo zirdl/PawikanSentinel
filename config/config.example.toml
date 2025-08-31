@@ -1,0 +1,40 @@
+# Example configuration for Pawikan Sentinel
+# Copy this to ~/.config/pawikan/config.toml and edit it.
+
+[model]
+# Absolute path to the quantized TFLite model
+path = "/home/gio/Projects/PawikanSentinel/models/pawikan_int8.tflite"
+confidence_threshold = 0.5
+nms_iou_threshold = 0.45
+max_detections = 50
+
+[video]
+# URL of the RTSP camera stream
+rtsp_url = "rtsp://user:pass@camera-ip:554/stream"
+# Reconnect backoff strategy (in seconds)
+reconnect_initial_seconds = 2
+reconnect_max_seconds = 30
+
+[gallery]
+# Directory to save annotated detection frames
+dir = "/home/pi/.local/share/pawikan/gallery"
+# Cooldown in seconds between saving frames to the gallery
+save_interval_seconds = 600
+
+# --- Dynamic Settings ---
+# The following settings are now managed via the web interface and stored in the database.
+# The values here are used as fallbacks only if the database is not available.
+
+[notify]
+# "twilio" or "gsm" or "none"
+provider = "twilio"
+# Cooldown in seconds between sending notifications
+cooldown_seconds = 1200
+# Master switch for all notifications
+enabled = true
+
+[logging]
+# Directory for JSON log files
+dir = "/var/log/pawikan"
+# Logging level: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+level = "INFO"

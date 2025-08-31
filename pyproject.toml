@@ -1,0 +1,38 @@
+[project]
+name = "pawikan-sentinel"
+version = "0.1.0"
+description = "A web-based management application for sea turtle monitoring on Raspberry Pi."
+authors = [{ name = "Pawikan Sentinel Team", email = "contact@pawikan.org" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "passlib[bcrypt]",
+    "python-multipart",
+    "jinja2",
+    "itsdangerous",
+    "opencv-python-headless",
+    "tflite-runtime",
+    "python-json-logger",
+    "python-dotenv",
+    "tenacity",
+    "twilio",
+    "pyserial",
+    "numpy<2",
+    "toml",
+    "ultralytics>=8.3.185",
+    "sqlalchemy",
+    "ai-edge-litert>=1.4.0",
+]
+
+[project.scripts]
+pawikan-inference = "pawikan.service.inference_service:main"
+pawikan-dashboard = "pawikan.dashboard.main:app"
+create-admin = "scripts.create_admin:main"
+
+
+[tool.uv]
+package = true
+dev-dependencies = []

@@ -1,0 +1,4 @@
+[console_scripts]
+create-admin = scripts.create_admin:main
+pawikan-dashboard = pawikan.dashboard.main:app
+pawikan-inference = pawikan.service.inference_service:main
