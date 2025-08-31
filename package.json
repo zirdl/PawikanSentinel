@@ -1,0 +1,33 @@
+{
+  "name": "pawikansentinel",
+  "version": "1.0.0",
+  "description": "**ML-powered sea-turtle detection on Raspberry Pi 4B with real-time SMS alerts.**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./src/css/input.css -o ./src/pawikan/dashboard/static/style.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zirdl/PawikanSentinel.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/zirdl/PawikanSentinel/issues"
+  },
+  "homepage": "https://github.com/zirdl/PawikanSentinel#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "@material-tailwind/html": "^3.0.0-beta.7"
+  }
+}

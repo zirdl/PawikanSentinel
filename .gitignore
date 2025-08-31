@@ -6,3 +6,4 @@ models/
 *.log
 GEMINI.md
 implementation.md
+node_modules/

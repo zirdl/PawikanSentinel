@@ -7,14 +7,14 @@
     <p class="mb-6">This is the main dashboard. Analytics and other information will be displayed here.</p>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow-accent overflow-hidden">
+        <div class="bg-surface text-on-surface p-6 rounded-lg shadow-md overflow-hidden">
             <h3 class="text-xl font-semibold mb-4">Detections Over Time</h3>
             <div class="relative h-96">
                 <canvas id="detectionsChart"></canvas>
             </div>
         </div>
         <!-- Add more dashboard cards here -->
-        <div class="bg-white p-6 rounded-lg shadow-accent">
+        <div class="bg-surface text-on-surface p-6 rounded-lg shadow-md">
             <h3 class="text-xl font-semibold mb-4">Detection Gallery</h3>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
                 {% for image in gallery_images %}
@@ -42,10 +42,10 @@
                     label: '# of Detections',
                     data: chartData.values,
                     borderWidth: 0,
-                    borderColor: 'var(--accent-color)',
-                    backgroundColor: 'rgba(60, 127, 58, 0.4)',
-                    pointBackgroundColor: 'var(--accent-color)', /* Filled dot with accent color */
-                    pointBorderColor: 'var(--accent-color)', /* Border color same as fill to hide it */
+                    borderColor: '#1976D2',
+                    backgroundColor: 'rgba(25, 118, 210, 0.4)',
+                    pointBackgroundColor: '#1976D2', /* Filled dot with primary color */
+                    pointBorderColor: '#1976D2', /* Border color same as fill to hide it */
                     pointBorderWidth: 0, /* Explicitly remove border */
                     fill: true,
                 }]
@@ -62,7 +62,7 @@
                     legend: {
                         display: true,
                         labels: {
-                            color: 'var(--font-color)',
+                            color: '#212121',
                             boxWidth: 20, /* Default is 40, making it smaller */
                             boxHeight: 20, /* Adjust height if needed */
                             borderWidth: 0 /* Remove border from legend box */

@@ -4,9 +4,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import secrets
 
-from ....core import storage
-from ....core.database import get_db
-from ....core import schemas
+from pawikan.core import storage
+from pawikan.core.database import get_db
+from pawikan.core import schemas
 
 router = APIRouter()
 templates = Jinja2Templates(directory="src/pawikan/dashboard/templates")
