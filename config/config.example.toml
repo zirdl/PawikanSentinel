@@ -10,7 +10,10 @@ max_detections = 50
 
 [video]
 # URL of the RTSP camera stream
-rtsp_url = "rtsp://user:pass@camera-ip:554/stream"
+rtsp_urls = [
+    "rtsp://user:pass@camera-ip-1:554/stream",
+    "rtsp://user:pass@camera-ip-2:554/stream"
+]
 # Reconnect backoff strategy (in seconds)
 reconnect_initial_seconds = 2
 reconnect_max_seconds = 30

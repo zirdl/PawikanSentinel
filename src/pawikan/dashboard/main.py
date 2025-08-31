@@ -21,6 +21,7 @@ app.mount("/static", StaticFiles(directory="src/pawikan/dashboard/static"), name
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(settings.router)
+app.include_router(contacts.router)
 
 @app.get("/")
 def read_root(request: Request):
