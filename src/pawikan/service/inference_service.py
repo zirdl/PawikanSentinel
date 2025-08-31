@@ -61,48 +61,30 @@ class DbWriterThread(threading.Thread):
 static_settings = config.settings
 logger = setup_logger(Path(static_settings["logging"]["dir"]), static_settings["logging"]["level"])
 
-class InferenceService:
-    def __init__(self, db: Session):
-        self.db = db
-        self.rtsp_url = static_settings["video"]["rtsp_url"]
-        self.model_path = static_settings["model"]["path"]
-        self.confidence_threshold = static_settings["model"]["confidence_threshold"]
-        self.iou_threshold = static_settings["model"]["nms_iou_threshold"]
-        self.max_detections = static_settings["model"]["max_detections"]
-        self.gallery_dir = Path(static_settings["gallery"]["dir"])
-
-        # --- TFLite Interpreter Setup ---
-        self.interpreter = tflite.Interpreter(model_path=self.model_path)
-        self.interpreter.allocate_tensors()
-        self.input_details = self.interpreter.get_input_details()
-        self.output_details = self.interpreter.get_output_details()
-
-        # --- Cooldowns and Notifications ---
-        self.gallery_cooldown_sec = int(static_settings["gallery"]["save_interval_seconds"])
-        self.gallery_cooldown = CooldownManager("gallery_save", self.gallery_cooldown_sec)
-        
-        # Notification cooldown from DB, fallback to config if not in DB
-        notification_cooldown_obj = storage.get_setting(db, "notification_cooldown_seconds")
-        if notification_cooldown_obj:
-            notification_cooldown_sec = int(notification_cooldown_obj.value)
-        else:
-            notification_cooldown_sec = int(static_settings["notify"]["cooldown_seconds"]) if "cooldown_seconds" in static_settings["notify"] else 1200
-            logger.warning(f"Notification cooldown not found in DB, using config value: {notification_cooldown_sec} seconds.")
-
-        self.notification_cooldown = CooldownManager("notification", notification_cooldown_sec)
-        
-        self.notifier = self._setup_notifier()
-
-        # --- Database Writer Thread Setup ---
-        self.detection_queue = queue.Queue()
-        self.db_writer_thread = DbWriterThread(self.detection_queue, SessionLocal)
-        self.db_writer_thread.start()
-        logger.info("Detection event queue and DB writer thread started.")
+class StreamProcessor(threading.Thread):
+    def __init__(self, rtsp_url: str, interpreter, input_details, output_details, detection_queue: queue.Queue, gallery_cooldown: CooldownManager, notification_cooldown: CooldownManager, notifier, db_session_factory, static_settings):
+        super().__init__()
+        self.rtsp_url = rtsp_url
+        self.interpreter = interpreter
+        self.input_details = input_details
+        self.output_details = output_details
+        self.detection_queue = detection_queue
+        self.gallery_cooldown = gallery_cooldown
+        self.notification_cooldown = notification_cooldown
+        self.notifier = notifier
+        self.db_session_factory = db_session_factory
+        self.static_settings = static_settings
+        self.stop_event = threading.Event()
+        self.model_path = self.static_settings["model"]["path"]
+        self.confidence_threshold = self.static_settings["model"]["confidence_threshold"]
+        self.iou_threshold = self.static_settings["model"]["nms_iou_threshold"]
+        self.max_detections = self.static_settings["model"]["max_detections"]
+        self.gallery_dir = Path(self.static_settings["gallery"]["dir"])
+        logger.info(f"StreamProcessor for {self.rtsp_url} initialized.")
 
     def _process_frame(self, frame: np.ndarray) -> Tuple[np.ndarray, List[tuple]]:
         """
         Processes a single frame for inference, draws bounding boxes, and returns detections.
-        Directly adapted from scripts/test_rtsp.py.
         """
         input_shape = self.input_details[0]['shape']
         model_input_height, model_input_width = input_shape[1], input_shape[2]
@@ -157,12 +139,117 @@ class InferenceService:
 
         return frame_with_boxes, detections
 
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=30), before_sleep=lambda rs: logger.warning(f"RTSP connection to {self.rtsp_url} failed. Retrying..."))
+    def _connect_rtsp(self):
+        logger.info(f"Connecting to RTSP stream: {self.rtsp_url}")
+        cap = cv2.VideoCapture(self.rtsp_url)
+        if not cap.isOpened(): 
+            raise ConnectionError(f"Failed to open RTSP stream at {self.rtsp_url}")
+        logger.info(f"RTSP stream connected: {self.rtsp_url}")
+        return cap
+
+    def run(self):
+        cap = None
+        try:
+            cap = self._connect_rtsp()
+            db = self.db_session_factory()
+
+            while not self.stop_event.is_set():
+                try:
+                    ret, frame = cap.read()
+                    if not ret:
+                        logger.warning(f"Lost RTSP stream from {self.rtsp_url}. Attempting to reconnect...")
+                        cap.release()
+                        cap = self._connect_rtsp()
+                        continue
+
+                    processed_frame, detections = self._process_frame(frame)
+
+                    if detections:
+                        max_confidence = max(d[4] for d in detections)
+                        logger.info(f"Found {len(detections)} detections in stream {self.rtsp_url}.", extra={"max_confidence": f"{max_confidence:.2f}"})
+
+                        avg_confidence = sum(d[4] for d in detections) / len(detections)
+                        self.detection_queue.put(schemas.DetectionEventCreate(detection_count=len(detections), average_confidence=avg_confidence))
+                        logger.debug("Detection event added to queue.")
+
+                        if self.gallery_cooldown.is_ready():
+                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                            detections_for_json = [{"box": [d[0], d[1], d[2], d[3]], "score": d[4], "class_id": d[5]} for d in detections]
+                            annotate.save_annotated_frame_raw(processed_frame, self.gallery_dir, timestamp, detections_for_json)
+                            self.gallery_cooldown.trigger()
+                            logger.info(f"Saved detection frame to gallery from stream {self.rtsp_url}.")
+                        
+                        if self.notifier and self.notification_cooldown.is_ready():
+                            contacts = storage.get_all_contacts(db)
+                            recipients = [c.phone_number for c in contacts]
+                            if recipients:
+                                message = f"Pawikan Sentinel Alert: {len(detections)} turtle(s) detected in stream {self.rtsp_url} (max confidence: {max_confidence:.2f})."
+                                self.notifier.send(message, recipients)
+                                self.notification_cooldown.trigger()
+                                logger.info("Notification sent.")
+                            else:
+                                logger.warning("Detection found, but no active contacts to notify.")
+                    else:
+                        logger.debug(f"No detections found in frame from {self.rtsp_url}.")
+
+                except ConnectionError as e:
+                    logger.error(f"RTSP connection error during runtime for {self.rtsp_url}: {e}. Attempting to reconnect...", exc_info=True)
+                    if cap: cap.release()
+                    cap = self._connect_rtsp()
+                except Exception as e:
+                    logger.critical(f"An unhandled error occurred in the loop for {self.rtsp_url}: {e}", exc_info=True)
+                    time.sleep(5)
+        
+        except ConnectionError as e:
+            logger.critical(f"Initial RTSP connection failed for {self.rtsp_url}: {e}. Exiting thread.", exc_info=True)
+        finally:
+            if cap:
+                cap.release()
+            if db:
+                db.close()
+            logger.info(f"StreamProcessor for {self.rtsp_url} stopped.")
+
+    def stop(self):
+        self.stop_event.set()
+        logger.info(f"StreamProcessor for {self.rtsp_url} received stop signal.")
+
+class InferenceService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.rtsp_urls = static_settings["video"]["rtsp_urls"]
+        self.model_path = static_settings["model"]["path"]
+        
+        # --- TFLite Interpreter Setup ---
+        # This should be thread-safe if each thread has its own interpreter.
+        # For this implementation, we create one per stream thread.
+        
+        # --- Cooldowns and Notifications ---
+        self.gallery_cooldown_sec = int(static_settings["gallery"]["save_interval_seconds"])
+        self.gallery_cooldown = CooldownManager("gallery_save", self.gallery_cooldown_sec)
+        
+        notification_cooldown_obj = storage.get_setting(db, "notification_cooldown_seconds")
+        if notification_cooldown_obj:
+            notification_cooldown_sec = int(notification_cooldown_obj.value)
+        else:
+            notification_cooldown_sec = int(static_settings["notify"]["cooldown_seconds"]) if "cooldown_seconds" in static_settings["notify"] else 1200
+            logger.warning(f"Notification cooldown not found in DB, using config value: {notification_cooldown_sec} seconds.")
+
+        self.notification_cooldown = CooldownManager("notification", notification_cooldown_sec)
+        
+        self.notifier = self._setup_notifier()
+
+        # --- Database Writer Thread Setup ---
+        self.detection_queue = queue.Queue()
+        self.db_writer_thread = DbWriterThread(self.detection_queue, SessionLocal)
+        self.stream_processors = []
+
     def _setup_notifier(self):
         provider_obj = storage.get_setting(self.db, "notify_provider")
         provider = provider_obj.value if provider_obj else "none"
 
         enabled_obj = storage.get_setting(self.db, "notify_enabled")
-        enabled = (enabled_obj.value.lower() == "true") if enabled_obj else False # Default to False for safety
+        enabled = (enabled_obj.value.lower() == "true") if enabled_obj else False
 
         if not enabled or provider != "twilio":
             logger.info(f"Notifications disabled (provider: '{provider}', enabled: {enabled})")
@@ -182,94 +269,61 @@ class InferenceService:
             from_number=twilio_from_obj.value
         )
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=30), before_sleep=lambda rs: logger.warning("RTSP connection failed. Retrying..."))
-    def _connect_rtsp(self):
-        logger.info("Connecting to RTSP stream.", extra={"url": self.rtsp_url})
-        cap = cv2.VideoCapture(self.rtsp_url)
-        if not cap.isOpened(): 
-            raise ConnectionError(f"Failed to open RTSP stream at {self.rtsp_url}")
-        logger.info("RTSP stream connected.")
-        return cap
-
     def run(self):
-        cap = None
+        logger.info("Starting inference service with multiple streams.")
+        self.db_writer_thread.start()
+
+        for url in self.rtsp_urls:
+            # Each thread needs its own interpreter instance
+            interpreter = tflite.Interpreter(model_path=self.model_path)
+            interpreter.allocate_tensors()
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()
+
+            processor = StreamProcessor(
+                rtsp_url=url,
+                interpreter=interpreter,
+                input_details=input_details,
+                output_details=output_details,
+                detection_queue=self.detection_queue,
+                gallery_cooldown=self.gallery_cooldown,
+                notification_cooldown=self.notification_cooldown,
+                notifier=self.notifier,
+                db_session_factory=SessionLocal,
+                static_settings=static_settings
+            )
+            self.stream_processors.append(processor)
+            processor.start()
+
         try:
-            cap = self._connect_rtsp()
-
-            frame_count = 0
             while True:
-                try:
-                    ret, frame = cap.read()
-                    if not ret:
-                        logger.warning("Lost RTSP stream. Attempting to reconnect...")
-                        cap.release()
-                        cap = self._connect_rtsp() # Reconnect
-                        continue
+                # Keep the main thread alive, or handle other service-wide tasks
+                time.sleep(10)
+                # Optional: Check if threads are alive and restart if needed
+                for processor in self.stream_processors:
+                    if not processor.is_alive():
+                        logger.error(f"Stream processor for {processor.rtsp_url} has died. It will not be automatically restarted in this version.")
+                        # In a more robust implementation, you might want to restart it.
 
-                    frame_count += 1
-                    
-                    processed_frame, detections = self._process_frame(frame)
-
-                    if detections:
-                        max_confidence = max(d[4] for d in detections) # d[4] is score
-                        logger.info(f"Found {len(detections)} detections.", extra={"max_confidence": f"{max_confidence:.2f}"})
-
-                        # Log to analytics DB (asynchronously)
-                        avg_confidence = sum(d[4] for d in detections) / len(detections) # d[4] is score
-                        self.detection_queue.put(schemas.DetectionEventCreate(detection_count=len(detections), average_confidence=avg_confidence))
-                        logger.debug("Detection event added to queue.")
-
-                        # Save to gallery
-                        if self.gallery_cooldown.is_ready():
-                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                            
-                            # Convert detections to a list of dicts for JSON serialization
-                            detections_for_json = [
-                                {"box": [d[0], d[1], d[2], d[3]], "score": d[4], "class_id": d[5]}
-                                for d in detections
-                            ]
-
-                            annotate.save_annotated_frame_raw(processed_frame, self.gallery_dir, timestamp, detections_for_json)
-                            self.gallery_cooldown.trigger()
-                            logger.info("Saved detection frame to gallery.")
-                        
-                        # Send notification
-                        if self.notifier and self.notification_cooldown.is_ready():
-                            contacts = storage.get_all_contacts(self.db)
-                            recipients = [c.phone_number for c in contacts]
-                            if recipients:
-                                message = f"Pawikan Sentinel Alert: {len(detections)} turtle(s) detected (max confidence: {max_confidence:.2f})."
-                                self.notifier.send(message, recipients)
-                                self.notification_cooldown.trigger()
-                                logger.info("Notification sent.")
-                            else:
-                                logger.warning("Detection found, but no active contacts to notify.")
-                    else:
-                        logger.debug("No detections found in frame.")
-
-                except KeyboardInterrupt:
-                    logger.info("Stopping service due to KeyboardInterrupt.")
-                    break
-                except ConnectionError as e:
-                    logger.error(f"RTSP connection error during runtime: {e}. Attempting to reconnect...", exc_info=True)
-                    if cap: cap.release()
-                    cap = self._connect_rtsp() # Attempt to reconnect
-                except Exception as e:
-                    logger.critical(f"An unhandled error occurred in the main loop: {e}", exc_info=True)
-                    time.sleep(5) # Prevent rapid error looping
-
-        except ConnectionError as e:
-            logger.critical(f"Initial RTSP connection failed: {e}. Exiting service.", exc_info=True)
-            return # Exit if initial connection fails
+        except KeyboardInterrupt:
+            logger.info("Stopping service due to KeyboardInterrupt.")
         finally:
-            if cap:
-                cap.release()
-            if self.db_writer_thread:
-                logger.info("Signaling DbWriterThread to stop and waiting for it to finish...")
-                self.db_writer_thread.stop()
-                self.db_writer_thread.join()
-                logger.info("DbWriterThread stopped.")
-            logger.info("Inference service stopped.")
+            self.stop()
+
+    def stop(self):
+        logger.info("Stopping all stream processors...")
+        for processor in self.stream_processors:
+            processor.stop()
+        for processor in self.stream_processors:
+            processor.join()
+        logger.info("All stream processors stopped.")
+
+        if self.db_writer_thread:
+            logger.info("Signaling DbWriterThread to stop and waiting for it to finish...")
+            self.db_writer_thread.stop()
+            self.db_writer_thread.join()
+            logger.info("DbWriterThread stopped.")
+        logger.info("Inference service stopped.")
 
 def main():
     init_db()

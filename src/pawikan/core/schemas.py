@@ -8,6 +8,9 @@ class ContactBase(BaseModel):
 class ContactCreate(ContactBase):
     pass
 
+class ContactUpdate(ContactBase):
+    pass
+
 class Contact(ContactBase):
     id: int
     model_config = ConfigDict(from_attributes=True)

@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Pawikan Sentinel{% endblock %}</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,51 +13,24 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Glightbox CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
-    <style>
-        :root {
-            --accent-color: #3c7f3a;
-            --font-color: #444;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            color: var(--font-color);
-            background-color: #f4f4f9;
-        }
-        h1, h2, h3, h4 {
-            font-family: 'Inter', sans-serif; /* Changed from Space Mono */
-            color: var(--accent-color);
-        }
-        /* Custom Tailwind configuration for accent color */
-        .bg-accent {
-            background-color: var(--accent-color);
-        }
-        .text-accent {
-            color: var(--accent-color);
-        }
-        .border-accent {
-            border-color: var(--accent-color);
-        }
-        .shadow-accent {
-            box-shadow: 0 0 10px rgba(60, 127, 58, 0.2);
-        }
-    </style>
+    
 </head>
-<body class="min-h-screen flex flex-col">
-    <header class="bg-accent text-white p-4 flex justify-between items-center shadow-md">
-        <h1 class="text-2xl font-bold text-white">Pawikan Sentinel</h1>
+<body class="min-h-screen flex flex-col text-on-background bg-background">
+    <header class="bg-gradient-ocean-turtle from-ocean-start to-turtle-end text-on-primary p-4 flex justify-between items-center shadow-lg">
+        <h1 class="text-headline-small font-bold text-on-primary">Pawikan Sentinel</h1>
         <nav>
             {% if current_user %}
-                <a href="/dashboard" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Dashboard</a>
-                <a href="/contacts" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Contacts</a>
-                <a href="/settings" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Settings</a>
-                <a href="/logout" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Logout</a>
+                <a href="/dashboard" class="text-on-primary hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Dashboard</a>
+                <a href="/contacts" class="text-on-primary hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Contacts</a>
+                <a href="/settings" class="text-on-primary hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Settings</a>
+                <a href="/logout" class="text-on-primary hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded-md transition-colors duration-300">Logout</a>
             {% endif %}
         </nav>
     </header>
     <main class="flex-grow p-4">
         {% block content %}{% endblock %}
     </main>
-    <footer class="text-center p-4 bg-gray-200 text-gray-700 mt-8">
+    <footer class="text-center p-4 bg-surface text-on-surface mt-8">
         <p>Pawikan Sentinel &copy; 2025</p>
     </footer>
     <!-- Glightbox JS -->
