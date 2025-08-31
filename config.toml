@@ -1,0 +1,48 @@
+# Example configuration for Pawikan Sentinel
+# Copy this to ~/.config/pawikan/config.toml and edit it.
+
+[model]
+# Absolute path to the quantized TFLite model
+path = "/home/gio/Projects/PawikanSentinel/models/best_full_integer_quant.tflite"
+confidence_threshold = 0.1
+nms_iou_threshold = 0.45
+max_detections = 50
+
+[video]
+# URL of the RTSP camera stream
+# rtsp_url = "rtsp://user:pass@camera-ip:554/stream"
+rtsp_url = "rtsp://localhost:8554/test"
+# Reconnect backoff strategy (in seconds)
+reconnect_initial_seconds = 2
+reconnect_max_seconds = 30
+
+[gallery]
+# Directory to save annotated detection frames
+dir = "/home/gio/Projects/PawikanSentinel/detections"
+# Cooldown in minutes between saving frames to the gallery
+save_interval_seconds = 3
+
+[notify]
+# "twilio" or "gsm" or "none"
+provider = "twilio"
+# Cooldown in seconds between sending notifications
+cooldown_seconds = 20
+# Master switch for all notifications
+enabled = false
+
+[notify.twilio]
+# Get these from your Twilio account dashboard
+account_sid = "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+auth_token = "your_auth_token"
+from_number = "+15017122661" # Your Twilio phone number
+
+[notify.gsm]
+# Serial device for the GSM modem
+device = "/dev/ttyUSB0"
+baudrate = 115200
+
+[logging]
+# Directory for JSON log files
+dir = "/var/log/pawikan"
+# Logging level: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+level = "DEBUG"
