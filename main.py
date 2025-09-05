@@ -1,0 +1,762 @@
+import os
+import secrets
+from fastapi import FastAPI, HTTPException, Request, Depends, Form, Cookie, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from dotenv import load_dotenv
+import httpx
+from starlette.middleware.sessions import SessionMiddleware
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+import sqlite3
+import random
+
+# Rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+# Load environment variables
+load_dotenv()
+
+# Configuration
+DATABASE_PATH = "pawikan.db"
+SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
+SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", secrets.token_hex(32))
+CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY", secrets.token_hex(16))
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# OAuth2 scheme
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
+
+# Create FastAPI app
+app = FastAPI(title="Pawikan Sentinel", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add middleware
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=1800)  # 30 minutes
+
+# Create serializer for CSRF tokens
+serializer = URLSafeTimedSerializer(CSRF_SECRET_KEY)
+
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="web/static"), name="static")
+app.mount("/detections", StaticFiles(directory=os.getenv("DETECTIONS_DIR", "detections")), name="detections")
+templates = Jinja2Templates(directory="web/templates")
+
+# Database helper
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Create tables if they don't exist
+def create_tables():
+    conn = get_db_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            hashed_password TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user'
+        )
+    """)
+    
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS cameras (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            rtsp_url TEXT NOT NULL,
+            active BOOLEAN DEFAULT TRUE
+        )
+    """)
+    
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS detections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            camera_id INTEGER,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            class TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            image_path TEXT,
+            FOREIGN KEY (camera_id) REFERENCES cameras (id)
+        )
+    """)
+    
+    conn.commit()
+    conn.close()
+
+# Detection management functions
+def get_detection_stats():
+    """Get detection statistics for the dashboard cards"""
+    conn = get_db_connection()
+    
+    # Total detections
+    total = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
+    
+    # Today's detections
+    today = conn.execute("""
+        SELECT COUNT(*) as count FROM detections 
+        WHERE DATE(timestamp) = DATE('now')
+    """).fetchone()["count"]
+    
+    # This month's detections
+    this_month = conn.execute("""
+        SELECT COUNT(*) as count FROM detections 
+        WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+    """).fetchone()["count"]
+    
+    conn.close()
+    return {"total": total, "today": today, "this_month": this_month}
+
+def get_detection_chart_data(period="month"):
+    """Get detection data for chart visualization"""
+    conn = get_db_connection()
+    
+    if period == "month":
+        # Get daily counts for the current month
+        data = conn.execute("""
+            SELECT DATE(timestamp) as date, COUNT(*) as count 
+            FROM detections 
+            WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        """).fetchall()
+    else:
+        # Get monthly counts for all time
+        data = conn.execute("""
+            SELECT strftime('%Y-%m', timestamp) as month, COUNT(*) as count 
+            FROM detections 
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        """).fetchall()
+    
+    conn.close()
+    return [dict(row) for row in data]
+
+def get_recent_detections(limit=10):
+    """Get recent detections with camera names"""
+    conn = get_db_connection()
+    detections = conn.execute("""
+        SELECT d.id, d.timestamp, c.name as camera_name, d.class, d.confidence, d.image_path
+        FROM detections d
+        LEFT JOIN cameras c ON d.camera_id = c.id
+        ORDER BY d.timestamp DESC
+        LIMIT ?
+    """, (limit,)).fetchall()
+    conn.close()
+    return [dict(detection) for detection in detections]
+
+# Utility functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        return None
+
+# CSRF protection
+def generate_csrf_token(request: Request):
+    if "csrf_token" not in request.session:
+        request.session["csrf_token"] = secrets.token_hex(16)
+    return serializer.dumps(request.session["csrf_token"])
+
+async def verify_csrf_token(request: Request):
+    try:
+        form_csrf_token = request.headers.get("X-CSRFToken") or (await request.form()).get("csrf_token")
+        if not form_csrf_token:
+            raise HTTPException(status_code=403, detail="CSRF token missing")
+
+        session_token = serializer.loads(form_csrf_token, max_age=3600)
+        if session_token != request.session.get("csrf_token"):
+            raise HTTPException(status_code=403, detail="Invalid CSRF token")
+            
+        # Regenerate CSRF token after successful validation
+        request.session["csrf_token"] = secrets.token_hex(16)
+    except SignatureExpired:
+        raise HTTPException(status_code=403, detail="CSRF token expired")
+    except BadTimeSignature:
+        raise HTTPException(status_code=403, detail="Invalid CSRF token signature")
+    except Exception as e:
+        raise HTTPException(status_code=403, detail="CSRF verification failed")
+
+# Authentication dependencies
+async def get_current_user_from_cookie(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    payload = decode_access_token(access_token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    username: str = payload.get("sub")
+    if username is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    return username
+
+async def get_current_user_for_pages(access_token: str = Cookie(None)):
+    if not access_token:
+        return None
+    
+    payload = decode_access_token(access_token)
+    if payload is None:
+        return None
+    
+    username: str = payload.get("sub")
+    return username
+
+# Startup event to create tables
+@app.on_event("startup")
+async def startup_event():
+    create_tables()
+    
+    # Create default admin user if it doesn't exist
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
+    if not user:
+        hashed_password = get_password_hash("admin123")
+        conn.execute(
+            "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
+            ("admin", hashed_password, "admin")
+        )
+        conn.commit()
+        
+    # Add some sample detection data for testing
+    detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
+    if detection_count == 0:
+        # Add sample detections for the past 30 days
+        from datetime import datetime, timedelta
+        
+        for i in range(30):
+            date = datetime.now() - timedelta(days=i)
+            # Add random number of detections per day (0-10)
+            for j in range(random.randint(0, 10)):
+                camera_id = random.randint(1, 3)  # Assuming we have up to 3 cameras
+                confidence = round(random.uniform(0.7, 0.99), 2)
+                conn.execute(
+                    "INSERT INTO detections (camera_id, timestamp, class, confidence) VALUES (?, ?, ?, ?)",
+                    (camera_id, date, "pawikan", confidence)
+                )
+        conn.commit()
+    conn.close()
+
+# Routes
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return RedirectResponse(url="/dashboard")
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page(request: Request, username: str = Depends(get_current_user_for_pages)):
+    if not username:
+        return RedirectResponse(url="/login?next=/dashboard")
+    
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request, 
+        "csrf_token": csrf_token, 
+        "username": username
+    })
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request, username: str = Depends(get_current_user_for_pages)):
+    if not username:
+        return RedirectResponse(url="/login?next=/settings")
+    
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse("settings.html", {
+        "request": request, 
+        "csrf_token": csrf_token, 
+        "username": username
+    })
+
+# Detection API endpoints
+@app.get("/api/detections/stats")
+async def get_detection_stats_api(username: str = Depends(get_current_user_from_cookie)):
+    return get_detection_stats()
+
+@app.get("/api/detections/chart")
+async def get_detection_chart_api(period: str = "month", username: str = Depends(get_current_user_from_cookie)):
+    return get_detection_chart_data(period)
+
+@app.get("/api/detections/recent")
+async def get_recent_detections_api(username: str = Depends(get_current_user_from_cookie)):
+    return get_recent_detections()
+
+@app.get("/api/detections/gallery")
+async def get_detection_gallery_api(username: str = Depends(get_current_user_from_cookie)):
+    # Get detection images from the specified directory
+    import os
+    from PIL import Image
+    import glob
+    
+    detection_dir = os.getenv("DETECTIONS_DIR", "detections")
+    images = []
+    
+    if os.path.exists(detection_dir):
+        # Get all image files in the directory
+        image_files = glob.glob(os.path.join(detection_dir, "*.jpg")) + \
+                      glob.glob(os.path.join(detection_dir, "*.png")) + \
+                      glob.glob(os.path.join(detection_dir, "*.jpeg"))
+        
+        # Sort by modification time (newest first)
+        image_files.sort(key=os.path.getmtime, reverse=True)
+        
+        # Get the 12 most recent images
+        for image_file in image_files[:12]:
+            # Get file info
+            stat = os.stat(image_file)
+            images.append({
+                "filename": os.path.basename(image_file),
+                "path": f"/detections/{os.path.basename(image_file)}",
+                "size": stat.st_size,
+                "modified": stat.st_mtime
+            })
+    
+    return images
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    csrf_token = generate_csrf_token(request)
+    registered = request.query_params.get("registered") == "true"
+    next_url = request.query_params.get("next", "/dashboard")
+    return templates.TemplateResponse("login.html", {
+        "request": request, 
+        "csrf_token": csrf_token, 
+        "registered": registered, 
+        "next_url": next_url
+    })
+
+@app.post("/login")
+@limiter.limit("5/15minutes")
+async def login_user(request: Request):
+    form = await request.form()
+    username = form.get("username")
+    password = form.get("password")
+    csrf_token = form.get("csrf_token")
+    next_url = request.query_params.get("next", "/dashboard")
+    
+    # Verify CSRF token
+    try:
+        await verify_csrf_token(request)
+    except HTTPException:
+        return templates.TemplateResponse("login.html", {
+            "request": request, 
+            "error": "Invalid CSRF token", 
+            "csrf_token": generate_csrf_token(request),
+            "next_url": next_url
+        })
+    
+    # Authenticate user
+    conn = get_db_connection()
+    user = conn.execute("SELECT id, username, hashed_password FROM users WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    
+    if not user or not verify_password(password, user["hashed_password"]):
+        return templates.TemplateResponse("login.html", {
+            "request": request, 
+            "error": "Invalid username or password", 
+            "csrf_token": generate_csrf_token(request),
+            "next_url": next_url
+        })
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["username"]}, 
+        expires_delta=access_token_expires
+    )
+    
+    # Redirect with token cookie
+    response = RedirectResponse(url=next_url, status_code=302)
+    response.set_cookie(
+        key="access_token", 
+        value=access_token, 
+        httponly=True, 
+        samesite="lax", 
+        secure=False  # Set to True in production with HTTPS
+    )
+    return response
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse("register.html", {
+        "request": request, 
+        "csrf_token": csrf_token
+    })
+
+@app.post("/register")
+@limiter.limit("3/hour")
+async def register_user(request: Request):
+    form = await request.form()
+    username = form.get("username")
+    password = form.get("password")
+    confirm_password = form.get("confirm_password")
+    csrf_token = form.get("csrf_token")
+    
+    # Verify CSRF token
+    try:
+        await verify_csrf_token(request)
+    except HTTPException:
+        return templates.TemplateResponse("register.html", {
+            "request": request, 
+            "error": "Invalid CSRF token", 
+            "csrf_token": generate_csrf_token(request)
+        })
+    
+    # Validate input
+    if not username or not password:
+        return templates.TemplateResponse("register.html", {
+            "request": request, 
+            "error": "Username and password are required", 
+            "csrf_token": generate_csrf_token(request)
+        })
+    
+    if password != confirm_password:
+        return templates.TemplateResponse("register.html", {
+            "request": request, 
+            "error": "Passwords do not match", 
+            "csrf_token": generate_csrf_token(request)
+        })
+    
+    # Check if user already exists
+    conn = get_db_connection()
+    existing_user = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    if existing_user:
+        conn.close()
+        return templates.TemplateResponse("register.html", {
+            "request": request, 
+            "error": "Username already registered", 
+            "csrf_token": generate_csrf_token(request)
+        })
+    
+    # Create new user
+    hashed_password = get_password_hash(password)
+    conn.execute(
+        "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
+        (username, hashed_password, "user")
+    )
+    conn.commit()
+    conn.close()
+    
+    return RedirectResponse(url="/login?registered=true", status_code=302)
+
+@app.post("/change-password")
+async def change_password(request: Request, username: str = Depends(get_current_user_from_cookie)):
+    form = await request.form()
+    current_password = form.get("current_password")
+    new_password = form.get("new_password")
+    confirm_new_password = form.get("confirm_new_password")
+    
+    # Verify current password
+    conn = get_db_connection()
+    user = conn.execute("SELECT id, hashed_password FROM users WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    
+    if not user or not verify_password(current_password, user["hashed_password"]):
+        return JSONResponse({"error": "Current password is incorrect"}, status_code=400)
+    
+    # Validate new password
+    if not new_password or len(new_password) < 8:
+        return JSONResponse({"error": "New password must be at least 8 characters long"}, status_code=400)
+    
+    if new_password != confirm_new_password:
+        return JSONResponse({"error": "New passwords do not match"}, status_code=400)
+    
+    # Update password
+    hashed_password = get_password_hash(new_password)
+    conn = get_db_connection()
+    conn.execute("UPDATE users SET hashed_password = ? WHERE id = ?", (hashed_password, user["id"]))
+    conn.commit()
+    conn.close()
+    
+    return JSONResponse({"message": "Password changed successfully"})
+
+@app.post("/change-username")
+async def change_username(request: Request, current_username: str = Depends(get_current_user_from_cookie)):
+    form = await request.form()
+    current_password = form.get("current_password")
+    new_username = form.get("new_username")
+    
+    # Verify current password
+    conn = get_db_connection()
+    user = conn.execute("SELECT id, hashed_password FROM users WHERE username = ?", (current_username,)).fetchone()
+    
+    if not user or not verify_password(current_password, user["hashed_password"]):
+        conn.close()
+        return JSONResponse({"error": "Current password is incorrect"}, status_code=400)
+    
+    # Validate new username
+    if not new_username or len(new_username) < 3 or len(new_username) > 30:
+        conn.close()
+        return JSONResponse({"error": "Username must be between 3 and 30 characters"}, status_code=400)
+    
+    # Check if username is already taken
+    existing_user = conn.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user["id"])).fetchone()
+    if existing_user:
+        conn.close()
+        return JSONResponse({"error": "Username is already taken"}, status_code=400)
+    
+    # Update username
+    conn.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, user["id"]))
+    conn.commit()
+    conn.close()
+    
+    # Create new access token with new username
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": new_username}, 
+        expires_delta=access_token_expires
+    )
+    
+    response = JSONResponse({"message": "Username changed successfully"})
+    response.set_cookie(
+        key="access_token", 
+        value=access_token, 
+        httponly=True, 
+        samesite="lax", 
+        secure=False
+    )
+    return response
+
+@app.post("/logout")
+async def logout_user(request: Request):
+    response = RedirectResponse(url="/login", status_code=302)
+    response.delete_cookie("access_token", httponly=True, samesite="lax")
+    request.session.pop("csrf_token", None)
+    return response
+
+# Routes for camera management UI
+@app.get("/cameras/list", response_class=HTMLResponse)
+async def get_camera_list(request: Request, username: str = Depends(get_current_user_from_cookie)):
+    conn = get_db_connection()
+    cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
+    conn.close()
+    return templates.TemplateResponse("_camera_list.html", {
+        "request": request, 
+        "cameras": [dict(camera) for camera in cameras]
+    })
+
+@app.get("/cameras/form", response_class=HTMLResponse)
+async def get_camera_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse("_camera_form.html", {
+        "request": request, 
+        "csrf_token": csrf_token
+    })
+
+@app.get("/cameras/edit-form/{camera_id}", response_class=HTMLResponse)
+async def get_edit_camera_form(request: Request, camera_id: int, username: str = Depends(get_current_user_from_cookie)):
+    conn = get_db_connection()
+    camera = conn.execute("SELECT id, name, rtsp_url, active FROM cameras WHERE id = ?", (camera_id,)).fetchone()
+    conn.close()
+    
+    if camera is None:
+        raise HTTPException(status_code=404, detail="Camera not found")
+    
+    return templates.TemplateResponse("_camera_form.html", {
+        "request": request, 
+        "camera": dict(camera), 
+        "csrf_token": generate_csrf_token(request)
+    })
+
+@app.post("/cameras/add-or-update", response_class=HTMLResponse)
+async def add_or_update_camera(
+    request: Request,
+    username: str = Depends(get_current_user_from_cookie),
+    csrf_token: str = Depends(verify_csrf_token)
+):
+    form = await request.form()
+    camera_id = form.get("camera_id")
+    name = form.get("name")
+    rtsp_url = form.get("rtsp_url")
+    active = form.get("active") == "on"
+    
+    conn = get_db_connection()
+    if camera_id:
+        # Update existing camera
+        conn.execute(
+            "UPDATE cameras SET name = ?, rtsp_url = ?, active = ? WHERE id = ?",
+            (name, rtsp_url, active, camera_id)
+        )
+        message = f"Camera '{name}' updated successfully!"
+    else:
+        # Add new camera
+        conn.execute(
+            "INSERT INTO cameras (name, rtsp_url, active) VALUES (?, ?, ?)",
+            (name, rtsp_url, active)
+        )
+        message = f"Camera '{name}' added successfully!"
+    
+    conn.commit()
+    conn.close()
+    
+    # Return updated camera list
+    conn = get_db_connection()
+    cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
+    conn.close()
+    
+    return templates.TemplateResponse("_camera_list.html", {
+        "request": request, 
+        "cameras": [dict(camera) for camera in cameras],
+        "message": message
+    })
+
+@app.delete("/api/cameras/{camera_id}", response_class=HTMLResponse)
+async def delete_camera_htmx(
+    request: Request,
+    camera_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+    csrf_token: str = Depends(verify_csrf_token)
+):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM cameras WHERE id = ?", (camera_id,))
+    conn.commit()
+    conn.close()
+    
+    # Return updated camera list
+    conn = get_db_connection()
+    cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
+    conn.close()
+    
+    return templates.TemplateResponse("_camera_list.html", {
+        "request": request, 
+        "cameras": [dict(camera) for camera in cameras],
+        "message": "Camera deleted successfully!"
+    })
+
+# Routes for contact management UI
+@app.get("/contacts/list", response_class=HTMLResponse)
+async def get_contact_list(request: Request, username: str = Depends(get_current_user_from_cookie)):
+    conn = get_db_connection()
+    contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
+    conn.close()
+    return templates.TemplateResponse("_contact_list.html", {
+        "request": request, 
+        "contacts": [dict(contact) for contact in contacts]
+    })
+
+@app.get("/contacts/form", response_class=HTMLResponse)
+async def get_contact_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse("_contact_form.html", {
+        "request": request, 
+        "csrf_token": csrf_token
+    })
+
+@app.get("/contacts/edit-form/{contact_id}", response_class=HTMLResponse)
+async def get_edit_contact_form(request: Request, contact_id: int, username: str = Depends(get_current_user_from_cookie)):
+    conn = get_db_connection()
+    contact = conn.execute("SELECT id, name, phone FROM contacts WHERE id = ?", (contact_id,)).fetchone()
+    conn.close()
+    
+    if contact is None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    return templates.TemplateResponse("_contact_form.html", {
+        "request": request, 
+        "contact": dict(contact), 
+        "csrf_token": generate_csrf_token(request)
+    })
+
+@app.post("/contacts/add-or-update", response_class=HTMLResponse)
+async def add_or_update_contact(
+    request: Request,
+    username: str = Depends(get_current_user_from_cookie),
+    csrf_token: str = Depends(verify_csrf_token)
+):
+    form = await request.form()
+    contact_id = form.get("contact_id")
+    name = form.get("name")
+    phone = form.get("phone")
+    
+    conn = get_db_connection()
+    if contact_id:
+        # Update existing contact
+        conn.execute(
+            "UPDATE contacts SET name = ?, phone = ? WHERE id = ?",
+            (name, phone, contact_id)
+        )
+        message = f"Contact '{name}' updated successfully!"
+    else:
+        # Add new contact
+        conn.execute(
+            "INSERT INTO contacts (name, phone) VALUES (?, ?)",
+            (name, phone)
+        )
+        message = f"Contact '{name}' added successfully!"
+    
+    conn.commit()
+    conn.close()
+    
+    # Return updated contact list
+    conn = get_db_connection()
+    contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
+    conn.close()
+    
+    return templates.TemplateResponse("_contact_list.html", {
+        "request": request, 
+        "contacts": [dict(contact) for contact in contacts],
+        "message": message
+    })
+
+@app.delete("/contacts/{contact_id}", response_class=HTMLResponse)
+async def delete_contact_htmx(
+    request: Request,
+    contact_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+    csrf_token: str = Depends(verify_csrf_token)
+):
+    conn = get_db_connection()
+    conn.execute("DELETE FROM contacts WHERE id = ?", (contact_id,))
+    conn.commit()
+    conn.close()
+    
+    # Return updated contact list
+    conn = get_db_connection()
+    contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
+    conn.close()
+    
+    return templates.TemplateResponse("_contact_list.html", {
+        "request": request, 
+        "contacts": [dict(contact) for contact in contacts],
+        "message": "Contact deleted successfully!"
+    })

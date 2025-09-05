@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pawikan Sentinel{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- HTMX CDN -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+        .card {
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+    {% block header %}
+    <header class="bg-gray-800 text-white px-4 py-2 flex justify-between items-center shadow-md">
+        <h1 class="text-xl font-semibold">
+            <a href="/" class="text-white hover:text-gray-300">Pawikan Sentinel</a>
+        </h1>
+        <div class="flex items-center space-x-3">
+            {% if username %}
+            <a href="/dashboard"
+               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/dashboard' %}bg-teal-600 text-white{% else %}bg-gray-700 hover:bg-gray-600 text-gray-100{% endif %}">
+                Dashboard
+            </a>
+            <a href="/settings"
+               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/settings' %}bg-teal-600 text-white{% else %}bg-gray-700 hover:bg-gray-600 text-gray-100{% endif %}">
+                Settings
+            </a>
+            <form method="post" action="/logout" class="inline">
+                <button type="submit" class="px-3 py-1.5 rounded text-sm bg-red-600 hover:bg-red-700 text-white btn">
+                    Logout
+                </button>
+            </form>
+            {% else %}
+            <a href="/login" class="px-3 py-1.5 rounded text-sm bg-indigo-600 hover:bg-indigo-700 text-white">Login</a>
+            {% endif %}
+        </div>
+    </header>
+    {% endblock %}
+    <main class="container mx-auto mt-8 p-4">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        // Add CSRF token to all HTMX requests
+        document.addEventListener('htmx:configRequest', function(evt) {
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            evt.detail.headers['X-CSRFToken'] = csrfToken;
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

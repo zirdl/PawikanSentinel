@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Pawikan Sentinel{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Detection Analytics</h1>
+        {% if username %}
+        <p class="mt-2 text-gray-600">Welcome, <span class="font-semibold">{{ username }}</span>!</p>
+        {% endif %}
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6 card">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Detections</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="total-detections">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 card">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Today's Detections</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="today-detections">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 card">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">This Month</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="month-detections">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="bg-white rounded-lg shadow-md mb-8 card">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">Detection Trends</h2>
+                <div class="flex items-center space-x-2">
+                    <label for="chart-period" class="text-sm font-medium text-gray-700">View:</label>
+                    <select id="chart-period" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="month">This Month</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <canvas id="detections-chart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Detections and Gallery -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Recent Detections -->
+        <div class="bg-white rounded-lg shadow-md card">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Recent Detections</h2>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Camera</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="recent-detections-body">
+                            <tr>
+                                <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                    <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Gallery -->
+        <div class="bg-white rounded-lg shadow-md card">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Detection Gallery</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-4" id="detection-gallery">
+                    <div class="col-span-3 text-center py-8">
+                        <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize chart
+    let detectionsChart;
+    
+    // Load detection stats
+    async function loadDetectionStats() {
+        try {
+            const response = await fetch('/api/detections/stats');
+            const stats = await response.json();
+            
+            document.getElementById('total-detections').textContent = stats.total;
+            document.getElementById('today-detections').textContent = stats.today;
+            document.getElementById('month-detections').textContent = stats.this_month;
+        } catch (error) {
+            console.error('Error loading detection stats:', error);
+        }
+    }
+    
+    // Load chart data
+    async function loadChartData(period = 'month') {
+        try {
+            const response = await fetch(`/api/detections/chart?period=${period}`);
+            const data = await response.json();
+            
+            // Prepare chart data
+            const labels = data.map(item => period === 'month' ? item.date : item.month);
+            const values = data.map(item => item.count);
+            
+            // Create or update chart
+            const ctx = document.getElementById('detections-chart').getContext('2d');
+            
+            if (detectionsChart) {
+                detectionsChart.destroy();
+            }
+            
+            detectionsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: period === 'month' ? 'Detections per day' : 'Detections per month',
+                        data: values,
+                        borderColor: 'rgb(79, 70, 229)',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading chart data:', error);
+        }
+    }
+    
+    // Load recent detections
+    async function loadRecentDetections() {
+        try {
+            const response = await fetch('/api/detections/recent');
+            const detections = await response.json();
+            
+            const tbody = document.getElementById('recent-detections-body');
+            
+            if (detections.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <p class="mt-2">No recent detections</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = detections.map(detection => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(detection.timestamp).toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${detection.camera_name || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ${(detection.confidence * 100).toFixed(1)}%
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading recent detections:', error);
+            document.getElementById('recent-detections-body').innerHTML = `
+                <tr>
+                    <td colspan="3" class="px-6 py-4 text-center text-red-500">
+                        Error loading detections
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    
+    // Load detection gallery
+    async function loadDetectionGallery() {
+        try {
+            const response = await fetch('/api/detections/gallery');
+            const images = await response.json();
+            
+            const gallery = document.getElementById('detection-gallery');
+            
+            if (images.length === 0) {
+                gallery.innerHTML = `
+                    <div class="col-span-3 text-center py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="mt-2">No detection images found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            gallery.innerHTML = images.map(image => `
+                <div class="aspect-w-1 aspect-h-1">
+                    <img class="object-cover rounded-lg shadow-sm" 
+                         src="${image.path}" 
+                         alt="Detection image"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlNWU1ZTUiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9IkFyaWFsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading detection gallery:', error);
+            document.getElementById('detection-gallery').innerHTML = `
+                <div class="col-span-3 text-center py-8 text-red-500">
+                    Error loading detection images
+                </div>
+            `;
+        }
+    }
+    
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDetectionStats();
+        loadChartData('month');
+        loadRecentDetections();
+        loadDetectionGallery();
+        
+        // Add event listener for period selector
+        document.getElementById('chart-period').addEventListener('change', function() {
+            loadChartData(this.value);
+        });
+    });
+</script>
+{% endblock %}

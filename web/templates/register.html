@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Pawikan Sentinel{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+    <div class="flex items-center justify-center min-h-screen"> 
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md card">
+            <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-8">Register for Pawikan Sentinel</h2>
+
+            {% if error %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <strong class="font-bold">Error!</strong>
+                    <span class="block sm:inline">{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="post" action="/register" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username"
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password"
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password"
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn">
+                    Register
+                </button>
+            </form>
+            <p class="mt-8 text-center text-sm text-gray-600">
+                Already have an account?
+                <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500 transition duration-300 ease-in-out">Login here</a>
+            </p>
+        </div>
+    </div>
+{% endblock %}

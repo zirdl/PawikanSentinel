@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Pawikan Sentinel{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Settings</h1>
+        <p class="mt-2 text-gray-600">Manage your system configuration and account settings</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Camera Management -->
+        <div class="bg-white rounded-lg shadow-md card">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">Cameras</h2>
+                    <button hx-get="/cameras/form" hx-target="#modal-content" hx-swap="innerHTML" 
+                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn">
+                        Add Camera
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="cameras-container">
+                <div class="text-center py-8">
+                    <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Management -->
+        <div class="bg-white rounded-lg shadow-md card">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">Contacts</h2>
+                    <button hx-get="/contacts/form" hx-target="#modal-content" hx-swap="innerHTML" 
+                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn">
+                        Add Contact
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="contacts-container">
+                <div class="text-center py-8">
+                    <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Settings -->
+    <div class="mt-8 bg-white rounded-lg shadow-md card">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Account Settings</h2>
+        </div>
+        <div class="p-6">
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Change Password</h3>
+                    <form id="change-password-form" class="mt-4 space-y-4">
+                        <div>
+                            <label for="current_password" class="block text-sm font-medium text-gray-700">Current Password</label>
+                            <input type="password" name="current_password" id="current_password" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="new_password" class="block text-sm font-medium text-gray-700">New Password</label>
+                            <input type="password" name="new_password" id="new_password" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="confirm_new_password" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                            <input type="password" name="confirm_new_password" id="confirm_new_password" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Change Password
+                            </button>
+                        </div>
+                    </form>
+                    <div id="password-message" class="mt-2 hidden"></div>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900">Change Username</h3>
+                    <form id="change-username-form" class="mt-4 space-y-4">
+                        <div>
+                            <label for="current_password_username" class="block text-sm font-medium text-gray-700">Current Password</label>
+                            <input type="password" name="current_password" id="current_password_username" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="new_username" class="block text-sm font-medium text-gray-700">New Username</label>
+                            <input type="text" name="new_username" id="new_username" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Change Username
+                            </button>
+                        </div>
+                    </form>
+                    <div id="username-message" class="mt-2 hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div id="modal-content">
+                <!-- Content will be loaded here via HTMX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load cameras and contacts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        htmx.ajax('GET', '/cameras/list', '#cameras-container');
+        htmx.ajax('GET', '/contacts/list', '#contacts-container');
+        
+        // Handle change password form submission
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('password-message');
+            
+            try {
+                const response = await fetch('/change-password', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
+                    messageDiv.textContent = result.message;
+                    messageDiv.classList.remove('hidden');
+                    // Reset form
+                    this.reset();
+                } else {
+                    messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                    messageDiv.textContent = result.error;
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.classList.remove('hidden');
+            }
+        });
+        
+        // Handle change username form submission
+        document.getElementById('change-username-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('username-message');
+            
+            try {
+                const response = await fetch('/change-username', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
+                    messageDiv.textContent = result.message;
+                    messageDiv.classList.remove('hidden');
+                    // Reset form
+                    this.reset();
+                    // Reload page after short delay to reflect new username
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                    messageDiv.textContent = result.error;
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.classList.remove('hidden');
+            }
+        });
+    });
+
+    // Modal functionality
+    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+        if (evt.detail.target.id === 'modal-content') {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+    });
+
+    function closeModal() {
+        document.getElementById('modal').classList.add('hidden');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('modal').addEventListener('click', function(evt) {
+        if (evt.target === this) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(evt) {
+        if (evt.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}

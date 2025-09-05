@@ -1,0 +1,10 @@
+fastapi==0.103.2
+uvicorn==0.23.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+slowapi==0.1.7
+python-multipart==0.0.6
+python-dotenv==1.0.0
+pillow==10.0.1
+opencv-python==4.8.1.78
+inference-sdk==0.9.12
