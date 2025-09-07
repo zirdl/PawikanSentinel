@@ -10,8 +10,8 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from database import get_db_connection
-from inference import RTSPInferenceWorker, DetectionResult
+from ..core.database import get_db_connection
+from .inference import RTSPInferenceWorker, DetectionResult
 
 # Load environment variables from .env file
 load_dotenv()

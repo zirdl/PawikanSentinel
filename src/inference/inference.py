@@ -17,7 +17,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import functools
 
-from database import get_db_connection
+from ..core.database import get_db_connection
 
 # Load environment variables from .env file
 load_dotenv()

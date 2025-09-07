@@ -1,7 +1,8 @@
 
 import sqlite3
+import os
 
-DB_FILE = "pawikan.db"
+DB_FILE = os.getenv("DATABASE_PATH", "pawikan.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)

@@ -7,9 +7,9 @@ import re
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from database import get_db_connection
-from models import User, UserCreate, Token
-from utils import verify_password, get_password_hash, create_access_token, decode_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..core.database import get_db_connection
+from ..core.models import User, UserCreate, Token
+from ..core.utils import verify_password, get_password_hash, create_access_token, decode_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 
