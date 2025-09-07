@@ -4,55 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Pawikan Sentinel{% endblock %}</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- HTMX CDN -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <style>
-        .nav-link {
-            transition: all 0.3s ease;
-        }
-        .nav-link:hover {
-            transform: translateY(-2px);
-        }
-        .card {
-            transition: all 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .btn {
-            transition: all 0.3s ease;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-    </style>
-</head>
-<body class="bg-gray-100 font-sans antialiased">
+    <!-- Local CSS -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+    <link rel="stylesheet" href="/static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="/static/css/host-grotesk.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Local JS -->
+    <script src="/static/js/htmx.min.js"></script>
+    </head>
+<body class="font-sans antialiased bg-gradient-to-br from-sand-light to-ocean-light">
     {% block header %}
-    <header class="bg-gray-800 text-white px-4 py-2 flex justify-between items-center shadow-md">
+    <header class="px-4 py-2 flex justify-between items-center shadow-md bg-gradient-to-r from-turtle-dark-green to-ocean-dark-blue">
         <h1 class="text-xl font-semibold">
-            <a href="/" class="text-white hover:text-gray-300">Pawikan Sentinel</a>
+            <a href="/" class="text-white hover:text-sand-light transition-transform duration-300 ease-in-out hover:-translate-y-0.5">Pawikan Sentinel</a>
         </h1>
         <div class="flex items-center space-x-3">
             {% if username %}
             <a href="/dashboard"
-               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/dashboard' %}bg-teal-600 text-white{% else %}bg-gray-700 hover:bg-gray-600 text-gray-100{% endif %}">
+               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/dashboard' %}bg-turtle-green text-white{% else %}bg-white bg-opacity-20 hover:bg-opacity-30 text-white{% endif %} transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
                 Dashboard
             </a>
             <a href="/settings"
-               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/settings' %}bg-teal-600 text-white{% else %}bg-gray-700 hover:bg-gray-600 text-gray-100{% endif %}">
+               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/settings' %}bg-turtle-green text-white{% else %}bg-white bg-opacity-20 hover:bg-opacity-30 text-white{% endif %} transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
                 Settings
             </a>
             <form method="post" action="/logout" class="inline">
-                <button type="submit" class="px-3 py-1.5 rounded text-sm bg-red-600 hover:bg-red-700 text-white btn">
+                <button type="submit" class="px-3 py-1.5 rounded text-sm bg-coral hover:bg-opacity-80 text-white btn transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
                     Logout
                 </button>
             </form>
             {% else %}
-            <a href="/login" class="px-3 py-1.5 rounded text-sm bg-indigo-600 hover:bg-indigo-700 text-white">Login</a>
+            <a href="/login" class="px-3 py-1.5 rounded text-sm bg-ocean-blue hover:bg-opacity-80 text-white transition-transform duration-300 ease-in-out hover:-translate-y-0.5">Login</a>
             {% endif %}
         </div>
     </header>
@@ -66,6 +49,22 @@
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
             evt.detail.headers['X-CSRFToken'] = csrfToken;
         });
+        
+        // Password peek functionality
+        function togglePasswordVisibility(fieldId, iconId) {
+            const passwordField = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                passwordField.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
     </script>
     {% block scripts %}{% endblock %}
 </body>

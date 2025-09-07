@@ -1,0 +1,17 @@
+{
+  "name": "pawikan-sentinel",
+  "version": "1.0.0",
+  "description": "Pawikan Sentinel Web Application",
+  "main": "index.js",
+  "scripts": {
+    "build:tailwind": "npx tailwindcss -i ./src/web/static/css/input.css -o ./src/web/static/css/tailwind.css",
+    "watch:tailwind": "npx tailwindcss -i ./src/web/static/css/input.css -o ./src/web/static/css/tailwind.css --watch",
+    "build": "npm run build:tailwind"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

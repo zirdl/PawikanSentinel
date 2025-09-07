@@ -11,19 +11,19 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Camera Management -->
-        <div class="bg-white rounded-lg shadow-md card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800">Cameras</h2>
                     <button hx-get="/cameras/form" hx-target="#modal-content" hx-swap="innerHTML" 
-                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn">
-                        Add Camera
+                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                        <i class="fas fa-plus mr-1"></i> Add Camera
                     </button>
                 </div>
             </div>
             <div class="p-6" id="cameras-container">
                 <div class="text-center py-8">
-                    <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                    <div class="spinner" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
@@ -31,19 +31,19 @@
         </div>
 
         <!-- Contact Management -->
-        <div class="bg-white rounded-lg shadow-md card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800">Contacts</h2>
                     <button hx-get="/contacts/form" hx-target="#modal-content" hx-swap="innerHTML" 
-                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn">
-                        Add Contact
+                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                        <i class="fas fa-plus mr-1"></i> Add Contact
                     </button>
                 </div>
             </div>
             <div class="p-6" id="contacts-container">
                 <div class="text-center py-8">
-                    <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                    <div class="spinner" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
@@ -52,7 +52,7 @@
     </div>
 
     <!-- Account Settings -->
-    <div class="mt-8 bg-white rounded-lg shadow-md card">
+    <div class="mt-8 bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">Account Settings</h2>
         </div>
@@ -62,27 +62,42 @@
                     <h3 class="text-lg font-medium text-gray-900">Change Password</h3>
                     <form id="change-password-form" class="mt-4 space-y-4">
                         <div>
-                            <label for="current_password" class="block text-sm font-medium text-gray-700">Current Password</label>
-                            <input type="password" name="current_password" id="current_password" required
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                            <div class="relative">
+                                <input type="password" name="current_password" id="current_password" required
+                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
+                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('current_password', 'password-icon-3')">
+                                    <i id="password-icon-3" class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div>
-                            <label for="new_password" class="block text-sm font-medium text-gray-700">New Password</label>
-                            <input type="password" name="new_password" id="new_password" required
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                            <div class="relative">
+                                <input type="password" name="new_password" id="new_password" required
+                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
+                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('new_password', 'password-icon-4')">
+                                    <i id="password-icon-4" class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div>
-                            <label for="confirm_new_password" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                            <input type="password" name="confirm_new_password" id="confirm_new_password" required
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <label for="confirm_new_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                            <div class="relative">
+                                <input type="password" name="confirm_new_password" id="confirm_new_password" required
+                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
+                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('confirm_new_password', 'password-icon-5')">
+                                    <i id="password-icon-5" class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div>
                             <button type="submit"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Change Password
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                                <i class="fas fa-key mr-1"></i> Change Password
                             </button>
                         </div>
                     </form>
@@ -93,21 +108,26 @@
                     <h3 class="text-lg font-medium text-gray-900">Change Username</h3>
                     <form id="change-username-form" class="mt-4 space-y-4">
                         <div>
-                            <label for="current_password_username" class="block text-sm font-medium text-gray-700">Current Password</label>
-                            <input type="password" name="current_password" id="current_password_username" required
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <label for="current_password_username" class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                            <div class="relative">
+                                <input type="password" name="current_password" id="current_password_username" required
+                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
+                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('current_password_username', 'password-icon-6')">
+                                    <i id="password-icon-6" class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div>
-                            <label for="new_username" class="block text-sm font-medium text-gray-700">New Username</label>
+                            <label for="new_username" class="block text-sm font-medium text-gray-700 mb-2">New Username</label>
                             <input type="text" name="new_username" id="new_username" required
-                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                   class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
                         </div>
                         
                         <div>
                             <button type="submit"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Change Username
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                                <i class="fas fa-user-edit mr-1"></i> Change Username
                             </button>
                         </div>
                     </form>
@@ -217,6 +237,10 @@
         }
     });
 
+    document.body.addEventListener('close-modal', function(evt) {
+        closeModal();
+    });
+
     function closeModal() {
         document.getElementById('modal').classList.add('hidden');
     }
@@ -233,6 +257,10 @@
         if (evt.key === 'Escape') {
             closeModal();
         }
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        htmx.process(evt.detail.elt);
     });
 </script>
 {% endblock %}

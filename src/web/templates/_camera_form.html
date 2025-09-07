@@ -10,22 +10,22 @@
     
     <div class="space-y-4">
         <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">Camera Name</label>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Camera Name</label>
             <input type="text" name="name" id="name" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                   class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20"
                    value="{{ camera.name if camera else '' }}">
         </div>
         
         <div>
-            <label for="rtsp_url" class="block text-sm font-medium text-gray-700">RTSP URL</label>
+            <label for="rtsp_url" class="block text-sm font-medium text-gray-700 mb-2">RTSP URL</label>
             <input type="text" name="rtsp_url" id="rtsp_url" required
-                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                   class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20"
                    value="{{ camera.rtsp_url if camera else '' }}" placeholder="rtsp://example.com/stream">
         </div>
         
         <div class="flex items-center">
             <input type="checkbox" name="active" id="active" 
-                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                   class="h-4 w-4 text-turtle-green focus:ring-turtle-green border-gray-300 rounded"
                    {% if camera and camera.active %}checked{% endif %}>
             <label for="active" class="ml-2 block text-sm text-gray-900">Active</label>
         </div>
@@ -33,11 +33,11 @@
     
     <div class="mt-6 flex justify-end space-x-3">
         <button type="button" onclick="closeModal()"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-gradient-to-r from-sand-medium to-sand-dark hover:from-sand-dark hover:to-sand-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
             Cancel
         </button>
         <button type="submit"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
             {% if camera %}Update{% else %}Add{% endif %} Camera
         </button>
     </div>
