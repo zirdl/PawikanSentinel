@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
-from database import get_db_connection
+from ..core.database import get_db_connection
 
 router = APIRouter()
 

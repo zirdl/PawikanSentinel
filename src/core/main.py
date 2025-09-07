@@ -51,10 +51,19 @@ app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=180
 # Create serializer for CSRF tokens
 serializer = URLSafeTimedSerializer(CSRF_SECRET_KEY)
 
+# Include API routers
+from src.api import auth, cameras, contacts, detections, analytics
+
+app.include_router(auth.router)
+app.include_router(cameras.router)
+app.include_router(contacts.router)
+app.include_router(detections.router)
+app.include_router(analytics.router)
+
 # Mount static files and templates
-app.mount("/static", StaticFiles(directory="web/static"), name="static")
+app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
 app.mount("/detections", StaticFiles(directory=os.getenv("DETECTIONS_DIR", "detections")), name="detections")
-templates = Jinja2Templates(directory="web/templates")
+templates = Jinja2Templates(directory="src/web/templates")
 
 # Database helper
 def get_db_connection():

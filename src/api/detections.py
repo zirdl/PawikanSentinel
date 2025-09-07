@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 from datetime import datetime
 
-from database import get_db_connection
-from models import Detection, DetectionBase, DetectionOut
+from ..core.database import get_db_connection
+from ..core.models import Detection, DetectionBase, DetectionOut
 
 router = APIRouter()
 

@@ -2,8 +2,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 
-from database import get_db_connection
-from models import Camera, CameraBase
+from ..core.database import get_db_connection
+from ..core.models import Camera, CameraBase
 
 router = APIRouter()
 

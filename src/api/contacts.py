@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 
-from database import get_db_connection
-from models import Contact, ContactBase
+from ..core.database import get_db_connection
+from ..core.models import Contact, ContactBase
 
 router = APIRouter()
 
