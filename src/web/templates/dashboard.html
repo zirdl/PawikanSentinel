@@ -13,12 +13,10 @@
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-md p-6 card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-2xl bg-gradient-to-br from-ocean-blue/20 to-ocean-dark-blue/20 text-ocean-dark-blue mr-4">
+                    <i class="fas fa-chart-bar"></i>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Total Detections</p>
@@ -27,12 +25,10 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6 card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-2xl bg-gradient-to-br from-turtle-green/20 to-turtle-dark-green/20 text-turtle-dark-green mr-4">
+                    <i class="fas fa-clock"></i>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Today's Detections</p>
@@ -41,12 +37,10 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6 card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-2xl bg-gradient-to-br from-turtle-shell/20 to-turtle-shell/20 text-turtle-shell mr-4">
+                    <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">This Month</p>
@@ -57,13 +51,13 @@
     </div>
 
     <!-- Chart Section -->
-    <div class="bg-white rounded-lg shadow-md mb-8 card">
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800">Detection Trends</h2>
                 <div class="flex items-center space-x-2">
                     <label for="chart-period" class="text-sm font-medium text-gray-700">View:</label>
-                    <select id="chart-period" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <select id="chart-period" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-turtle-green focus:border-turtle-green sm:text-sm rounded-md">
                         <option value="month">This Month</option>
                         <option value="all">All Time</option>
                     </select>
@@ -78,7 +72,7 @@
     <!-- Recent Detections and Gallery -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- Recent Detections -->
-        <div class="bg-white rounded-lg shadow-md card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-xl font-semibold text-gray-800">Recent Detections</h2>
             </div>
@@ -95,7 +89,7 @@
                         <tbody class="bg-white divide-y divide-gray-200" id="recent-detections-body">
                             <tr>
                                 <td colspan="3" class="px-6 py-4 text-center text-gray-500">
-                                    <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                                    <div class="spinner" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                 </td>
@@ -107,14 +101,14 @@
         </div>
 
         <!-- Detection Gallery -->
-        <div class="bg-white rounded-lg shadow-md card">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-xl font-semibold text-gray-800">Detection Gallery</h2>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-3 gap-4" id="detection-gallery">
-                    <div class="col-span-3 text-center py-8">
-                        <div class="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full" role="status">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="detection-gallery">
+                    <div class="text-center py-8">
+                        <div class="spinner" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
@@ -125,10 +119,12 @@
 </div>
 
 <!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/chart.umd.js"></script>
 <script>
     // Initialize chart
     let detectionsChart;
+    let galleryImages = [];
+    let currentImageIndex = 0;
     
     // Load detection stats
     async function loadDetectionStats() {
@@ -168,8 +164,8 @@
                     datasets: [{
                         label: period === 'month' ? 'Detections per day' : 'Detections per month',
                         data: values,
-                        borderColor: 'rgb(79, 70, 229)',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderColor: 'rgb(74, 124, 89)',
+                        backgroundColor: 'rgba(74, 124, 89, 0.1)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.4
@@ -205,9 +201,7 @@
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="3" class="px-6 py-4 text-center text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
+                            <i class="fas fa-camera mx-auto text-4xl text-gray-300 mb-2"></i>
                             <p class="mt-2">No recent detections</p>
                         </td>
                     </tr>
@@ -246,40 +240,100 @@
     async function loadDetectionGallery() {
         try {
             const response = await fetch('/api/detections/gallery');
-            const images = await response.json();
+            galleryImages = await response.json();
             
             const gallery = document.getElementById('detection-gallery');
+            gallery.innerHTML = ''; // Clear existing content
             
-            if (images.length === 0) {
+            if (galleryImages.length === 0) {
                 gallery.innerHTML = `
-                    <div class="col-span-3 text-center py-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                    <div class="text-center py-8 col-span-full">
+                        <i class="fas fa-images mx-auto text-4xl text-gray-300 mb-2"></i>
                         <p class="mt-2">No detection images found</p>
                     </div>
                 `;
                 return;
             }
             
-            gallery.innerHTML = images.map(image => `
-                <div class="aspect-w-1 aspect-h-1">
-                    <img class="object-cover rounded-lg shadow-sm" 
-                         src="${image.path}" 
-                         alt="Detection image"
-                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlNWU1ZTUiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9IkFyaWFsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
-                </div>
-            `).join('');
+            galleryImages.forEach((image, index) => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item overflow-hidden rounded-lg';
+                galleryItem.onclick = () => openImageModal(index);
+
+                const img = document.createElement('img');
+                img.src = image.path;
+                img.alt = 'Detection image';
+                img.loading = 'lazy';
+                img.className = 'w-full h-full object-cover rounded-lg';
+                img.onerror = function() {
+                    galleryItem.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg"><i class="fas fa-image text-2xl"></i></div>';
+                };
+
+                galleryItem.appendChild(img);
+                gallery.appendChild(galleryItem);
+            });
         } catch (error) {
             console.error('Error loading detection gallery:', error);
             document.getElementById('detection-gallery').innerHTML = `
-                <div class="col-span-3 text-center py-8 text-red-500">
+                <div class="text-center py-8 col-span-full text-red-500">
                     Error loading detection images
                 </div>
             `;
         }
     }
     
+    // Open image modal with details
+    function openImageModal(index) {
+        currentImageIndex = index;
+        showImageAtIndex(currentImageIndex);
+        
+        const modal = document.getElementById('image-modal');
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function showImageAtIndex(index) {
+        const image = galleryImages[index];
+        if (!image) return;
+
+        const modalImage = document.getElementById('modal-image');
+        const modalFilename = document.getElementById('modal-filename');
+        const modalSize = document.getElementById('modal-size');
+        const modalDate = document.getElementById('modal-date');
+
+        modalImage.src = image.path;
+        modalFilename.textContent = image.filename;
+        modalSize.textContent = formatFileSize(image.size);
+        modalDate.textContent = new Date(image.modified * 1000).toLocaleString();
+        resetZoom();
+    }
+    
+    // Close image modal
+    function closeImageModal() {
+        const modal = document.getElementById('image-modal');
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    function showNextImage() {
+        currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
+        showImageAtIndex(currentImageIndex);
+    }
+
+    function showPrevImage() {
+        currentImageIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+        showImageAtIndex(currentImageIndex);
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function() {
         loadDetectionStats();
@@ -291,6 +345,160 @@
         document.getElementById('chart-period').addEventListener('change', function() {
             loadChartData(this.value);
         });
+
+        // Zoom and pan functionality
+        const modalImage = document.getElementById('modal-image');
+        let scale = 1;
+        let isPanning = false;
+        let start = { x: 0, y: 0 };
+        let transform = { x: 0, y: 0 };
+
+        window.zoomIn = function() {
+            scale = Math.min(scale + 0.1, 3);
+            updateImageTransform();
+        }
+
+        window.zoomOut = function() {
+            scale = Math.max(scale - 0.1, 0.5);
+            updateImageTransform();
+        }
+
+        window.resetZoom = function() {
+            scale = 1;
+            transform = { x: 0, y: 0 };
+            updateImageTransform();
+        }
+
+        function updateImageTransform() {
+            modalImage.style.transform = `translate(${transform.x}px, ${transform.y}px) scale(${scale})`;
+        }
+
+        modalImage.addEventListener('mousedown', (e) => {
+            if (scale > 1) {
+                isPanning = true;
+                start = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+                modalImage.style.cursor = 'grabbing';
+            }
+        });
+
+        modalImage.addEventListener('mouseup', () => {
+            isPanning = false;
+            modalImage.style.cursor = 'grab';
+        });
+
+        modalImage.addEventListener('mouseleave', () => {
+            isPanning = false;
+            modalImage.style.cursor = 'grab';
+        });
+
+        modalImage.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                transform.x = e.clientX - start.x;
+                transform.y = e.clientY - start.y;
+                updateImageTransform();
+            }
+        });
+
+        modalImage.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        });
+
+        // Close modal with ESC key and handle arrow keys
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('image-modal');
+            if (!modal.classList.contains('hidden')) {
+                if (e.key === 'Escape') {
+                    closeImageModal();
+                } else if (e.key === 'ArrowLeft') {
+                    showPrevImage();
+                } else if (e.key === 'ArrowRight') {
+                    showNextImage();
+                }
+            }
+        });
     });
 </script>
+
+<!-- Image Modal -->
+<div id="image-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="absolute top-4 right-4 z-20 flex space-x-2">
+            <button onclick="zoomIn()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow"><i class="fas fa-search-plus"></i></button>
+            <button onclick="zoomOut()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow"><i class="fas fa-search-minus"></i></button>
+            <button onclick="resetZoom()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow"><i class="fas fa-sync-alt"></i></button>
+            <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="absolute top-1/2 left-4 z-20 transform -translate-y-1/2">
+            <button onclick="showPrevImage()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="absolute top-1/2 right-4 z-20 transform -translate-y-1/2">
+            <button onclick="showNextImage()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        
+        <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+            <div class="md:w-2/3 p-4 flex items-center justify-center overflow-hidden bg-gray-200">
+                <img id="modal-image" src="" alt="Detection image" class="max-w-full max-h-full object-contain rounded transform transition-transform duration-200 ease-in-out cursor-grab">
+            </div>
+            
+            <div class="md:w-1/3 p-6 bg-gray-50 overflow-y-auto">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Detection Details</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Filename</label>
+                        <p id="modal-filename" class="mt-1 text-sm text-gray-900"></p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">File Size</label>
+                        <p id="modal-size" class="mt-1 text-sm text-gray-900"></p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Captured</label>
+                        <p id="modal-date" class="mt-1 text-sm text-gray-900"></p>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Use arrow keys to navigate, scroll to zoom.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Close modal when clicking outside or pressing ESC -->
+<script>
+    // Close modal when clicking outside the content
+    document.getElementById('image-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeImageModal();
+        }
+    });
+    
+    // Close modal with ESC key and handle arrow keys
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('image-modal');
+        if (!modal.classList.contains('hidden')) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            } else if (e.key === 'ArrowLeft') {
+                showPrevImage();
+            } else if (e.key === 'ArrowRight') {
+                showNextImage();
+            }
+        }
+    });
+</script>
+
 {% endblock %}

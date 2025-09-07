@@ -6,43 +6,54 @@
 
 {% block content %}
     <div class="flex items-center justify-center min-h-screen"> 
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md card">
-            <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-8">Login to Pawikan Sentinel</h2>
+        <div class="bg-white bg-opacity-15 backdrop-filter backdrop-blur-md border border-white border-opacity-20 rounded-2xl shadow-lg p-8 transition-all duration-300 ease-in-out hover:bg-opacity-25 hover:hover:shadow-2xl w-full max-w-md fade-in">
+            <h2 class="text-3xl font-extrabold text-center text-gray-800 mb-8">Login to Pawikan Sentinel</h2>
 
             {% if error %}
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong class="font-bold">Error!</strong>
-                    <span class="block sm:inline">{{ error }}</span>
+                <div class="p-3 rounded-lg font-medium flex items-center gap-2 mb-4 bg-red-100 border border-red-200 text-red-700" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>
+                        <strong class="font-bold">Error!</strong>
+                        <span class="block sm:inline">{{ error }}</span>
+                    </div>
                 </div>
             {% endif %}
 
             {% if registered %}
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong class="font-bold">Success!</strong>
-                    <span class="block sm:inline">Registration successful. Please log in.</span>
+                <div class="p-3 rounded-lg font-medium flex items-center gap-2 mb-4 bg-green-100 border border-green-200 text-green-700" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong class="font-bold">Success!</strong>
+                        <span class="block sm:inline">Registration successful. Please log in.</span>
+                    </div>
                 </div>
             {% endif %}
 
             <form method="post" action="/login?next={{ next_url }}" class="space-y-6">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
                     <input type="text" id="username" name="username" required autocomplete="username"
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                           class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
                 </div>
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password"
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
+                               class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('password', 'password-icon')">
+                            <i id="password-icon" class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 btn">
-                    Login
+                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Login
                 </button>
             </form>
             <p class="mt-8 text-center text-sm text-gray-600">
                 Don't have an account?
-                <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500 transition duration-300 ease-in-out">Register here</a>
+                <a href="/register" class="font-medium text-turtle-green hover:text-turtle-dark-green transition duration-300 ease-in-out">Register here</a>
             </p>
         </div>
     </div>

@@ -17,6 +17,14 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import functools
 
+# Twilio for SMS notifications
+try:
+    from twilio.rest import Client
+    TWILIO_AVAILABLE = True
+except ImportError:
+    TWILIO_AVAILABLE = False
+    Client = None
+
 from ..core.database import get_db_connection
 
 # Load environment variables from .env file
@@ -27,6 +35,12 @@ ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
 ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2") # Default model ID
 DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
 
+# Twilio configuration for SMS notifications
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
+
 # Ensure the detections directory exists
 os.makedirs(DETECTIONS_DIR, exist_ok=True)
 
@@ -35,6 +49,17 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 # --- End Logging Setup ---
+
+# Initialize Twilio client for SMS notifications
+twilio_client = None
+if TWILIO_AVAILABLE and TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
+    try:
+        twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        logger.info("Twilio client initialized successfully")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Twilio client: {e}")
+else:
+    logger.info("Twilio not configured or dependencies not available")
 
 if not ROBOFLOW_API_KEY:
     logger.warning("ROBOFLOW_API_KEY not set in .env. Inference will not work.")
@@ -113,6 +138,9 @@ class RTSPInferenceWorker(threading.Thread):
             "last_success": None
         }
         
+        # SMS notification tracking
+        self.twilio_client = twilio_client
+        
         # Connection management
         self.cap: Optional[cv2.VideoCapture] = None
         self.reconnect_delay = 1  # Start with 1 second delay
@@ -179,6 +207,10 @@ class RTSPInferenceWorker(threading.Thread):
             conn.commit()
             logger.info(f"Camera {self.camera_id}: Flushed {len(self.detection_buffer)} detections to DB.")
             
+            # Send SMS notifications for new detections if Twilio is configured
+            if self.twilio_client and TWILIO_PHONE_NUMBER:
+                self._send_sms_notifications()
+            
             # Clear buffer after successful flush
             self.detection_buffer.clear()
             
@@ -189,6 +221,57 @@ class RTSPInferenceWorker(threading.Thread):
         finally:
             if conn:
                 conn.close()
+
+    def _send_sms_notifications(self):
+        """Send SMS notifications for new detections with cooldown"""
+        try:
+            # Get camera name
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("SELECT name FROM cameras WHERE id = ?", (self.camera_id,))
+            camera_result = c.fetchone()
+            camera_name = camera_result["name"] if camera_result else f"Camera {self.camera_id}"
+            
+            # Get contacts
+            c.execute("SELECT phone FROM contacts")
+            contacts = c.fetchall()
+            conn.close()
+            
+            if not contacts:
+                logger.debug("No contacts found for SMS notifications")
+                return
+            
+            # Check cooldown - get last notification time for this camera
+            last_notification_key = f"last_sms_{self.camera_id}"
+            last_notification_time = getattr(self, last_notification_key, None)
+            current_time = time.time()
+            
+            if last_notification_time and (current_time - last_notification_time) < (SMS_NOTIFICATION_COOLDOWN * 60):
+                logger.debug(f"SMS cooldown active for camera {self.camera_id}. Skipping notification.")
+                return
+            
+            # Send SMS to each contact
+            for contact in contacts:
+                phone_number = contact["phone"]
+                try:
+                    # Create message with detection details
+                    confidence_percent = self.detection_buffer[-1].confidence * 100
+                    message_body = f"Pawikan Sentinel Alert: {len(self.detection_buffer)} detections of {self.detection_buffer[-1].class_name} on {camera_name}. Last detection at {self.detection_buffer[-1].timestamp} with {confidence_percent:.1f}% confidence."
+                    
+                    message = self.twilio_client.messages.create(
+                        body=message_body,
+                        from_=TWILIO_PHONE_NUMBER,
+                        to=phone_number
+                    )
+                    logger.info(f"SMS sent to {phone_number}: {message.sid}")
+                except Exception as e:
+                    logger.error(f"Failed to send SMS to {phone_number}: {e}")
+            
+            # Update last notification time
+            setattr(self, last_notification_key, current_time)
+            
+        except Exception as e:
+            logger.error(f"Error sending SMS notifications: {e}", exc_info=True)
 
     def _save_annotated_frame(self, frame, detections: List[Dict], timestamp: str) -> Optional[str]:
         """Save annotated frame with bounding boxes"""

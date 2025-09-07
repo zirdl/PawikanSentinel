@@ -13,6 +13,9 @@ if [ ! -d ".venv" ]; then
     uv venv
 fi
 
+# Build Tailwind CSS
+./build-css.sh
+
 # Activate virtual environment and run the web application
 echo "Starting web application..."
 source .venv/bin/activate

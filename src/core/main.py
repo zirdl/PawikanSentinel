@@ -62,7 +62,11 @@ app.include_router(analytics.router)
 
 # Mount static files and templates
 app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
-app.mount("/detections", StaticFiles(directory=os.getenv("DETECTIONS_DIR", "detections")), name="detections")
+# Use absolute path for detections directory
+detections_dir = os.getenv("DETECTIONS_DIR", "detections")
+if not os.path.isabs(detections_dir):
+    detections_dir = os.path.abspath(detections_dir)
+app.mount("/detections", StaticFiles(directory=detections_dir), name="detections")
 templates = Jinja2Templates(directory="src/web/templates")
 
 # Database helper
@@ -337,6 +341,10 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
     import glob
     
     detection_dir = os.getenv("DETECTIONS_DIR", "detections")
+    # Ensure we're using an absolute path
+    if not os.path.isabs(detection_dir):
+        detection_dir = os.path.abspath(detection_dir)
+    
     images = []
     
     if os.path.exists(detection_dir):
@@ -643,11 +651,13 @@ async def add_or_update_camera(
     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
     conn.close()
     
-    return templates.TemplateResponse("_camera_list.html", {
+    response = templates.TemplateResponse("_camera_list.html", {
         "request": request, 
         "cameras": [dict(camera) for camera in cameras],
         "message": message
     })
+    response.headers["HX-Trigger"] = "close-modal"
+    return response
 
 @app.delete("/api/cameras/{camera_id}", response_class=HTMLResponse)
 async def delete_camera_htmx(
@@ -741,11 +751,13 @@ async def add_or_update_contact(
     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
     conn.close()
     
-    return templates.TemplateResponse("_contact_list.html", {
+    response = templates.TemplateResponse("_contact_list.html", {
         "request": request, 
         "contacts": [dict(contact) for contact in contacts],
         "message": message
     })
+    response.headers["HX-Trigger"] = "close-modal"
+    return response
 
 @app.delete("/contacts/{contact_id}", response_class=HTMLResponse)
 async def delete_contact_htmx(

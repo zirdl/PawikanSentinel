@@ -14,3 +14,7 @@ secret_key.txt
 .gemini/
 GEMINI.md
 .env
+
+# Node.js
+node_modules/
+tailwindcss-cli
