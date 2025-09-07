@@ -4,6 +4,10 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
 from datetime import datetime
+import sys
+
+# Add parent directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv

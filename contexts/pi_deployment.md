@@ -34,8 +34,8 @@ This guide explains how to deploy the Pawikan Sentinel inference service on a Ra
 2. Run the deployment script:
    ```bash
    cd /home/pi/pawikan-sentinel
-   chmod +x deploy_pi.sh
-   ./deploy_pi.sh
+   chmod +x pi-inference/deploy_pi.sh
+   ./pi-inference/deploy_pi.sh
    ```
 
 3. Configure environment variables:
@@ -73,14 +73,14 @@ When a turtle is detected with high confidence (>80%), the system sends SMS noti
 Use the management script for common tasks:
 ```bash
 cd /home/pi/pawikan-sentinel
-./manage_pi.sh status    # Check service status
-./manage_pi.sh start     # Start service
-./manage_pi.sh stop      # Stop service
-./manage_pi.sh restart   # Restart service
-./manage_pi.sh logs      # View recent logs
-./manage_pi.sh follow    # Follow logs
-./manage_pi.sh resources # Check system resources
-./manage_pi.sh update    # Update software
+./pi-inference/manage_pi.sh status    # Check service status
+./pi-inference/manage_pi.sh start     # Start service
+./pi-inference/manage_pi.sh stop      # Stop service
+./pi-inference/manage_pi.sh restart   # Restart service
+./pi-inference/manage_pi.sh logs      # View recent logs
+./pi-inference/manage_pi.sh follow    # Follow logs
+./pi-inference/manage_pi.sh resources # Check system resources
+./pi-inference/manage_pi.sh update    # Update software
 ```
 
 ## Remote Monitoring

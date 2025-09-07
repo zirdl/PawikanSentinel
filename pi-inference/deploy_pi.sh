@@ -55,7 +55,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/pawikan-sentinel
-ExecStart=/home/pi/pawikan-sentinel/venv/bin/uvicorn inference_service_pi:app --host 0.0.0.0 --port 8001
+ExecStart=/home/pi/pawikan-sentinel/venv/bin/python -m pi-inference.inference_service_pi
 Restart=always
 RestartSec=10
 

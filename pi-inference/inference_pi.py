@@ -7,6 +7,10 @@ from typing import Dict, Optional, List
 import logging
 from dataclasses import dataclass
 import psutil
+import sys
+
+# Add parent directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
