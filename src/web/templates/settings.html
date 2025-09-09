@@ -11,7 +11,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Camera Management -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800">Cameras</h2>
@@ -21,7 +21,7 @@
                     </button>
                 </div>
             </div>
-            <div class="p-6" id="cameras-container">
+            <div class="p-6 overflow-hidden" id="cameras-container">
                 <div class="text-center py-8">
                     <div class="spinner" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Contact Management -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800">Contacts</h2>
@@ -41,7 +41,7 @@
                     </button>
                 </div>
             </div>
-            <div class="p-6" id="contacts-container">
+            <div class="p-6 overflow-hidden" id="contacts-container">
                 <div class="text-center py-8">
                     <div class="spinner" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -51,8 +51,10 @@
         </div>
     </div>
 
+<!-- Account Settings and System Configuration -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
     <!-- Account Settings -->
-    <div class="mt-8 bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">Account Settings</h2>
         </div>
@@ -132,6 +134,93 @@
                         </div>
                     </form>
                     <div id="username-message" class="mt-2 hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">System Configuration</h2>
+        </div>
+        <div class="p-6">
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Detection Settings</h3>
+                    <form id="detection-config-form" class="mt-4 space-y-4">
+                        <div>
+                            <label for="confidence_threshold" class="block text-sm font-medium text-gray-700 mb-2">
+                                Confidence Threshold: <span id="confidence_value">80</span>%
+                            </label>
+                            <input type="range" name="confidence_threshold" id="confidence_threshold" min="50" max="99" value="80" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-turtle-green">
+                            <p class="mt-1 text-sm text-gray-500">Minimum confidence level for detections to be considered valid.</p>
+                        </div>
+                        
+                        <div>
+                            <label for="frame_skip" class="block text-sm font-medium text-gray-700 mb-2">
+                                Frame Skip: <span id="frame_skip_value">20</span> frames
+                            </label>
+                            <input type="range" name="frame_skip" id="frame_skip" min="1" max="50" value="20" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-turtle-green">
+                            <p class="mt-1 text-sm text-gray-500">Number of frames to skip between inference runs (higher = better performance, lower = more responsive).</p>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900">Notification Settings</h3>
+                    <form id="notification-config-form" class="mt-4 space-y-4">
+                        <div>
+                            <label for="sms_cooldown" class="block text-sm font-medium text-gray-700 mb-2">
+                                SMS Cooldown: <span id="sms_cooldown_value">10</span> minutes
+                            </label>
+                            <input type="range" name="sms_cooldown" id="sms_cooldown" min="1" max="60" value="10" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-turtle-green">
+                            <p class="mt-1 text-sm text-gray-500">Minimum time between SMS notifications to prevent spam.</p>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <button id="save-config-btn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                        <i class="fas fa-save mr-1"></i> Save Configuration
+                    </button>
+                    <div id="config-message" class="mt-2 hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Section -->
+<div class="mt-8 bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800">System Backup</h2>
+    </div>
+    <div class="p-6">
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-lg font-medium text-gray-900">Create Backup</h3>
+                <p class="mt-2 text-sm text-gray-600">Create a backup of your database and configuration files.</p>
+                <button id="create-backup-btn"
+                        class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                    <i class="fas fa-download mr-1"></i> Create Backup
+                </button>
+                <div id="backup-message" class="mt-2 hidden"></div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-medium text-gray-900">Backup History</h3>
+                <p class="mt-2 text-sm text-gray-600">List of recent backups (stored in the backups directory).</p>
+                <div id="backup-history" class="mt-4">
+                    <div class="text-center py-4">
+                        <div class="spinner" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,5 +351,173 @@
     document.body.addEventListener('htmx:afterSwap', function(evt) {
         htmx.process(evt.detail.elt);
     });
+
+    // Configuration slider handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize slider values on page load
+        function initializeSlider(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            if (slider && valueDisplay) {
+                // Update display value
+                valueDisplay.textContent = slider.value;
+                
+                // Update slider background
+                updateSliderBackground(slider);
+                
+                // Add event listener for changes
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                    updateSliderBackground(this);
+                });
+            }
+        }
+
+        // Update slider background to show progress
+        function updateSliderBackground(slider) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const value = parseFloat(slider.value) || 0;
+            const percentage = ((value - min) / (max - min)) * 100;
+            
+            // Update CSS variable for gradient
+            slider.style.setProperty('--slider-value', percentage + '%');
+        }
+
+        // Initialize all sliders
+        initializeSlider('confidence_threshold', 'confidence_value');
+        initializeSlider('frame_skip', 'frame_skip_value');
+        initializeSlider('sms_cooldown', 'sms_cooldown_value');
+
+        // Save configuration button
+        const saveConfigBtn = document.getElementById('save-config-btn');
+        if (saveConfigBtn) {
+            saveConfigBtn.addEventListener('click', async function() {
+                const configMessage = document.getElementById('config-message');
+                
+                // Get current values
+                const confidenceThreshold = document.getElementById('confidence_threshold').value;
+                const frameSkip = document.getElementById('frame_skip').value;
+                const smsCooldown = document.getElementById('sms_cooldown').value;
+                
+                try {
+                    const response = await fetch('/api/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                        },
+                        body: JSON.stringify({
+                            confidence_threshold: confidenceThreshold,
+                            frame_skip: frameSkip,
+                            sms_cooldown: smsCooldown
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        configMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
+                        configMessage.textContent = result.message || 'Configuration saved successfully!';
+                        configMessage.classList.remove('hidden');
+                    } else {
+                        configMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                        configMessage.textContent = result.error || 'Failed to save configuration';
+                        configMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    configMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                    configMessage.textContent = 'An error occurred while saving configuration';
+                    configMessage.classList.remove('hidden');
+                }
+            });
+        }
+
+        // Create backup button
+        const createBackupBtn = document.getElementById('create-backup-btn');
+        if (createBackupBtn) {
+            createBackupBtn.addEventListener('click', async function() {
+                const backupMessage = document.getElementById('backup-message');
+                const backupBtn = this;
+                
+                // Disable button and show loading state
+                backupBtn.disabled = true;
+                const originalText = backupBtn.innerHTML;
+                backupBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Creating Backup...';
+                
+                try {
+                    const response = await fetch('/api/backup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        backupMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
+                        backupMessage.textContent = result.message || 'Backup created successfully!';
+                        backupMessage.classList.remove('hidden');
+                        
+                        // Refresh backup history
+                        loadBackupHistory();
+                    } else {
+                        backupMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                        backupMessage.textContent = result.error || 'Failed to create backup';
+                        backupMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    backupMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                    backupMessage.textContent = 'An error occurred while creating backup';
+                    backupMessage.classList.remove('hidden');
+                } finally {
+                    // Re-enable button and restore original text
+                    backupBtn.disabled = false;
+                    backupBtn.innerHTML = originalText;
+                }
+            });
+        }
+
+        // Load backup history
+        function loadBackupHistory() {
+            const backupHistory = document.getElementById('backup-history');
+            
+            fetch('/api/backup/history', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.backups && data.backups.length > 0) {
+                    let backupList = '<div class="space-y-2">';
+                    data.backups.forEach(backup => {
+                        backupList += `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <div class="font-medium text-gray-900">${backup.filename}</div>
+                                    <div class="text-sm text-gray-500">${backup.timestamp}</div>
+                                </div>
+                                <div class="text-sm text-gray-500">${backup.size}</div>
+                            </div>
+                        `;
+                    });
+                    backupList += '</div>';
+                    backupHistory.innerHTML = backupList;
+                } else {
+                    backupHistory.innerHTML = '<div class="text-center py-4 text-gray-500">No backups found</div>';
+                }
+            })
+            .catch(error => {
+                backupHistory.innerHTML = '<div class="text-center py-4 text-red-500">Error loading backup history</div>';
+            });
+        }
+
+        // Load backup history on page load
+        loadBackupHistory();
+    });
 </script>
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 {% endblock %}

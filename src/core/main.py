@@ -1,7 +1,7 @@
 import os
 import secrets
 from fastapi import FastAPI, HTTPException, Request, Depends, Form, Cookie, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -14,6 +14,10 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 import sqlite3
 import random
+import shutil
+import zipfile
+from pathlib import Path
+import glob
 
 # Rate limiting
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -143,19 +147,29 @@ def get_detection_stats():
     conn.close()
     return {"total": total, "today": today, "this_month": this_month}
 
-def get_detection_chart_data(period="month"):
+def get_detection_chart_data(period="month", month=None):
     """Get detection data for chart visualization"""
     conn = get_db_connection()
     
     if period == "month":
-        # Get daily counts for the current month
-        data = conn.execute("""
-            SELECT DATE(timestamp) as date, COUNT(*) as count 
-            FROM detections 
-            WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
-            GROUP BY DATE(timestamp)
-            ORDER BY date
-        """).fetchall()
+        if month:
+            # Get daily counts for a specific month
+            data = conn.execute("""
+                SELECT DATE(timestamp) as date, COUNT(*) as count 
+                FROM detections 
+                WHERE strftime('%Y-%m', timestamp) = ?
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            """, (month,)).fetchall()
+        else:
+            # Get daily counts for the current month
+            data = conn.execute("""
+                SELECT DATE(timestamp) as date, COUNT(*) as count 
+                FROM detections 
+                WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            """).fetchall()
     else:
         # Get monthly counts for all time
         data = conn.execute("""
@@ -326,8 +340,8 @@ async def get_detection_stats_api(username: str = Depends(get_current_user_from_
     return get_detection_stats()
 
 @app.get("/api/detections/chart")
-async def get_detection_chart_api(period: str = "month", username: str = Depends(get_current_user_from_cookie)):
-    return get_detection_chart_data(period)
+async def get_detection_chart_api(period: str = "month", month: str = None, username: str = Depends(get_current_user_from_cookie)):
+    return get_detection_chart_data(period, month)
 
 @app.get("/api/detections/recent")
 async def get_recent_detections_api(username: str = Depends(get_current_user_from_cookie)):
@@ -781,3 +795,181 @@ async def delete_contact_htmx(
         "contacts": [dict(contact) for contact in contacts],
         "message": "Contact deleted successfully!"
     })
+
+
+# Configuration API endpoints
+@app.get("/api/config")
+async def get_config(username: str = Depends(get_current_user_from_cookie)):
+    """Get current configuration values"""
+    config = {
+        "confidence_threshold": os.getenv("CONFIDENCE_THRESHOLD", "80"),
+        "frame_skip": os.getenv("FRAME_SKIP", "20"),
+        "sms_cooldown": os.getenv("SMS_NOTIFICATION_COOLDOWN", "10")
+    }
+    return config
+
+
+@app.post("/api/config")
+async def update_config(
+    request: Request,
+    username: str = Depends(get_current_user_from_cookie),
+    csrf_token: str = Depends(verify_csrf_token)
+):
+    """Update configuration values"""
+    try:
+        data = await request.json()
+        
+        # Get current config values with defaults
+        confidence_threshold = data.get("confidence_threshold", "80")
+        frame_skip = data.get("frame_skip", "20")
+        sms_cooldown = data.get("sms_cooldown", "10")
+        
+        # Update .env file
+        env_path = ".env"
+        if os.path.exists(env_path):
+            with open(env_path, "r") as file:
+                lines = file.readlines()
+            
+            # Update or add the configuration values
+            updated_lines = []
+            confidence_found = False
+            frame_skip_found = False
+            sms_cooldown_found = False
+            
+            for line in lines:
+                if line.startswith("CONFIDENCE_THRESHOLD="):
+                    updated_lines.append(f"CONFIDENCE_THRESHOLD={confidence_threshold}\n")
+                    confidence_found = True
+                elif line.startswith("FRAME_SKIP="):
+                    updated_lines.append(f"FRAME_SKIP={frame_skip}\n")
+                    frame_skip_found = True
+                elif line.startswith("SMS_NOTIFICATION_COOLDOWN="):
+                    updated_lines.append(f"SMS_NOTIFICATION_COOLDOWN={sms_cooldown}\n")
+                    sms_cooldown_found = True
+                else:
+                    updated_lines.append(line)
+            
+            # Add missing config values if not found
+            if not confidence_found:
+                updated_lines.append(f"CONFIDENCE_THRESHOLD={confidence_threshold}\n")
+            if not frame_skip_found:
+                updated_lines.append(f"FRAME_SKIP={frame_skip}\n")
+            if not sms_cooldown_found:
+                updated_lines.append(f"SMS_NOTIFICATION_COOLDOWN={sms_cooldown}\n")
+            
+            # Write updated config back to file
+            with open(env_path, "w") as file:
+                file.writelines(updated_lines)
+            
+            # Reload environment variables
+            load_dotenv(env_path, override=True)
+            
+            return JSONResponse({"message": "Configuration updated successfully!"})
+        else:
+            return JSONResponse({"error": "Configuration file not found"}, status_code=500)
+            
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to update configuration: {str(e)}"}, status_code=500)
+
+
+# Backup API endpoints
+@app.post("/api/backup")
+async def create_backup(
+    request: Request,
+    username: str = Depends(get_current_user_from_cookie),
+    csrf_token: str = Depends(verify_csrf_token)
+):
+    """Create a backup of the database and configuration files"""
+    try:
+        # Create backups directory if it doesn't exist
+        backups_dir = Path("backups")
+        backups_dir.mkdir(exist_ok=True)
+        
+        # Generate backup filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"pawikan_backup_{timestamp}.zip"
+        backup_path = backups_dir / backup_filename
+        
+        # Files to include in backup
+        files_to_backup = [
+            ".env",
+            "pawikan.db",
+            "README.md",
+            "requirements.txt",
+            "pyproject.toml"
+        ]
+        
+        # Create zip file
+        with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in files_to_backup:
+                if os.path.exists(file_path):
+                    zipf.write(file_path)
+            
+            # Add detections directory if it exists
+            if os.path.exists("detections"):
+                for root, dirs, files in os.walk("detections"):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arc_name = os.path.relpath(file_path, ".")
+                        zipf.write(file_path, arc_name)
+            
+            # Add any other important directories
+            important_dirs = ["deployments", "docs"]
+            for dir_name in important_dirs:
+                if os.path.exists(dir_name):
+                    for root, dirs, files in os.walk(dir_name):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            arc_name = os.path.relpath(file_path, ".")
+                            zipf.write(file_path, arc_name)
+        
+        return JSONResponse({
+            "message": f"Backup created successfully: {backup_filename}",
+            "filename": backup_filename
+        })
+        
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to create backup: {str(e)}"}, status_code=500)
+
+
+@app.get("/api/backup/history")
+async def get_backup_history(
+    request: Request,
+    username: str = Depends(get_current_user_from_cookie)
+):
+    """Get list of available backups"""
+    try:
+        backups_dir = Path("backups")
+        if not backups_dir.exists():
+            return JSONResponse({"backups": []})
+        
+        backup_files = list(backups_dir.glob("*.zip"))
+        backup_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        
+        backups = []
+        for backup_file in backup_files[:10]:  # Limit to 10 most recent backups
+            stat = backup_file.stat()
+            backups.append({
+                "filename": backup_file.name,
+                "timestamp": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                "size": format_file_size(stat.st_size)
+            })
+        
+        return JSONResponse({"backups": backups})
+        
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to retrieve backup history: {str(e)}"}, status_code=500)
+
+
+def format_file_size(size_bytes):
+    """Format file size in human readable format"""
+    if size_bytes == 0:
+        return "0 B"
+    
+    size_names = ["B", "KB", "MB", "GB"]
+    i = 0
+    while size_bytes >= 1024 and i < len(size_names) - 1:
+        size_bytes /= 1024.0
+        i += 1
+    
+    return f"{size_bytes:.1f} {size_names[i]}"

@@ -30,6 +30,7 @@ DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Cooldown in minutes
 
 # Pi-specific optimizations
 MAX_WORKERS = int(os.getenv("MAX_INFERENCE_WORKERS", "2"))  # Reduced for Pi
@@ -37,6 +38,7 @@ FRAME_SKIP = int(os.getenv("FRAME_SKIP", "10"))  # Process every 10th frame
 RESIZE_WIDTH = int(os.getenv("RESIZE_WIDTH", "320"))  # Lower resolution
 RESIZE_HEIGHT = int(os.getenv("RESIZE_HEIGHT", "240"))
 CPU_THRESHOLD = int(os.getenv("CPU_THRESHOLD", "80"))  # Max CPU usage percentage
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))  # Confidence threshold (80%)
 
 # Ensure directories exist
 os.makedirs(DETECTIONS_DIR, exist_ok=True)
@@ -69,19 +71,17 @@ class PiOptimizedWorker(threading.Thread):
             api_key=self.api_key
         )
         
-        # State management
-        self.running = False
-        self.paused = False
-        self.detection_buffer: List[DetectionResult] = []
-        
-        # Pi-specific optimizations
-        self.frame_count = 0
-        self.last_cpu_check = time.time()
-        
-        # Twilio client for SMS
+        # Initialize Twilio client
         self.twilio_client = None
         if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
             self.twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        
+        # Worker state
+        self.running = False
+        self.paused = False
+        self.frame_count = 0
+        self.detection_buffer = []
+        self.last_sms_time = {}  # Track last SMS time per contact
 
     def _check_system_resources(self) -> bool:
         """Check if system resources are within acceptable limits"""
@@ -103,7 +103,7 @@ class PiOptimizedWorker(threading.Thread):
         return True
 
     def _send_sms_notification(self, detection: DetectionResult):
-        """Send SMS notification for significant detections"""
+        """Send SMS notification for significant detections with cooldown"""
         if not self.twilio_client or not TWILIO_PHONE_NUMBER:
             return
             
@@ -115,16 +115,28 @@ class PiOptimizedWorker(threading.Thread):
             
             message_body = f"Pawikan Sentinel Alert: {detection.class_name} detected with {detection.confidence:.2f} confidence at {detection.timestamp}"
             
+            current_time = time.time()
+            
             for contact in contacts:
+                phone = contact["phone"]
+                
+                # Check cooldown period
+                last_sms = self.last_sms_time.get(phone, 0)
+                if current_time - last_sms < SMS_NOTIFICATION_COOLDOWN * 60:  # Convert minutes to seconds
+                    logger.info(f"SMS cooldown active for {phone}. Skipping notification.")
+                    continue
+                
                 try:
                     message = self.twilio_client.messages.create(
                         body=message_body,
                         from_=TWILIO_PHONE_NUMBER,
-                        to=contact["phone"]
+                        to=phone
                     )
-                    logger.info(f"SMS sent to {contact['phone']}: {message.sid}")
+                    logger.info(f"SMS sent to {phone}: {message.sid}")
+                    # Update last SMS time
+                    self.last_sms_time[phone] = current_time
                 except Exception as e:
-                    logger.error(f"Failed to send SMS to {contact['phone']}: {e}")
+                    logger.error(f"Failed to send SMS to {phone}: {e}")
                     
         except Exception as e:
             logger.error(f"Error sending SMS notifications: {e}")
@@ -230,7 +242,7 @@ class PiOptimizedWorker(threading.Thread):
                             self.detection_buffer.append(detection)
                             
                             # Send SMS notification for high-confidence detections
-                            if confidence > 0.8:  # 80% confidence threshold
+                            if confidence > CONFIDENCE_THRESHOLD:  # Configurable confidence threshold
                                 self._send_sms_notification(detection)
                             
                             # Flush buffer if it reaches small batch size
