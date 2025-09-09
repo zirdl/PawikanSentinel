@@ -41,6 +41,10 @@ TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
 
+# Detection configuration
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))  # Default 80% confidence threshold
+FRAME_SKIP = int(os.getenv("FRAME_SKIP", "5"))  # Default frame skip of 5
+
 # Ensure the detections directory exists
 os.makedirs(DETECTIONS_DIR, exist_ok=True)
 
@@ -108,7 +112,7 @@ class CircuitBreaker:
 
 class RTSPInferenceWorker(threading.Thread):
     def __init__(self, camera_id: int, rtsp_url: str, model_id: str, api_url: str, api_key: str, 
-                 frame_skip: int = 5, batch_size: int = 10, max_retries: int = 3):
+                 frame_skip: int = FRAME_SKIP, batch_size: int = 10, max_retries: int = 3):
         super().__init__(name=f"CameraWorker-{camera_id}")
         self.camera_id = camera_id
         self.rtsp_url = rtsp_url
@@ -241,18 +245,21 @@ class RTSPInferenceWorker(threading.Thread):
                 logger.debug("No contacts found for SMS notifications")
                 return
             
-            # Check cooldown - get last notification time for this camera
-            last_notification_key = f"last_sms_{self.camera_id}"
-            last_notification_time = getattr(self, last_notification_key, None)
+            # Track last SMS time per contact for cooldown
             current_time = time.time()
             
-            if last_notification_time and (current_time - last_notification_time) < (SMS_NOTIFICATION_COOLDOWN * 60):
-                logger.debug(f"SMS cooldown active for camera {self.camera_id}. Skipping notification.")
-                return
-            
-            # Send SMS to each contact
+            # Send SMS to each contact with cooldown check
             for contact in contacts:
                 phone_number = contact["phone"]
+                
+                # Check cooldown - get last notification time for this contact
+                last_notification_key = f"last_sms_{phone_number}"
+                last_notification_time = getattr(self, last_notification_key, None)
+                
+                if last_notification_time and (current_time - last_notification_time) < (SMS_NOTIFICATION_COOLDOWN * 60):
+                    logger.debug(f"SMS cooldown active for {phone_number}. Skipping notification.")
+                    continue
+                
                 try:
                     # Create message with detection details
                     confidence_percent = self.detection_buffer[-1].confidence * 100
@@ -264,11 +271,11 @@ class RTSPInferenceWorker(threading.Thread):
                         to=phone_number
                     )
                     logger.info(f"SMS sent to {phone_number}: {message.sid}")
+                    
+                    # Update last notification time for this contact
+                    setattr(self, last_notification_key, current_time)
                 except Exception as e:
                     logger.error(f"Failed to send SMS to {phone_number}: {e}")
-            
-            # Update last notification time
-            setattr(self, last_notification_key, current_time)
             
         except Exception as e:
             logger.error(f"Error sending SMS notifications: {e}", exc_info=True)
@@ -391,6 +398,11 @@ class RTSPInferenceWorker(threading.Thread):
                         class_name = pred["class"]
                         confidence = pred["confidence"]
                         
+                        # Check confidence threshold
+                        if confidence < CONFIDENCE_THRESHOLD:
+                            logger.debug(f"Camera {self.camera_id}: Detection below confidence threshold ({confidence:.2f} < {CONFIDENCE_THRESHOLD})")
+                            continue
+                        
                         # Save annotated frame
                         image_path = self._save_annotated_frame(resized, [pred], timestamp)
                         
@@ -408,9 +420,14 @@ class RTSPInferenceWorker(threading.Thread):
                             self.detection_buffer.append(detection)
                             self.stats["detections_made"] += 1
                             
-                            # Flush buffer if it reaches batch size
-                            if len(self.detection_buffer) >= self.batch_size:
+                            # Send SMS notification for high-confidence detections
+                            if confidence > CONFIDENCE_THRESHOLD:
+                                # Flush immediately for high-confidence detections
                                 self._flush_detections()
+                            else:
+                                # Flush buffer if it reaches batch size for low-confidence detections
+                                if len(self.detection_buffer) >= self.batch_size:
+                                    self._flush_detections()
                 
                 # Small delay to prevent overwhelming the system
                 time.sleep(0.1)

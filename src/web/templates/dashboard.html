@@ -56,10 +56,13 @@
             <div class="flex justify-between items-center">
                 <h2 class="text-xl font-semibold text-gray-800">Detection Trends</h2>
                 <div class="flex items-center space-x-2">
-                    <label for="chart-period" class="text-sm font-medium text-gray-700">View:</label>
-                    <select id="chart-period" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-turtle-green focus:border-turtle-green sm:text-sm rounded-md">
+                    <select id="chart-period" class="block w-32 pl-2 pr-8 py-1 text-sm border-gray-300 focus:outline-none focus:ring-turtle-green focus:border-turtle-green rounded-md">
                         <option value="month">This Month</option>
+                        <option value="specific-month">Specific Month</option>
                         <option value="all">All Time</option>
+                    </select>
+                    <select id="chart-month" class="block w-40 pl-2 pr-8 py-1 text-sm border-gray-300 focus:outline-none focus:ring-turtle-green focus:border-turtle-green rounded-md hidden">
+                        <!-- Month options will be populated by JavaScript -->
                     </select>
                 </div>
             </div>
@@ -141,14 +144,30 @@
     }
     
     // Load chart data
-    async function loadChartData(period = 'month') {
+    async function loadChartData(period = 'month', month = null) {
         try {
-            const response = await fetch(`/api/detections/chart?period=${period}`);
+            let url = `/api/detections/chart?period=${period}`;
+            if (month) {
+                url += `&month=${month}`;
+            }
+            
+            const response = await fetch(url);
             const data = await response.json();
             
             // Prepare chart data
-            const labels = data.map(item => period === 'month' ? item.date : item.month);
-            const values = data.map(item => item.count);
+            let labels, values, label;
+            if (period === 'month') {
+                if (month) {
+                    label = `Detections per day (${month})`;
+                } else {
+                    label = 'Detections per day (This Month)';
+                }
+                labels = data.map(item => item.date);
+            } else {
+                label = 'Detections per month';
+                labels = data.map(item => item.month);
+            }
+            values = data.map(item => item.count);
             
             // Create or update chart
             const ctx = document.getElementById('detections-chart').getContext('2d');
@@ -162,7 +181,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: period === 'month' ? 'Detections per day' : 'Detections per month',
+                        label: label,
                         data: values,
                         borderColor: 'rgb(74, 124, 89)',
                         backgroundColor: 'rgba(74, 124, 89, 0.1)',
@@ -342,8 +361,53 @@
         loadDetectionGallery();
         
         // Add event listener for period selector
-        document.getElementById('chart-period').addEventListener('change', function() {
-            loadChartData(this.value);
+        const periodSelector = document.getElementById('chart-period');
+        const monthSelector = document.getElementById('chart-month');
+        
+        // Populate month dropdown with last 12 months
+        function populateMonthDropdown() {
+            const today = new Date();
+            const months = [];
+            
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const monthString = `${year}-${month}`;
+                const monthName = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                months.push({ value: monthString, name: monthName });
+            }
+            
+            monthSelector.innerHTML = '';
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month.value;
+                option.textContent = month.name;
+                monthSelector.appendChild(option);
+            });
+        }
+        
+        // Initialize month dropdown
+        populateMonthDropdown();
+        
+        // Handle period change
+        periodSelector.addEventListener('change', function() {
+            const period = this.value;
+            
+            if (period === 'specific-month') {
+                monthSelector.classList.remove('hidden');
+                const selectedMonth = monthSelector.value;
+                loadChartData('month', selectedMonth);
+            } else {
+                monthSelector.classList.add('hidden');
+                loadChartData(period);
+            }
+        });
+        
+        // Handle month change
+        monthSelector.addEventListener('change', function() {
+            const selectedMonth = this.value;
+            loadChartData('month', selectedMonth);
         });
 
         // Zoom and pan functionality
@@ -365,7 +429,7 @@
 
         window.resetZoom = function() {
             scale = 1;
-            transform = { x: 0, y: 0 };
+            transform = { x: 0, y: 0 }
             updateImageTransform();
         }
 
@@ -376,7 +440,7 @@
         modalImage.addEventListener('mousedown', (e) => {
             if (scale > 1) {
                 isPanning = true;
-                start = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+                start = { x: e.clientX - transform.x, y: e.clientY - transform.y }
                 modalImage.style.cursor = 'grabbing';
             }
         });

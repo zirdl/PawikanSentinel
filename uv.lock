@@ -1170,25 +1170,6 @@ wheels = [
 ]
 
 [[package]]
-name = "inference-sdk"
-version = "0.45.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "backoff" },
-    { name = "dataclasses-json" },
-    { name = "numpy" },
-    { name = "opencv-python" },
-    { name = "pillow" },
-    { name = "py-cpuinfo" },
-    { name = "requests" },
-    { name = "supervision" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/d9/117502ae6923d0ecea297fb133ab5c665e04010bae22f66b6a134788c5b3/inference_sdk-0.45.1-py3-none-any.whl", hash = "sha256:de9ccd08afc31a74292c710572a56270287eaac1b05ffd8c6d8bbebfd9b61c2e", size = 43300, upload-time = "2025-04-02T12:55:34.293Z" },
-]
-
-[[package]]
 name = "iniconfig"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2501,7 +2482,6 @@ dependencies = [
     { name = "httpx" },
     { name = "inference" },
     { name = "inference-cli" },
-    { name = "inference-sdk" },
     { name = "itsdangerous" },
     { name = "jinja2" },
     { name = "numpy" },
@@ -2520,7 +2500,6 @@ requires-dist = [
     { name = "httpx" },
     { name = "inference", specifier = ">=0.45.1" },
     { name = "inference-cli", specifier = ">=0.45.1" },
-    { name = "inference-sdk" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
     { name = "jinja2" },
     { name = "numpy", specifier = "<2" },
