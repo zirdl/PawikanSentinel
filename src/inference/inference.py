@@ -42,7 +42,7 @@ TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
 
 # Detection configuration
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))  # Default 80% confidence threshold
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))/100.0  # Default 80% confidence threshold
 FRAME_SKIP = int(os.getenv("FRAME_SKIP", "5"))  # Default frame skip of 5
 
 # Ensure the detections directory exists

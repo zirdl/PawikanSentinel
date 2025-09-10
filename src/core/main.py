@@ -286,7 +286,7 @@ async def startup_event():
         )
         conn.commit()
         
-    # Add some sample detection data for testing
+    """ # Add some sample detection data for testing
     detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
     if detection_count == 0:
         # Add sample detections for the past 30 days
@@ -303,7 +303,7 @@ async def startup_event():
                     (camera_id, date, "pawikan", confidence)
                 )
         conn.commit()
-    conn.close()
+    conn.close() """
 
 # Routes
 @app.get("/", response_class=HTMLResponse)
