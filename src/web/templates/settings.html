@@ -384,10 +384,54 @@
             slider.style.setProperty('--slider-value', percentage + '%');
         }
 
-        // Initialize all sliders
+        // Fetch current configuration and update sliders
+        function loadCurrentConfig() {
+            fetch('/api/config', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(config => {
+                // Update confidence threshold slider
+                const confidenceSlider = document.getElementById('confidence_threshold');
+                const confidenceValue = document.getElementById('confidence_value');
+                if (confidenceSlider && confidenceValue) {
+                    confidenceSlider.value = config.confidence_threshold;
+                    confidenceValue.textContent = config.confidence_threshold;
+                    updateSliderBackground(confidenceSlider);
+                }
+                
+                // Update frame skip slider
+                const frameSkipSlider = document.getElementById('frame_skip');
+                const frameSkipValue = document.getElementById('frame_skip_value');
+                if (frameSkipSlider && frameSkipValue) {
+                    frameSkipSlider.value = config.frame_skip;
+                    frameSkipValue.textContent = config.frame_skip;
+                    updateSliderBackground(frameSkipSlider);
+                }
+                
+                // Update SMS cooldown slider
+                const smsCooldownSlider = document.getElementById('sms_cooldown');
+                const smsCooldownValue = document.getElementById('sms_cooldown_value');
+                if (smsCooldownSlider && smsCooldownValue) {
+                    smsCooldownSlider.value = config.sms_cooldown;
+                    smsCooldownValue.textContent = config.sms_cooldown;
+                    updateSliderBackground(smsCooldownSlider);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading configuration:', error);
+            });
+        }
+
+        // Initialize all sliders with default values first
         initializeSlider('confidence_threshold', 'confidence_value');
         initializeSlider('frame_skip', 'frame_skip_value');
         initializeSlider('sms_cooldown', 'sms_cooldown_value');
+        
+        // Then load current configuration from backend
+        loadCurrentConfig();
 
         // Save configuration button
         const saveConfigBtn = document.getElementById('save-config-btn');
