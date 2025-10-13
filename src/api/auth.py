@@ -69,26 +69,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/auth/register", response_model=User)
-@limiter.limit("3/hour")
-async def register_user(request: Request, user: UserCreate):
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (user.username,))
-    existing_user = c.fetchone()
-    if existing_user:
-        conn.close()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
 
-    hashed_password = get_password_hash(user.password)
-    c.execute("INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
-              (user.username, hashed_password, user.role))
-    conn.commit()
-    new_user_id = c.lastrowid
-    c.execute("SELECT id, username, hashed_password, role FROM users WHERE id = ?", (new_user_id,))
-    new_user = c.fetchone()
-    conn.close()
-    return User(**new_user)
 
 @router.post("/auth/change-password")
 async def change_password(old_password: str, new_password: str, current_user: User = Depends(get_current_user)):
@@ -131,8 +112,8 @@ async def change_username(new_username: str, current_password: str, current_user
         conn.close()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
-    # Check if new username is already taken
-    c.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (new_username,))
+    # Check if new username is already taken (should not happen with single account but let's be safe)
+    c.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE AND id != ?", (new_username, current_user.id))
     existing_user = c.fetchone()
     if existing_user:
         conn.close()

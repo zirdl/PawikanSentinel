@@ -39,15 +39,7 @@
                 </div>
             {% endif %}
 
-            {% if registered %}
-                <div class="p-3 rounded-lg font-medium flex items-center gap-2 mb-4 bg-green-100 border border-green-200 text-green-700" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    <div>
-                        <strong class="font-bold">Success!</strong>
-                        <span class="block sm:inline">Registration successful. Please log in.</span>
-                    </div>
-                </div>
-            {% endif %}
+            
 
             <form method="post" action="/login?next={{ next_url }}" class="space-y-6">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -71,9 +63,9 @@
                     <i class="fas fa-sign-in-alt mr-2"></i> Login
                 </button>
             </form>
+            <!-- Only admin account is available -->
             <p class="mt-8 text-center text-sm text-gray-600">
-                Don't have an account?
-                <a href="/register" class="font-medium text-turtle-green hover:text-turtle-dark-green transition duration-300 ease-in-out">Register here</a>
+                Only the admin account is available for login.
             </p>
         </div>
     </div>

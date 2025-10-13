@@ -275,16 +275,22 @@ async def get_current_user_for_pages(access_token: str = Cookie(None)):
 async def startup_event():
     create_tables()
     
-    # Create default admin user if it doesn't exist
+    # Ensure only the admin user exists - remove any non-admin users
     conn = get_db_connection()
+    # Check if admin user exists
     user = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
     if not user:
-        hashed_password = get_password_hash("admin123")
+        # Create default admin user if it doesn't exist
+        hashed_password = get_password_hash("admin")
         conn.execute(
             "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
             ("admin", hashed_password, "admin")
         )
         conn.commit()
+    # Remove any non-admin users to enforce single-account policy
+    conn.execute("DELETE FROM users WHERE username != ?", ("admin",))
+    conn.commit()
+    conn.close()
         
     """ # Add some sample detection data for testing
     detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
@@ -446,69 +452,8 @@ async def login_user(request: Request):
     )
     return response
 
-@app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
-    csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("register.html", {
-        "request": request, 
-        "csrf_token": csrf_token
-    })
-
-@app.post("/register")
-@limiter.limit("3/hour")
-async def register_user(request: Request):
-    form = await request.form()
-    username = form.get("username")
-    password = form.get("password")
-    confirm_password = form.get("confirm_password")
-    csrf_token = form.get("csrf_token")
-    
-    # Verify CSRF token
-    try:
-        await verify_csrf_token(request)
-    except HTTPException:
-        return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": "Invalid CSRF token", 
-            "csrf_token": generate_csrf_token(request)
-        })
-    
-    # Validate input
-    if not username or not password:
-        return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": "Username and password are required", 
-            "csrf_token": generate_csrf_token(request)
-        })
-    
-    if password != confirm_password:
-        return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": "Passwords do not match", 
-            "csrf_token": generate_csrf_token(request)
-        })
-    
-    # Check if user already exists
-    conn = get_db_connection()
-    existing_user = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
-    if existing_user:
-        conn.close()
-        return templates.TemplateResponse("register.html", {
-            "request": request, 
-            "error": "Username already registered", 
-            "csrf_token": generate_csrf_token(request)
-        })
-    
-    # Create new user
-    hashed_password = get_password_hash(password)
-    conn.execute(
-        "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
-        (username, hashed_password, "user")
-    )
-    conn.commit()
-    conn.close()
-    
-    return RedirectResponse(url="/login?registered=true", status_code=302)
+# REMOVED: Registration routes to prevent creation of new accounts
+# Only the admin account should exist
 
 @app.post("/change-password")
 async def change_password(request: Request, username: str = Depends(get_current_user_from_cookie)):
@@ -560,7 +505,7 @@ async def change_username(request: Request, current_username: str = Depends(get_
         conn.close()
         return JSONResponse({"error": "Username must be between 3 and 30 characters"}, status_code=400)
     
-    # Check if username is already taken
+    # Check if username is already taken (should not happen with single account but let's be safe)
     existing_user = conn.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user["id"])).fetchone()
     if existing_user:
         conn.close()
