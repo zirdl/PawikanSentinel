@@ -58,8 +58,6 @@ def create_tables():
 
     # Indexes
     c.execute("CREATE INDEX IF NOT EXISTS idx_detections_timestamp ON detections (timestamp)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
-
     conn.commit()
     conn.close()
 
