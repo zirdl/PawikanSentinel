@@ -184,6 +184,10 @@
                 </div>
                 
                 <div class="border-t border-gray-200 pt-6">
+                    <button id="reset-config-btn"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gradient-to-r from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 mr-2">
+                        <i class="fas fa-undo mr-1"></i> Reset to Default
+                    </button>
                     <button id="save-config-btn"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
                         <i class="fas fa-save mr-1"></i> Save Configuration
@@ -377,6 +381,23 @@
 
     // Configuration slider handlers
     document.addEventListener('DOMContentLoaded', function() {
+        // Store default values for reset functionality
+        const defaultValues = {
+            confidence_threshold: 50,  // 50% is the optimal default
+            frame_skip: 20,           // 20 frames is the optimal default
+            sms_cooldown: 10          // 10 minutes is the optimal default
+        };
+        
+        // Store loaded values to know if current values are saved or unsaved
+        let savedConfig = {
+            confidence_threshold: null,
+            frame_skip: null,
+            sms_cooldown: null
+        };
+        
+        // Track if values have been modified since load/since last save
+        let hasUnsavedChanges = false;
+
         // Initialize slider values on page load
         function initializeSlider(sliderId, valueId) {
             const slider = document.getElementById(sliderId);
@@ -388,10 +409,15 @@
                 // Update slider background
                 updateSliderBackground(slider);
                 
+                // Set initial color based on whether it differs from default
+                updateSliderColor(slider);
+                
                 // Add event listener for changes
                 slider.addEventListener('input', function() {
                     valueDisplay.textContent = this.value;
                     updateSliderBackground(this);
+                    hasUnsavedChanges = true; // Mark that there are unsaved changes
+                    updateSliderColor(this); // Change color when modified
                 });
             }
         }
@@ -405,6 +431,39 @@
             
             // Update CSS variable for gradient
             slider.style.setProperty('--slider-value', percentage + '%');
+        }
+
+        // Update slider color based on whether it differs from saved value
+        function updateSliderColor(slider) {
+            const sliderId = slider.id;
+            const currentValue = parseInt(slider.value);
+            
+            // If savedConfig values are null (not loaded yet), compare with defaults initially
+            // but after load, compare with the saved values
+            if (savedConfig[sliderId] === null) {
+                // If saved config hasn't been loaded yet, use default comparison for initial state
+                const defaultValue = defaultValues[sliderId];
+                if (currentValue !== defaultValue) {
+                    // Changed from default - use different color (red)
+                    slider.classList.add('slider-modified');
+                    slider.classList.remove('slider-default');
+                } else {
+                    // At default - use regular color (green)
+                    slider.classList.remove('slider-modified');
+                    slider.classList.add('slider-default');
+                }
+            } else {
+                // Compare with the saved configuration value
+                if (currentValue !== savedConfig[sliderId] || hasUnsavedChanges) {
+                    // Changed from saved value or has unsaved changes - use different color (red)
+                    slider.classList.add('slider-modified');
+                    slider.classList.remove('slider-default');
+                } else {
+                    // Matches saved value - use regular color (green)
+                    slider.classList.remove('slider-modified');
+                    slider.classList.add('slider-default');
+                }
+            }
         }
 
         // Fetch current configuration and update sliders
@@ -422,7 +481,10 @@
                 if (confidenceSlider && confidenceValue) {
                     confidenceSlider.value = config.confidence_threshold;
                     confidenceValue.textContent = config.confidence_threshold;
+                    // Store the loaded value as the "saved" value
+                    savedConfig.confidence_threshold = parseInt(config.confidence_threshold);
                     updateSliderBackground(confidenceSlider);
+                    updateSliderColor(confidenceSlider);
                 }
                 
                 // Update frame skip slider
@@ -431,7 +493,10 @@
                 if (frameSkipSlider && frameSkipValue) {
                     frameSkipSlider.value = config.frame_skip;
                     frameSkipValue.textContent = config.frame_skip;
+                    // Store the loaded value as the "saved" value
+                    savedConfig.frame_skip = parseInt(config.frame_skip);
                     updateSliderBackground(frameSkipSlider);
+                    updateSliderColor(frameSkipSlider);
                 }
                 
                 // Update SMS cooldown slider
@@ -440,8 +505,14 @@
                 if (smsCooldownSlider && smsCooldownValue) {
                     smsCooldownSlider.value = config.sms_cooldown;
                     smsCooldownValue.textContent = config.sms_cooldown;
+                    // Store the loaded value as the "saved" value
+                    savedConfig.sms_cooldown = parseInt(config.sms_cooldown);
                     updateSliderBackground(smsCooldownSlider);
+                    updateSliderColor(smsCooldownSlider);
                 }
+                
+                // Reset the unsaved changes flag since we just loaded saved values
+                hasUnsavedChanges = false;
             })
             .catch(error => {
                 console.error('Error loading configuration:', error);
@@ -487,6 +558,19 @@
                         configMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
                         configMessage.textContent = result.message || 'Configuration saved successfully!';
                         configMessage.classList.remove('hidden');
+                        
+                        // Store the current values as the new "saved" values
+                        savedConfig.confidence_threshold = parseInt(confidenceThreshold);
+                        savedConfig.frame_skip = parseInt(frameSkip);
+                        savedConfig.sms_cooldown = parseInt(smsCooldown);
+                        
+                        // Reset the unsaved changes flag
+                        hasUnsavedChanges = false;
+                        
+                        // Update slider colors to reflect that values are now saved
+                        updateSliderColor(document.getElementById('confidence_threshold'));
+                        updateSliderColor(document.getElementById('frame_skip'));
+                        updateSliderColor(document.getElementById('sms_cooldown'));
                     } else {
                         configMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
                         configMessage.textContent = result.error || 'Failed to save configuration';
@@ -497,6 +581,51 @@
                     configMessage.textContent = 'An error occurred while saving configuration';
                     configMessage.classList.remove('hidden');
                 }
+            });
+        }
+
+        // Reset to default configuration button
+        const resetConfigBtn = document.getElementById('reset-config-btn');
+        if (resetConfigBtn) {
+            resetConfigBtn.addEventListener('click', function() {
+                // Reset sliders to default values
+                document.getElementById('confidence_threshold').value = defaultValues.confidence_threshold;
+                document.getElementById('frame_skip').value = defaultValues.frame_skip;
+                document.getElementById('sms_cooldown').value = defaultValues.sms_cooldown;
+                
+                // Update the displayed values
+                document.getElementById('confidence_value').textContent = defaultValues.confidence_threshold;
+                document.getElementById('frame_skip_value').textContent = defaultValues.frame_skip;
+                document.getElementById('sms_cooldown_value').textContent = defaultValues.sms_cooldown;
+                
+                // Update slider backgrounds
+                updateSliderBackground(document.getElementById('confidence_threshold'));
+                updateSliderBackground(document.getElementById('frame_skip'));
+                updateSliderBackground(document.getElementById('sms_cooldown'));
+                
+                // Update saved config to the default values since we just reset
+                savedConfig.confidence_threshold = defaultValues.confidence_threshold;
+                savedConfig.frame_skip = defaultValues.frame_skip;
+                savedConfig.sms_cooldown = defaultValues.sms_cooldown;
+                
+                // Reset the unsaved changes flag since values are now "saved" (reset to defaults)
+                hasUnsavedChanges = false;
+                
+                // Update slider colors
+                updateSliderColor(document.getElementById('confidence_threshold'));
+                updateSliderColor(document.getElementById('frame_skip'));
+                updateSliderColor(document.getElementById('sms_cooldown'));
+                
+                // Show confirmation message
+                const configMessage = document.getElementById('config-message');
+                configMessage.className = 'mt-2 p-2 bg-blue-100 text-blue-700 rounded text-sm';
+                configMessage.textContent = 'Configuration reset to default values!';
+                configMessage.classList.remove('hidden');
+                
+                // Hide message after 3 seconds
+                setTimeout(() => {
+                    configMessage.classList.add('hidden');
+                }, 3000);
             });
         }
 
@@ -641,6 +770,92 @@
             });
         }
     });
+    
+    /* Add custom CSS for slider styling */
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* Custom styling for slider when modified */
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type="range"].slider-modified::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background: #ef4444 !important; /* red-500 */
+            border-color: #dc2626 !important; /* red-600 */
+            border: 2px solid !important;
+            height: 20px !important;
+            width: 20px !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+            margin-top: -6px !important; /* Center the thumb on the track */
+        }
+        
+        input[type="range"].slider-modified::-moz-range-thumb {
+            background: #ef4444 !important; /* red-500 */
+            border-color: #dc2626 !important; /* red-600 */
+            border: 2px solid !important;
+            height: 20px !important;
+            width: 20px !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+        }
+        
+        input[type="range"].slider-default::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background: #15803d !important; /* green-600 */
+            border-color: #16a34a !important; /* green-500 */
+            border: 2px solid !important;
+            height: 20px !important;
+            width: 20px !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+            margin-top: -6px !important; /* Center the thumb on the track */
+        }
+        
+        input[type="range"].slider-default::-moz-range-thumb {
+            background: #15803d !important; /* green-600 */
+            border-color: #16a34a !important; /* green-500 */
+            border: 2px solid !important;
+            height: 20px !important;
+            width: 20px !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+        }
+        
+        /* Optional: Change track color as well */
+        input[type="range"].slider-modified::-webkit-slider-runnable-track {
+            background: #fee2e2 !important; /* red-100 */
+            border-color: #fecaca !important; /* red-200 */
+            border-radius: 5px !important;
+            height: 8px !important;
+        }
+        
+        input[type="range"].slider-modified::-moz-range-track {
+            background: #fee2e2 !important; /* red-100 */
+            border-color: #fecaca !important; /* red-200 */
+            border-radius: 5px !important;
+            height: 8px !important;
+        }
+        
+        input[type="range"].slider-default::-webkit-slider-runnable-track {
+            background: #bbf7d0 !important; /* green-200 */
+            border-color: #86efac !important; /* green-300 */
+            border-radius: 5px !important;
+            height: 8px !important;
+        }
+        
+        input[type="range"].slider-default::-moz-range-track {
+            background: #bbf7d0 !important; /* green-200 */
+            border-color: #86efac !important; /* green-300 */
+            border-radius: 5px !important;
+            height: 8px !important;
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 {% endblock %}
