@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+<div id="toast-container" class="fixed top-0 right-0 p-4 z-50"></div>
+
 {% block title %}Dashboard - Pawikan Sentinel{% endblock %}
 
 {% block content %}
@@ -109,7 +111,7 @@
                 <h2 class="text-xl font-semibold text-gray-800">Detection Gallery</h2>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="detection-gallery">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4" id="detection-gallery">
                     <div class="text-center py-8">
                         <div class="spinner" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -140,6 +142,7 @@
             document.getElementById('month-detections').textContent = stats.this_month;
         } catch (error) {
             console.error('Error loading detection stats:', error);
+            // Optional: Show error indicator in UI
         }
     }
     
@@ -173,38 +176,47 @@
             const ctx = document.getElementById('detections-chart').getContext('2d');
             
             if (detectionsChart) {
-                detectionsChart.destroy();
-            }
-            
-            detectionsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: label,
-                        data: values,
-                        borderColor: 'rgb(74, 124, 89)',
-                        backgroundColor: 'rgba(74, 124, 89, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
+                // Update existing chart instead of destroying and recreating to prevent blinking
+                detectionsChart.data.labels = labels;
+                detectionsChart.data.datasets[0].data = values;
+                detectionsChart.data.datasets[0].label = label;
+                detectionsChart.update('active'); // Use 'active' animation for smooth update
+            } else {
+                // Create new chart if it doesn't exist
+                detectionsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: values,
+                            borderColor: 'rgb(74, 124, 89)',
+                            backgroundColor: 'rgba(74, 124, 89, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 300, // Animation duration in ms
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         } catch (error) {
             console.error('Error loading chart data:', error);
+            // Optional: Show error indicator in UI
         }
     }
     
@@ -228,7 +240,8 @@
                 return;
             }
             
-            tbody.innerHTML = detections.map(detection => `
+            // Create new content without showing loading indicator to reduce flicker
+            const newContent = detections.map(detection => `
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         ${new Date(detection.timestamp).toLocaleString()}
@@ -243,15 +256,24 @@
                     </td>
                 </tr>
             `).join('');
+            
+            // Only update if content has actually changed to prevent unnecessary flicker
+            if (tbody.innerHTML.trim() !== newContent.trim()) {
+                tbody.innerHTML = newContent;
+            }
         } catch (error) {
             console.error('Error loading recent detections:', error);
-            document.getElementById('recent-detections-body').innerHTML = `
+            const tbody = document.getElementById('recent-detections-body');
+            const errorContent = `
                 <tr>
                     <td colspan="3" class="px-6 py-4 text-center text-red-500">
                         Error loading detections
                     </td>
                 </tr>
             `;
+            if (tbody.innerHTML.trim() !== errorContent.trim()) {
+                tbody.innerHTML = errorContent;
+            }
         }
     }
     
@@ -259,45 +281,76 @@
     async function loadDetectionGallery() {
         try {
             const response = await fetch('/api/detections/gallery');
-            galleryImages = await response.json();
+            const newGalleryImages = await response.json();
             
             const gallery = document.getElementById('detection-gallery');
-            gallery.innerHTML = ''; // Clear existing content
             
-            if (galleryImages.length === 0) {
-                gallery.innerHTML = `
+            if (newGalleryImages.length === 0) {
+                const noImagesContent = `
                     <div class="text-center py-8 col-span-full">
                         <i class="fas fa-images mx-auto text-4xl text-gray-300 mb-2"></i>
                         <p class="mt-2">No detection images found</p>
                     </div>
                 `;
+                if (gallery.innerHTML.trim() !== noImagesContent.trim()) {
+                    gallery.innerHTML = noImagesContent;
+                }
+                galleryImages = newGalleryImages;
                 return;
             }
             
-            galleryImages.forEach((image, index) => {
-                const galleryItem = document.createElement('div');
-                galleryItem.className = 'gallery-item overflow-hidden rounded-lg';
-                galleryItem.onclick = () => openImageModal(index);
-
-                const img = document.createElement('img');
-                img.src = image.path;
-                img.alt = 'Detection image';
-                img.loading = 'lazy';
-                img.className = 'w-full h-full object-cover rounded-lg';
-                img.onerror = function() {
-                    galleryItem.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg"><i class="fas fa-image text-2xl"></i></div>';
-                };
-
-                galleryItem.appendChild(img);
-                gallery.appendChild(galleryItem);
-            });
+            // Compare with existing images to minimize DOM changes
+            const hasChanges = JSON.stringify(galleryImages) !== JSON.stringify(newGalleryImages);
+            
+            if (hasChanges) {
+                galleryImages = newGalleryImages;
+                
+                // Update gallery content efficiently
+                const neededItems = Math.min(galleryImages.length, 24);
+                
+                // Ensure we have enough elements
+                while (gallery.children.length < neededItems) {
+                    const galleryItem = document.createElement('div');
+                    galleryItem.className = 'gallery-item overflow-hidden rounded-lg';
+                    
+                    const img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.className = 'w-full h-full object-cover rounded-lg';
+                    img.onerror = function() {
+                        this.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg"><i class="fas fa-image text-2xl"></i></div>';
+                    };
+                    
+                    galleryItem.appendChild(img);
+                    gallery.appendChild(galleryItem);
+                }
+                
+                // Update existing elements with new image data
+                for (let i = 0; i < neededItems; i++) {
+                    const img = gallery.children[i].querySelector('img');
+                    if (img && img.src !== galleryImages[i].path) {
+                        // Update image source if different to prevent unnecessary reloads
+                        img.src = galleryImages[i].path;
+                    }
+                    // Update onclick handler with correct index
+                    gallery.children[i].onclick = () => openImageModal(i);
+                }
+                
+                // Remove extra elements if we have fewer images than before
+                while (gallery.children.length > neededItems) {
+                    gallery.removeChild(gallery.lastChild);
+                }
+            }
         } catch (error) {
             console.error('Error loading detection gallery:', error);
-            document.getElementById('detection-gallery').innerHTML = `
+            const gallery = document.getElementById('detection-gallery');
+            const errorContent = `
                 <div class="text-center py-8 col-span-full text-red-500">
                     Error loading detection images
                 </div>
             `;
+            if (gallery.innerHTML.trim() !== errorContent.trim()) {
+                gallery.innerHTML = errorContent;
+            }
         }
     }
     
@@ -484,6 +537,108 @@
                     showNextImage();
                 }
             }
+        });
+        
+        // Set up periodic AJAX polling for real-time updates (as an alternative to WebSockets)
+        let pollingInterval = null;
+        let pollInterval = 5000; // Default 5 seconds
+        let consecutiveErrors = 0;
+        const maxErrorInterval = 60000; // Max 60 seconds on errors
+
+        function startPolling() {
+            if (pollingInterval) {
+                // Clear existing interval if present
+                clearInterval(pollingInterval);
+            }
+            
+            // Initial load
+            loadDetectionStats();
+            loadChartData('month');
+            loadRecentDetections();
+            loadDetectionGallery();
+            
+            // Set up polling with current interval
+            pollingInterval = setInterval(pollForUpdates, pollInterval);
+            
+            console.log('Started polling for real-time updates with interval:', pollInterval);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                console.log('Stopped polling for real-time updates');
+            }
+        }
+
+        function pollForUpdates() {
+            console.log('Polling for updates...');
+            
+            // Perform all API calls in parallel
+            Promise.allSettled([
+                loadDetectionStats(),
+                loadChartData('month'),
+                loadRecentDetections(),
+                loadDetectionGallery()
+            ]).then(results => {
+                // Check if any promises were rejected
+                const rejected = results.filter(result => result.status === 'rejected');
+                
+                if (rejected.length > 0) {
+                    consecutiveErrors++;
+                    console.warn(`Polling error: ${rejected.length} out of ${results.length} requests failed`);
+                    
+                    // Exponential backoff on errors, up to max interval
+                    pollInterval = Math.min(pollInterval * 2, maxErrorInterval);
+                    console.log(`Increased polling interval to ${pollInterval}ms due to errors`);
+                    
+                    // Restart polling with new interval
+                    stopPolling();
+                    startPolling();
+                } else {
+                    // Reset error counter on success
+                    consecutiveErrors = 0;
+                    
+                    // If interval was increased due to errors, gradually return to normal
+                    if (pollInterval > 5000) {
+                        pollInterval = 5000;
+                        console.log('Reset polling interval to 5000ms after successful requests');
+                        
+                        // Restart polling with normal interval
+                        stopPolling();
+                        startPolling();
+                    }
+                }
+            });
+        }
+
+        // Function to adjust polling based on page visibility
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                // Pause polling when tab is not active (reduce resource usage)
+                console.log('Tab is hidden, reducing polling frequency');
+                stopPolling();
+                // Use a longer interval when page is hidden
+                pollInterval = 30000; // 30 seconds when tab is hidden
+                pollingInterval = setInterval(pollForUpdates, pollInterval);
+            } else {
+                // Resume normal polling when tab becomes active
+                console.log('Tab is visible, resuming normal polling');
+                clearInterval(pollingInterval);
+                pollInterval = 5000; // 5 seconds when tab is visible
+                startPolling();
+            }
+        }
+
+        // Start the polling when the page loads
+        startPolling();
+
+        // Add visibility change listener to reduce polling when tab is not active
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Optional: Stop polling when the user navigates away
+        window.addEventListener('beforeunload', function() {
+            stopPolling();
         });
     });
 </script>
