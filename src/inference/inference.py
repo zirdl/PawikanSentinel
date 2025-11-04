@@ -17,6 +17,8 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import functools
 
+# Import WebSocket manager for real-time updates from dedicated module (will be imported locally when needed)
+
 # Twilio for SMS notifications
 try:
     from twilio.rest import Client
@@ -204,12 +206,51 @@ class RTSPInferenceWorker(threading.Thread):
                 for d in self.detection_buffer
             ]
             
-            c.executemany(
-                "INSERT INTO detections (camera_id, timestamp, class, confidence, image_path) VALUES (?, ?, ?, ?, ?)",
-                db_records
-            )
+            # Get the last detection ID before insertion to identify new records
+            c.execute("SELECT MAX(id) FROM detections WHERE camera_id = ?", (self.camera_id,))
+            last_id_before = c.fetchone()[0] or 0
+            
+            # Insert each detection individually to get proper IDs
+            for detection in self.detection_buffer:
+                c.execute("INSERT INTO detections (camera_id, timestamp, class, confidence, image_path) VALUES (?, ?, ?, ?, ?)",
+                          (detection.camera_id, detection.timestamp, detection.class_name, detection.confidence, detection.image_path))
+            
             conn.commit()
             logger.info(f"Camera {self.camera_id}: Flushed {len(self.detection_buffer)} detections to DB.")
+            
+            # Get camera name for each detection to broadcast in WebSocket
+            c.execute("SELECT name FROM cameras WHERE id = ?", (self.camera_id,))
+            camera_result = c.fetchone()
+            camera_name = camera_result["name"] if camera_result else f"Camera {self.camera_id}"
+            
+            # Get the newly inserted detections by ID range
+            c.execute("""
+                SELECT id, camera_id, timestamp, class, confidence, image_path 
+                FROM detections 
+                WHERE id > ? AND camera_id = ?
+                ORDER BY id
+            """, (last_id_before, self.camera_id))
+            
+            new_detections = c.fetchall()
+            
+            # Log details for debugging
+            logger.info(f"Camera {self.camera_id}: About to broadcast {len(new_detections)} detections.")
+            
+            # Broadcast WebSocket updates for each detection
+            for detection_row in new_detections:
+                detection_data = dict(detection_row)
+                detection_data['camera_name'] = camera_name  # Add camera_name to match expected format
+                
+                # Put the detection data into the queue for the main event loop to broadcast
+                try:
+                    # Import from the dedicated websocket manager module to avoid circular imports
+                    from ..core.websocket_manager import detection_broadcast_queue
+                    detection_broadcast_queue.put(detection_data, timeout=1.0)
+                    # Removed verbose logging to reduce debug messages
+                except Exception as ws_error:
+                    logger.error(f"Camera {self.camera_id}: Error queuing WebSocket broadcast: {ws_error}")
+                    import traceback
+                    logger.error(f"Camera {self.camera_id}: Traceback: {traceback.format_exc()}")
             
             # Send SMS notifications for new detections if Twilio is configured
             if self.twilio_client and TWILIO_PHONE_NUMBER:

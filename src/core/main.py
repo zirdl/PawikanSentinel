@@ -1,10 +1,14 @@
 import os
 import secrets
+import logging
 from fastapi import FastAPI, HTTPException, Request, Depends, Form, Cookie, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import WebSocket
+from fastapi import WebSocket
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import httpx
 from starlette.middleware.sessions import SessionMiddleware
@@ -18,6 +22,17 @@ import shutil
 import zipfile
 from pathlib import Path
 import glob
+import asyncio
+import threading
+
+# --- Logging Setup ---
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+# --- End Logging Setup ---
+
+# Global variable to store the main event loop when available
+main_event_loop = None
 
 # Rate limiting
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -44,6 +59,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 
+# Global variable to store the background task
+background_task = None
+
+# Create FastAPI app without lifespan for now to fix session issues
+# We'll start the broadcast thread separately
+
 # Create FastAPI app
 app = FastAPI(title="Pawikan Sentinel", version="1.0.0")
 app.state.limiter = limiter
@@ -55,6 +76,42 @@ app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=180
 # Create serializer for CSRF tokens
 serializer = URLSafeTimedSerializer(CSRF_SECRET_KEY)
 
+# Global variable to store the broadcast thread
+broadcast_thread = None
+
+
+
+import asyncio
+import queue
+import threading
+
+# Thread-safe queue to receive detection broadcasts from inference threads  
+detection_broadcast_queue = queue.Queue()
+
+# Asyncio-compatible queue for the background task
+async_detection_queue = asyncio.Queue()
+
+# Define the detections directory
+detections_dir = os.getenv("DETECTIONS_DIR", "detections")
+# Ensure we're using an absolute path
+if not os.path.isabs(detections_dir):
+    detections_dir = os.path.abspath(detections_dir)
+
+app.mount("/detections", StaticFiles(directory=detections_dir), name="detections")
+app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
+templates = Jinja2Templates(directory="src/web/templates")
+
+# Import and initialize WebSocket manager after templates are created
+from . import websocket_manager
+from .websocket_manager import ConnectionManager
+
+# Set the templates in the manager instance
+manager = ConnectionManager(templates=templates)
+# Update the global manager in the websocket_manager module
+websocket_manager.manager = manager
+
+
+
 # Include API routers
 from src.api import auth, cameras, contacts, detections, analytics
 
@@ -64,14 +121,7 @@ app.include_router(contacts.router)
 app.include_router(detections.router)
 app.include_router(analytics.router)
 
-# Mount static files and templates
-app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
-# Use absolute path for detections directory
-detections_dir = os.getenv("DETECTIONS_DIR", "detections")
-if not os.path.isabs(detections_dir):
-    detections_dir = os.path.abspath(detections_dir)
-app.mount("/detections", StaticFiles(directory=detections_dir), name="detections")
-templates = Jinja2Templates(directory="src/web/templates")
+manager = ConnectionManager(templates)
 
 # Database helper
 def get_db_connection():
@@ -273,6 +323,11 @@ async def get_current_user_for_pages(access_token: str = Cookie(None)):
 # Startup event to create tables
 @app.on_event("startup")
 async def startup_event():
+    # Store the main event loop
+    global main_event_loop
+    main_event_loop = asyncio.get_running_loop()
+    print(f"Main event loop stored in startup: {main_event_loop}, running: {main_event_loop.is_running()}")
+    
     create_tables()
     
     # Ensure only the admin user exists - remove any non-admin users
@@ -292,26 +347,107 @@ async def startup_event():
     conn.commit()
     conn.close()
         
-    """ # Add some sample detection data for testing
-    detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
-    if detection_count == 0:
+    # """ # Add some sample detection data for testing
+    # detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
+    # if detection_count == 0:
         # Add sample detections for the past 30 days
-        from datetime import datetime, timedelta
+        # from datetime import datetime, timedelta
         
-        for i in range(30):
-            date = datetime.now() - timedelta(days=i)
+        # for i in range(30):
+            # date = datetime.now() - timedelta(days=i)
             # Add random number of detections per day (0-10)
-            for j in range(random.randint(0, 10)):
-                camera_id = random.randint(1, 3)  # Assuming we have up to 3 cameras
-                confidence = round(random.uniform(0.7, 0.99), 2)
-                conn.execute(
-                    "INSERT INTO detections (camera_id, timestamp, class, confidence) VALUES (?, ?, ?, ?)",
-                    (camera_id, date, "pawikan", confidence)
-                )
-        conn.commit()
-    conn.close() """
+            # for j in range(random.randint(0, 10)):
+                # camera_id = random.randint(1, 3)  # Assuming we have up to 3 cameras
+                # confidence = round(random.uniform(0.7, 0.99), 2)
+                # conn.execute(
+                    # "INSERT INTO detections (camera_id, timestamp, class, confidence) VALUES (?, ?, ?, ?)",
+                    # (camera_id, date, "pawikan", confidence)
+                # )
+        # conn.commit()
+    # conn.close() 
+    # """
+
+    # Start the broadcast processing thread
+    def run_broadcast_processor():
+        try:
+            logger.info("Broadcast processor thread started and running...")
+            
+            # Small initial delay to ensure everything is properly initialized
+            import time
+            time.sleep(0.5)
+            
+            logger.debug("Broadcast processor: Starting main processing loop...")
+            
+            while True:
+                try:
+                    # Get a detection from the queue (blocking with timeout)
+                    logger.debug("Broadcast processor: Waiting for detection from queue...")
+                    detection_data = detection_broadcast_queue.get(timeout=2.0)
+                    if detection_data is None:  # None is used as a signal to stop
+                        logger.info("Broadcast processor thread stopping...")
+                        break
+                    
+                    logger.debug(f"Broadcast processor: Processing detection {detection_data}")
+                    
+                    # Use the stored main event loop
+                    global main_event_loop
+                    if main_event_loop is not None:
+                        logger.debug(f"Broadcast processor: Using event loop {main_event_loop}")
+                        try:
+                            # Create the coroutine for broadcasting
+                            coro = manager.broadcast({
+                                "type": "new_detection",
+                                "detection": detection_data
+                            })
+                            
+                            logger.debug(f"Broadcast processor: About to call run_coroutine_threadsafe")
+                            
+                            # Submit the coroutine to the stored event loop
+                            future = asyncio.run_coroutine_threadsafe(coro, main_event_loop)
+                            
+                            # Wait for the result with a timeout to see if there are any errors
+                            try:
+                                result = future.result(timeout=5.0)  # 5 second timeout
+                                logger.debug(f"Broadcast processor: Broadcast completed successfully, result: {result}")
+                            except (asyncio.TimeoutError, Exception) as future_error:
+                                logger.error(f"Broadcast processor: Error getting future result: {future_error}")
+                                import traceback
+                                traceback.print_exc()
+                            
+                        except Exception as broadcast_error:
+                            logger.error(f"Error during broadcast: {broadcast_error}")
+                            import traceback
+                            traceback.print_exc()
+                    else:
+                        logger.error("Main event loop not available in broadcast processor")
+                        
+                except queue.Empty:
+                    # Timeout occurred, continue the loop
+                    logger.debug("Broadcast processor: Queue timeout, continuing...")
+                    continue
+        except Exception as e:
+            logger.error(f"Fatal error in broadcast processor thread: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Start the broadcast processing thread
+    global broadcast_thread
+    print("Attempting to start broadcast processing thread...")
+    broadcast_thread = threading.Thread(target=run_broadcast_processor, daemon=True)
+    broadcast_thread.start()
+    print(f"Background thread for processing detection broadcasts started: {broadcast_thread}")
 
 # Routes
+@app.on_event("shutdown")
+async def shutdown_event():
+    global broadcast_thread
+    if broadcast_thread:
+        # Put None to signal the thread to stop
+        detection_broadcast_queue.put(None)
+        broadcast_thread.join(timeout=2.0)  # Wait up to 2 seconds for thread to finish
+    print("Background thread for processing detection broadcasts stopped")
+
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return RedirectResponse(url="/dashboard")
@@ -357,7 +493,6 @@ async def get_recent_detections_api(username: str = Depends(get_current_user_fro
 async def get_detection_gallery_api(username: str = Depends(get_current_user_from_cookie)):
     # Get detection images from the specified directory
     import os
-    from PIL import Image
     import glob
     
     detection_dir = os.getenv("DETECTIONS_DIR", "detections")
@@ -368,21 +503,30 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
     images = []
     
     if os.path.exists(detection_dir):
-        # Get all image files in the directory
-        image_files = glob.glob(os.path.join(detection_dir, "*.jpg")) + \
-                      glob.glob(os.path.join(detection_dir, "*.png")) + \
-                      glob.glob(os.path.join(detection_dir, "*.jpeg"))
+        # Get all image files in the directory and subdirectories
+        image_patterns = [
+            os.path.join(detection_dir, "**", "*.jpg"),
+            os.path.join(detection_dir, "**", "*.jpeg"), 
+            os.path.join(detection_dir, "**", "*.png"),
+            os.path.join(detection_dir, "**", "*.gif"),
+            os.path.join(detection_dir, "**", "*.webp")
+        ]
+        
+        image_files = []
+        for pattern in image_patterns:
+            image_files.extend(glob.glob(pattern, recursive=True))
         
         # Sort by modification time (newest first)
         image_files.sort(key=os.path.getmtime, reverse=True)
         
-        # Get the 12 most recent images
-        for image_file in image_files[:12]:
+        # Get the 24 most recent images for 6x4 grid
+        for image_file in image_files[:24]:
             # Get file info
             stat = os.stat(image_file)
+            # Create path for the static file mount point
             images.append({
                 "filename": os.path.basename(image_file),
-                "path": f"/detections/{os.path.basename(image_file)}",
+                "path": f"/detections/{os.path.relpath(image_file, detection_dir)}",
                 "size": stat.st_size,
                 "modified": stat.st_mtime
             })
@@ -918,3 +1062,32 @@ def format_file_size(size_bytes):
         i += 1
     
     return f"{size_bytes:.1f} {size_names[i]}"
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    try:
+        await manager.connect(websocket)
+        print(f"WebSocket connected. Active connections: {len(manager.active_connections)}")
+        # Send a welcome message to confirm connection
+        await websocket.send_json({"type": "connected", "message": "WebSocket connection established"})
+        
+        # Keep the connection alive to receive broadcasts
+        # We just need to keep this connection open, not receive any data from the client
+        while True:
+            # Sleep indefinitely to keep the connection open
+            # WebSocket will timeout automatically if the connection is lost
+            try:
+                await asyncio.sleep(3600)  # Sleep for 1 hour, will be interrupted if connection closes
+            except asyncio.CancelledError:
+                # This happens when the connection is closed or server shuts down
+                print("WebSocket connection task cancelled (normal on disconnect)")
+                break
+    except Exception as e:
+        print(f"WebSocket connection error: {e}")
+        # Only try to disconnect if the connection was actually established
+        try:
+            manager.disconnect(websocket)
+        except Exception as disconnect_error:
+            print(f"Error during disconnect: {disconnect_error}")
+        print(f"WebSocket disconnected. Active connections: {len(manager.active_connections)}")
