@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Query
+import csv
+import io
+from fastapi import APIRouter, Query, Response
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
@@ -108,3 +110,62 @@ async def get_detection_timeline(
         formatted_timeline.append(dict(row)) # Convert to dict
 
     return formatted_timeline
+
+@router.get("/api/detections/export-csv")
+async def export_detections_csv(
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    camera_id: Optional[int] = Query(None)
+):
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    # Build query to get detection data with camera names
+    query = """SELECT d.id, d.camera_id, c.name as camera_name, d.timestamp, d.class, d.confidence, d.image_path 
+               FROM detections d
+               JOIN cameras c ON d.camera_id = c.id
+               WHERE 1=1"""
+    params = []
+
+    if start_date:
+        query += " AND d.timestamp >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND d.timestamp <= ?"
+        params.append(end_date)
+    if camera_id:
+        query += " AND d.camera_id = ?"
+        params.append(camera_id)
+    
+    query += " ORDER BY d.timestamp DESC"
+
+    c.execute(query, params)
+    detections = c.fetchall()
+    conn.close()
+
+    # Create an in-memory string buffer for CSV content
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["id", "camera_id", "camera_name", "timestamp", "class", "confidence", "image_path"])
+    
+    # Write the header
+    writer.writeheader()
+    # Write the data rows
+    for detection in detections:
+        detection_dict = dict(detection)
+        # Format timestamp to be more readable
+        detection_dict['timestamp'] = datetime.fromisoformat(detection_dict['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+        writer.writerow(detection_dict)
+    
+    # Get the CSV content as a string
+    csv_content = output.getvalue()
+    output.close()
+
+    # Create a response with CSV content
+    response = Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=detections_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        }
+    )
+    return response

@@ -161,8 +161,40 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchDetectionAnalytics();
         fetchDetections();
 
-        setInterval(fetchDetectionAnalytics, 10000);
-        setInterval(fetchDetections, 5000);
+        // Replace intervals with WebSocket connection for real-time updates
+        let socket;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+        
+        function connectWebSocket() {
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(event) {
+                console.log('WebSocket connected for old dashboard');
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'new_detection') {
+                    // Update the dashboard with the new detection
+                    fetchDetectionAnalytics(); // Update the stats
+                    fetchDetections(); // Update the recent detections list and gallery
+                }
+            };
+            
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            
+            socket.onclose = function(event) {
+                console.log('WebSocket disconnected. Attempting to reconnect...');
+                // Try to reconnect after a delay
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+        
+        connectWebSocket();
     } else {
         console.log('Dashboard element not found, skipping dashboard-specific logic.'); // New log
     }
