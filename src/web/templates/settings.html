@@ -11,7 +11,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Camera Management -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800">Cameras</h2>
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Contact Management -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800">Contacts</h2>
@@ -54,7 +54,7 @@
 <!-- Account Settings and System Configuration -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
     <!-- Account Settings -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">Account Settings</h2>
         </div>
@@ -140,7 +140,7 @@
     </div>
 
     <!-- System Configuration -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">System Configuration</h2>
         </div>
@@ -195,32 +195,55 @@
     </div>
 </div>
 
-<!-- Backup Section -->
-<div class="mt-8 bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-800">System Backup</h2>
-    </div>
-    <div class="p-6">
-        <div class="space-y-6">
-            <div>
-                <h3 class="text-lg font-medium text-gray-900">Create Backup</h3>
-                <p class="mt-2 text-sm text-gray-600">Create a backup of your database and configuration files.</p>
-                <button id="create-backup-btn"
-                        class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                    <i class="fas fa-download mr-1"></i> Create Backup
-                </button>
-                <div id="backup-message" class="mt-2 hidden"></div>
-            </div>
-            
-            <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-medium text-gray-900">Backup History</h3>
-                <p class="mt-2 text-sm text-gray-600">List of recent backups (stored in the backups directory).</p>
-                <div id="backup-history" class="mt-4">
-                    <div class="text-center py-4">
-                        <div class="spinner" role="status">
-                            <span class="visually-hidden">Loading...</span>
+<!-- Backup & Export Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+    <!-- System Backup Card -->
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">System Backup</h2>
+        </div>
+        <div class="p-6">
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Create Backup</h3>
+                    <p class="mt-2 text-sm text-gray-600">Create a backup of your database and configuration files.</p>
+                    <button id="create-backup-btn"
+                            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                        <i class="fas fa-download mr-1"></i> Create Backup
+                    </button>
+                    <div id="backup-message" class="mt-2 hidden"></div>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900">Backup History</h3>
+                    <p class="mt-2 text-sm text-gray-600">List of recent backups (stored in the backups directory).</p>
+                    <div id="backup-history" class="mt-4">
+                        <div class="text-center py-4">
+                            <div class="spinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Data Card -->
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Export Data</h2>
+        </div>
+        <div class="p-6">
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Export Detection Data</h3>
+                    <p class="mt-2 text-sm text-gray-600">Export all detection records to a CSV file for further analysis.</p>
+                    <button id="export-csv-btn"
+                            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                        <i class="fas fa-file-export mr-1"></i> Export to CSV
+                    </button>
+                    <div id="export-message" class="mt-2 hidden"></div>
                 </div>
             </div>
         </div>
@@ -561,6 +584,62 @@
 
         // Load backup history on page load
         loadBackupHistory();
+        
+        // Export CSV button
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener('click', async function() {
+                const exportMessage = document.getElementById('export-message');
+                const exportBtn = this;
+                
+                // Disable button and show loading state
+                exportBtn.disabled = true;
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Exporting...';
+                
+                try {
+                    // Create a temporary link to trigger the download
+                    const response = await fetch('/api/detections/export-csv');
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = response.headers.get('content-disposition').split('filename=')[1];
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        exportMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
+                        exportMessage.textContent = 'Data exported successfully!';
+                        exportMessage.classList.remove('hidden');
+                        
+                        // Hide message after 5 seconds
+                        setTimeout(() => {
+                            exportMessage.classList.add('hidden');
+                        }, 5000);
+                    } else {
+                        const errorData = await response.json();
+                        exportMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                        exportMessage.textContent = errorData.error || 'Failed to export data';
+                        exportMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    exportMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
+                    exportMessage.textContent = 'An error occurred while exporting data';
+                    exportMessage.classList.remove('hidden');
+                } finally {
+                    // Re-enable button and restore original text
+                    exportBtn.disabled = false;
+                    exportBtn.innerHTML = originalText;
+                }
+            });
+        }
     });
 </script>
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

@@ -7,7 +7,7 @@ from ..core.models import Detection, DetectionBase, DetectionOut
 
 router = APIRouter()
 
-@router.post("/api/detections", response_model=Detection)
+@router.post("/api/detections", response_model=DetectionOut)
 async def create_detection(detection: DetectionBase):
     conn = get_db_connection()
     c = conn.cursor()
@@ -15,10 +15,30 @@ async def create_detection(detection: DetectionBase):
               (detection.camera_id, detection.timestamp, detection._class, detection.confidence, detection.image_path))
     conn.commit()
     new_detection_id = c.lastrowid
-    c.execute("SELECT id, camera_id, timestamp, class, confidence, image_path FROM detections WHERE id = ?", (new_detection_id,))
+    
+    # Get the newly created detection with camera name
+    c.execute("""
+        SELECT d.id, d.camera_id, c.name as camera_name, d.timestamp, d.class, d.confidence, d.image_path 
+        FROM detections d
+        JOIN cameras c ON d.camera_id = c.id
+        WHERE d.id = ?
+    """, (new_detection_id,))
     new_detection = c.fetchone()
     conn.close()
-    return dict(new_detection) # Convert to dict
+    
+    # For the response, return only the fields that match DetectionOut model
+    detection_dict = dict(new_detection)
+    response_dict = {
+        'id': detection_dict['id'],
+        'camera_id': detection_dict['camera_id'],
+        'timestamp': detection_dict['timestamp'],
+        '_class': detection_dict['class'],  # Pydantic maps _class to class field
+        'confidence': detection_dict['confidence'],
+        'image_path': detection_dict['image_path'],
+        'camera_name': detection_dict['camera_name']
+    }
+    
+    return response_dict
 
 @router.get("/api/detections", response_model=List[DetectionOut])
 async def get_detections(

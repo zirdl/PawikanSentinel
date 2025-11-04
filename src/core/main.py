@@ -76,21 +76,6 @@ app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=180
 # Create serializer for CSRF tokens
 serializer = URLSafeTimedSerializer(CSRF_SECRET_KEY)
 
-# Global variable to store the broadcast thread
-broadcast_thread = None
-
-
-
-import asyncio
-import queue
-import threading
-
-# Thread-safe queue to receive detection broadcasts from inference threads  
-detection_broadcast_queue = queue.Queue()
-
-# Asyncio-compatible queue for the background task
-async_detection_queue = asyncio.Queue()
-
 # Define the detections directory
 detections_dir = os.getenv("DETECTIONS_DIR", "detections")
 # Ensure we're using an absolute path
@@ -101,14 +86,7 @@ app.mount("/detections", StaticFiles(directory=detections_dir), name="detections
 app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
 templates = Jinja2Templates(directory="src/web/templates")
 
-# Import and initialize WebSocket manager after templates are created
-from . import websocket_manager
-from .websocket_manager import ConnectionManager
 
-# Set the templates in the manager instance
-manager = ConnectionManager(templates=templates)
-# Update the global manager in the websocket_manager module
-websocket_manager.manager = manager
 
 
 
@@ -121,7 +99,6 @@ app.include_router(contacts.router)
 app.include_router(detections.router)
 app.include_router(analytics.router)
 
-manager = ConnectionManager(templates)
 
 # Database helper
 def get_db_connection():
@@ -233,10 +210,10 @@ def get_detection_chart_data(period="month", month=None):
     return [dict(row) for row in data]
 
 def get_recent_detections(limit=10):
-    """Get recent detections with camera names"""
+    """Get recent detections with camera locations"""
     conn = get_db_connection()
     detections = conn.execute("""
-        SELECT d.id, d.timestamp, c.name as camera_name, d.class, d.confidence, d.image_path
+        SELECT d.id, d.timestamp, c.name as camera_name, c.name as camera_location, d.class, d.confidence, d.image_path
         FROM detections d
         LEFT JOIN cameras c ON d.camera_id = c.id
         ORDER BY d.timestamp DESC
@@ -367,85 +344,7 @@ async def startup_event():
     # conn.close() 
     # """
 
-    # Start the broadcast processing thread
-    def run_broadcast_processor():
-        try:
-            logger.info("Broadcast processor thread started and running...")
-            
-            # Small initial delay to ensure everything is properly initialized
-            import time
-            time.sleep(0.5)
-            
-            logger.debug("Broadcast processor: Starting main processing loop...")
-            
-            while True:
-                try:
-                    # Get a detection from the queue (blocking with timeout)
-                    logger.debug("Broadcast processor: Waiting for detection from queue...")
-                    detection_data = detection_broadcast_queue.get(timeout=2.0)
-                    if detection_data is None:  # None is used as a signal to stop
-                        logger.info("Broadcast processor thread stopping...")
-                        break
-                    
-                    logger.debug(f"Broadcast processor: Processing detection {detection_data}")
-                    
-                    # Use the stored main event loop
-                    global main_event_loop
-                    if main_event_loop is not None:
-                        logger.debug(f"Broadcast processor: Using event loop {main_event_loop}")
-                        try:
-                            # Create the coroutine for broadcasting
-                            coro = manager.broadcast({
-                                "type": "new_detection",
-                                "detection": detection_data
-                            })
-                            
-                            logger.debug(f"Broadcast processor: About to call run_coroutine_threadsafe")
-                            
-                            # Submit the coroutine to the stored event loop
-                            future = asyncio.run_coroutine_threadsafe(coro, main_event_loop)
-                            
-                            # Wait for the result with a timeout to see if there are any errors
-                            try:
-                                result = future.result(timeout=5.0)  # 5 second timeout
-                                logger.debug(f"Broadcast processor: Broadcast completed successfully, result: {result}")
-                            except (asyncio.TimeoutError, Exception) as future_error:
-                                logger.error(f"Broadcast processor: Error getting future result: {future_error}")
-                                import traceback
-                                traceback.print_exc()
-                            
-                        except Exception as broadcast_error:
-                            logger.error(f"Error during broadcast: {broadcast_error}")
-                            import traceback
-                            traceback.print_exc()
-                    else:
-                        logger.error("Main event loop not available in broadcast processor")
-                        
-                except queue.Empty:
-                    # Timeout occurred, continue the loop
-                    logger.debug("Broadcast processor: Queue timeout, continuing...")
-                    continue
-        except Exception as e:
-            logger.error(f"Fatal error in broadcast processor thread: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    # Start the broadcast processing thread
-    global broadcast_thread
-    print("Attempting to start broadcast processing thread...")
-    broadcast_thread = threading.Thread(target=run_broadcast_processor, daemon=True)
-    broadcast_thread.start()
-    print(f"Background thread for processing detection broadcasts started: {broadcast_thread}")
-
 # Routes
-@app.on_event("shutdown")
-async def shutdown_event():
-    global broadcast_thread
-    if broadcast_thread:
-        # Put None to signal the thread to stop
-        detection_broadcast_queue.put(None)
-        broadcast_thread.join(timeout=2.0)  # Wait up to 2 seconds for thread to finish
-    print("Background thread for processing detection broadcasts stopped")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -523,12 +422,35 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
         for image_file in image_files[:24]:
             # Get file info
             stat = os.stat(image_file)
+            
+            # Extract detection ID or camera ID from filename or path to get camera location
+            image_filename = os.path.basename(image_file)
+            
+            # Try to find corresponding detection record in database to get camera info
+            conn = get_db_connection()
+            c = conn.cursor()
+            # Look for the image in the detections table by filename
+            c.execute("""
+                SELECT d.camera_id, c.name as camera_name 
+                FROM detections d 
+                LEFT JOIN cameras c ON d.camera_id = c.id 
+                WHERE d.image_path LIKE ?
+            """, (f'%{image_filename}',))
+            
+            detection_record = c.fetchone()
+            conn.close()
+            
+            camera_name = "Unknown Location"
+            if detection_record:
+                camera_name = detection_record["camera_name"] or f"Camera {detection_record['camera_id']}"
+            
             # Create path for the static file mount point
             images.append({
-                "filename": os.path.basename(image_file),
+                "filename": image_filename,
                 "path": f"/detections/{os.path.relpath(image_file, detection_dir)}",
                 "size": stat.st_size,
-                "modified": stat.st_mtime
+                "modified": stat.st_mtime,
+                "camera_name": camera_name  # Add camera location information
             })
     
     return images
@@ -1064,30 +986,4 @@ def format_file_size(size_bytes):
     return f"{size_bytes:.1f} {size_names[i]}"
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    try:
-        await manager.connect(websocket)
-        print(f"WebSocket connected. Active connections: {len(manager.active_connections)}")
-        # Send a welcome message to confirm connection
-        await websocket.send_json({"type": "connected", "message": "WebSocket connection established"})
-        
-        # Keep the connection alive to receive broadcasts
-        # We just need to keep this connection open, not receive any data from the client
-        while True:
-            # Sleep indefinitely to keep the connection open
-            # WebSocket will timeout automatically if the connection is lost
-            try:
-                await asyncio.sleep(3600)  # Sleep for 1 hour, will be interrupted if connection closes
-            except asyncio.CancelledError:
-                # This happens when the connection is closed or server shuts down
-                print("WebSocket connection task cancelled (normal on disconnect)")
-                break
-    except Exception as e:
-        print(f"WebSocket connection error: {e}")
-        # Only try to disconnect if the connection was actually established
-        try:
-            manager.disconnect(websocket)
-        except Exception as disconnect_error:
-            print(f"Error during disconnect: {disconnect_error}")
-        print(f"WebSocket disconnected. Active connections: {len(manager.active_connections)}")
+
