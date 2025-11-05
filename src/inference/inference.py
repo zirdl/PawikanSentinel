@@ -19,13 +19,7 @@ import functools
 
 # Import WebSocket manager for real-time updates from dedicated module (will be imported locally when needed)
 
-# Twilio for SMS notifications
-try:
-    from twilio.rest import Client
-    TWILIO_AVAILABLE = True
-except ImportError:
-    TWILIO_AVAILABLE = False
-    Client = None
+from ..inference.sms_sender import SemaphoreSMSSender
 
 from ..core.database import get_db_connection
 
@@ -37,10 +31,9 @@ ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
 ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2") # Default model ID
 DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
 
-# Twilio configuration for SMS notifications
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+# Semaphore configuration for SMS notifications (replaces Twilio)
+SEMAPHORE_API_KEY = os.getenv("SEMAPHORE_API_KEY")
+SEMAPHORE_SENDER_NAME = os.getenv("SEMAPHORE_SENDER_NAME", "PawikanSentinel")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
 
 # Detection configuration
@@ -56,16 +49,8 @@ logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(threadName)s - %(le
 logger = logging.getLogger(__name__)
 # --- End Logging Setup ---
 
-# Initialize Twilio client for SMS notifications
-twilio_client = None
-if TWILIO_AVAILABLE and TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
-    try:
-        twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        logger.info("Twilio client initialized successfully")
-    except Exception as e:
-        logger.warning(f"Failed to initialize Twilio client: {e}")
-else:
-    logger.info("Twilio not configured or dependencies not available")
+# Initialize Semaphore SMS sender
+sms_sender = SemaphoreSMSSender()
 
 if not ROBOFLOW_API_KEY:
     logger.warning("ROBOFLOW_API_KEY not set in .env. Inference will not work.")
@@ -145,7 +130,7 @@ class RTSPInferenceWorker(threading.Thread):
         }
         
         # SMS notification tracking
-        self.twilio_client = twilio_client
+        self.sms_sender = sms_sender
         
         # Connection management
         self.cap: Optional[cv2.VideoCapture] = None
@@ -220,8 +205,8 @@ class RTSPInferenceWorker(threading.Thread):
             
 
             
-            # Send SMS notifications for new detections if Twilio is configured
-            if self.twilio_client and TWILIO_PHONE_NUMBER:
+            # Send SMS notifications for new detections if Semaphore is configured
+            if self.sms_sender.is_enabled():
                 self._send_sms_notifications()
             
             # Clear buffer after successful flush
@@ -254,37 +239,33 @@ class RTSPInferenceWorker(threading.Thread):
                 logger.debug("No contacts found for SMS notifications")
                 return
             
-            # Track last SMS time per contact for cooldown
-            current_time = time.time()
+            # Extract phone numbers from contacts
+            phone_numbers = [contact["phone"] for contact in contacts if contact["phone"]]
             
-            # Send SMS to each contact with cooldown check
-            for contact in contacts:
-                phone_number = contact["phone"]
-                
-                # Check cooldown - get last notification time for this contact
-                last_notification_key = f"last_sms_{phone_number}"
-                last_notification_time = getattr(self, last_notification_key, None)
-                
-                if last_notification_time and (current_time - last_notification_time) < (SMS_NOTIFICATION_COOLDOWN * 60):
-                    logger.debug(f"SMS cooldown active for {phone_number}. Skipping notification.")
-                    continue
-                
-                try:
-                    # Create message with detection details
-                    confidence_percent = self.detection_buffer[-1].confidence * 100
-                    message_body = f"Pawikan Sentinel Alert: {len(self.detection_buffer)} detections of {self.detection_buffer[-1].class_name} on {camera_name}. Last detection at {self.detection_buffer[-1].timestamp} with {confidence_percent:.1f}% confidence."
-                    
-                    message = self.twilio_client.messages.create(
-                        body=message_body,
-                        from_=TWILIO_PHONE_NUMBER,
-                        to=phone_number
-                    )
-                    logger.info(f"SMS sent to {phone_number}: {message.sid}")
-                    
-                    # Update last notification time for this contact
-                    setattr(self, last_notification_key, current_time)
-                except Exception as e:
-                    logger.error(f"Failed to send SMS to {phone_number}: {e}")
+            if not phone_numbers:
+                logger.warning("No valid phone numbers found for SMS notifications")
+                return
+            
+            if not self.sms_sender.is_enabled():
+                logger.warning("SMS sender not enabled - skipping SMS notifications")
+                return
+            
+            # Create message with detection details
+            confidence_percent = self.detection_buffer[-1].confidence * 100
+            message_body = f"Pawikan Sentinel Alert: {len(self.detection_buffer)} detections of {self.detection_buffer[-1].class_name} on {camera_name}. Last detection at {self.detection_buffer[-1].timestamp} with {confidence_percent:.1f}% confidence."
+            
+            # Send SMS notifications using Semaphore
+            results = self.sms_sender.send_sms_notification(
+                phone_numbers=phone_numbers,
+                message_body=message_body
+            )
+            
+            # Log the results
+            for phone, success in results.items():
+                if success:
+                    logger.info(f"SMS sent successfully to {phone}")
+                else:
+                    logger.error(f"Failed to send SMS to {phone}")
             
         except Exception as e:
             logger.error(f"Error sending SMS notifications: {e}", exc_info=True)

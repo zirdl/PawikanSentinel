@@ -15,9 +15,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from inference_sdk import InferenceHTTPClient
-from twilio.rest import Client
+from src.inference.sms_sender import SemaphoreSMSSender
 
-from database import get_db_connection
+from src.core.database import get_db_connection
 
 # Load environment variables
 load_dotenv()
@@ -27,9 +27,9 @@ ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
 ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
 ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2")
 DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+# Semaphore configuration (replaces Twilio)
+SEMAPHORE_API_KEY = os.getenv("SEMAPHORE_API_KEY")
+SEMAPHORE_SENDER_NAME = os.getenv("SEMAPHORE_SENDER_NAME", "PawikanSentinel")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Cooldown in minutes
 
 # Pi-specific optimizations
@@ -71,10 +71,8 @@ class PiOptimizedWorker(threading.Thread):
             api_key=self.api_key
         )
         
-        # Initialize Twilio client
-        self.twilio_client = None
-        if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
-            self.twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        # Initialize Semaphore SMS sender
+        self.sms_sender = SemaphoreSMSSender()
         
         # Worker state
         self.running = False
@@ -104,7 +102,8 @@ class PiOptimizedWorker(threading.Thread):
 
     def _send_sms_notification(self, detection: DetectionResult):
         """Send SMS notification for significant detections with cooldown"""
-        if not self.twilio_client or not TWILIO_PHONE_NUMBER:
+        if not self.sms_sender.is_enabled():
+            logger.warning("SMS sender not enabled - skipping SMS notification")
             return
             
         try:
@@ -113,30 +112,31 @@ class PiOptimizedWorker(threading.Thread):
             contacts = conn.execute("SELECT phone FROM contacts LIMIT 3").fetchall()
             conn.close()
             
-            message_body = f"Pawikan Sentinel Alert: {detection.class_name} detected with {detection.confidence:.2f} confidence at {detection.timestamp}"
+            if not contacts:
+                logger.warning("No contacts found for SMS notifications")
+                return
             
-            current_time = time.time()
+            # Extract phone numbers from contacts
+            phone_numbers = [contact["phone"] for contact in contacts if contact["phone"]]
             
-            for contact in contacts:
-                phone = contact["phone"]
-                
-                # Check cooldown period
-                last_sms = self.last_sms_time.get(phone, 0)
-                if current_time - last_sms < SMS_NOTIFICATION_COOLDOWN * 60:  # Convert minutes to seconds
-                    logger.info(f"SMS cooldown active for {phone}. Skipping notification.")
-                    continue
-                
-                try:
-                    message = self.twilio_client.messages.create(
-                        body=message_body,
-                        from_=TWILIO_PHONE_NUMBER,
-                        to=phone
-                    )
-                    logger.info(f"SMS sent to {phone}: {message.sid}")
-                    # Update last SMS time
-                    self.last_sms_time[phone] = current_time
-                except Exception as e:
-                    logger.error(f"Failed to send SMS to {phone}: {e}")
+            if not phone_numbers:
+                logger.warning("No valid phone numbers found for SMS notifications")
+                return
+            
+            # Send SMS notifications using Semaphore
+            results = self.sms_sender.send_detailed_notification(
+                phone_numbers=phone_numbers,
+                class_name=detection.class_name,
+                confidence=detection.confidence,
+                timestamp=detection.timestamp
+            )
+            
+            # Log the results
+            for phone, success in results.items():
+                if success:
+                    logger.info(f"SMS sent successfully to {phone}")
+                else:
+                    logger.error(f"Failed to send SMS to {phone}")
                     
         except Exception as e:
             logger.error(f"Error sending SMS notifications: {e}")

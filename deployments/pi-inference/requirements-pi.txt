@@ -13,8 +13,7 @@ opencv-contrib-python-headless==4.8.1.78
 # Inference SDK
 inference-sdk==0.9.12
 
-# Twilio for SMS notifications
-twilio==8.8.0
+
 
 # Hardware monitoring
 psutil==5.9.5

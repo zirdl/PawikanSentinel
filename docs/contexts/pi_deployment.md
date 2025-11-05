@@ -41,7 +41,7 @@ This guide explains how to deploy the Pawikan Sentinel inference service on a Ra
 3. Configure environment variables:
    Edit `/home/pi/pawikan-sentinel/.env` with your actual values:
    - Roboflow API key
-   - Twilio credentials (if using SMS notifications)
+   - Semaphore credentials (if using SMS notifications)
    - Camera RTSP URLs
 
 ### 3. Start the Service
@@ -67,7 +67,7 @@ sudo journalctl -u pawikan-sentinel.service -f
 - Automatically pauses when CPU usage exceeds 80%
 
 ### SMS Notifications
-When a turtle is detected with high confidence (>80%), the system sends SMS notifications to emergency contacts using Twilio.
+When a turtle is detected with high confidence (>80%), the system sends SMS notifications to emergency contacts using Semaphore (cost-effective for Philippine deployments).
 
 ## Management Commands
 Use the management script for common tasks:
@@ -95,7 +95,7 @@ The system includes monitoring capabilities that can report:
 ### Common Issues
 1. **High CPU Usage**: Check if too many cameras are active
 2. **RTSP Connection Issues**: Verify camera URLs and network connectivity
-3. **SMS Not Sending**: Check Twilio credentials and account status
+3. **SMS Not Sending**: Check Semaphore credentials and account status
 
 ### Logs
 Check logs for detailed error information:
