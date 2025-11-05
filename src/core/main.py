@@ -351,6 +351,18 @@ async def startup_event():
 async def read_root(request: Request):
     return RedirectResponse(url="/dashboard")
 
+@app.get("/cameras", response_class=HTMLResponse)
+async def cameras_page(request: Request, username: str = Depends(get_current_user_for_pages)):
+    if not username:
+        return RedirectResponse(url="/login?next=/cameras")
+    
+    csrf_token = generate_csrf_token(request)
+    return templates.TemplateResponse("cameras.html", {
+        "request": request, 
+        "csrf_token": csrf_token, 
+        "username": username
+    })
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request, username: str = Depends(get_current_user_for_pages)):
     if not username:

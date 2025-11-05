@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Cameras - Pawikan Sentinel{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto bg-gradient-to-br from-white/80 to-white/60 min-h-screen rounded-2xl shadow-lg p-6 border border-gray-200">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Camera Feeds</h1>
+        <p class="mt-2 text-gray-600">View live RTSP streams from your cameras</p>
+    </div>
+
+    <!-- Cameras Grid -->
+    <div id="cameras-container" class="grid grid-cols-2 gap-6">
+        <div class="text-center py-8">
+            <div class="spinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div id="camera-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4">
+    <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[60vh] overflow-hidden">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-camera-name" class="text-xl font-bold text-gray-900"></h3>
+                <button onclick="closeCameraModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
+                <a id="modal-vlc-link" href="#" 
+                   class="inline-flex justify-center items-center px-5 py-2.5 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                    <i class="fas fa-play-circle mr-2"></i> Launch in VLC
+                </a>
+                <button onclick="closeCameraModal()" 
+                        class="inline-flex justify-center items-center px-5 py-2.5 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-gradient-to-r from-sand-medium to-sand-dark hover:from-sand-dark hover:to-sand-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load cameras on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCamerasList();
+    });
+    
+    async function loadCamerasList() {
+        try {
+            const response = await fetch('/api/cameras');
+            const cameras = await response.json();
+            
+            const container = document.getElementById('cameras-container');
+            
+            if (cameras.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-video mx-auto h-12 w-12 text-gray-400 text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No cameras configured</h3>
+                        <p class="text-gray-500 mb-6">Get started by adding a camera in the Settings section.</p>
+                        <a href="/settings" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                            Go to Settings
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate camera cards
+            const cameraCards = cameras.map(camera => `
+                <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200 overflow-hidden">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center min-w-0 flex-1">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4 text-xl bg-gradient-to-br from-turtle-green/20 to-ocean-blue/20 text-turtle-green">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${camera.name}</h3>
+                                <p class="text-sm text-gray-500 truncate" title="${camera.rtsp_url}">${camera.rtsp_url}</p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-4 whitespace-nowrap ${camera.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${camera.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <a href="${camera.rtsp_url}" 
+                           class="flex-1 text-center inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                            <i class="fas fa-external-link-alt mr-1"></i> VLC
+                        </a>
+                        <button onclick="openCameraModal(${camera.id}, '${escapeHtml(camera.name)}', '${escapeHtml(camera.rtsp_url)}')" 
+                                class="flex-1 text-center inline-flex justify-center items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green">
+                            <i class="fas fa-expand mr-1"></i> View
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = cameraCards;
+        } catch (error) {
+            console.error('Error loading cameras:', error);
+            const container = document.getElementById('cameras-container');
+            container.innerHTML = `
+                <div class="col-span-full text-center py-8">
+                    <i class="fas fa-exclamation-triangle mx-auto h-12 w-12 text-red-400 text-4xl mb-2"></i>
+                    <h3 class="text-lg font-medium text-gray-900">Error loading cameras</h3>
+                    <p class="text-gray-500">Please try refreshing the page or check your connection.</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Function to escape HTML to prevent XSS
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+    
+    // Open camera modal with details
+    function openCameraModal(id, name, rtspUrl) {
+        document.getElementById('modal-camera-name').textContent = name;
+        document.getElementById('modal-vlc-link').href = rtspUrl;
+        
+        const modal = document.getElementById('camera-modal');
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+    
+    // Close camera modal
+    function closeCameraModal() {
+        const modal = document.getElementById('camera-modal');
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('camera-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCameraModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('camera-modal');
+        if (!modal.classList.contains('hidden') && e.key === 'Escape') {
+            closeCameraModal();
+        }
+    });
+    
+    // Refresh button for cameras list
+    function refreshCamerasList() {
+        loadCamerasList();
+    }
+</script>
+
+<!-- Add refresh button to toolbar if needed -->
+<script>
+    // Add refresh button to header if it doesn't exist
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add custom refresh functionality if needed
+        const existingRefresh = document.querySelector('.refresh-btn');
+        if (!existingRefresh) {
+            // Ensure refresh can be triggered via keyboard shortcut
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    refreshCamerasList();
+                }
+            });
+        }
+    });
+</script>
+
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% endblock %}
