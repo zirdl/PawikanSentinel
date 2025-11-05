@@ -24,6 +24,10 @@
         </h1>
         <div class="flex items-center space-x-3">
             {% if username %}
+            <a href="/cameras"
+               class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/cameras' or request.url.path == '/' %}bg-turtle-green text-white{% else %}bg-white bg-opacity-20 hover:bg-opacity-30 text-white{% endif %} transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                Cameras
+            </a>
             <a href="/dashboard"
                class="px-3 py-1.5 rounded text-sm nav-link {% if request.url.path == '/dashboard' %}bg-turtle-green text-white{% else %}bg-white bg-opacity-20 hover:bg-opacity-30 text-white{% endif %} transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
                 Dashboard
