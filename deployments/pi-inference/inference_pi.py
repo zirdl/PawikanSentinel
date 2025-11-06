@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from inference_sdk import InferenceHTTPClient
-from src.inference.sms_sender import SemaphoreSMSSender
+from src.inference.sms_sender import IprogSMSSender
 
 from src.core.database import get_db_connection
 
@@ -27,9 +27,9 @@ ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
 ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
 ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2")
 DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
-# Semaphore configuration (replaces Twilio)
-SEMAPHORE_API_KEY = os.getenv("SEMAPHORE_API_KEY")
-SEMAPHORE_SENDER_NAME = os.getenv("SEMAPHORE_SENDER_NAME", "PawikanSentinel")
+# iprog configuration (replaces Semaphore)
+IPROG_API_TOKEN = os.getenv("IPROG_API_TOKEN")
+IPROG_SENDER_NAME = os.getenv("IPROG_SENDER_NAME", "PawikanSentinel")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Cooldown in minutes
 
 # Pi-specific optimizations
@@ -71,8 +71,8 @@ class PiOptimizedWorker(threading.Thread):
             api_key=self.api_key
         )
         
-        # Initialize Semaphore SMS sender
-        self.sms_sender = SemaphoreSMSSender()
+        # Initialize iprog SMS sender
+        self.sms_sender = IprogSMSSender()
         
         # Worker state
         self.running = False

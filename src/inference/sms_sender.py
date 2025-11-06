@@ -7,57 +7,83 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-class SemaphoreSMSSender:
+class IprogSMSSender:
     """
-    SMS sender implementation using Semaphore API instead of Twilio.
-    This is more cost-effective for Philippine deployments.
+    SMS sender implementation using iprog API instead of Semaphore.
+    This is the new SMS provider for the application.
     """
     
     def __init__(self):
-        self.api_key = os.getenv("SEMAPHORE_API_KEY")
-        self.sender_name = os.getenv("SEMAPHORE_SENDER_NAME", "PawikanSentinel")
+        self.api_token = os.getenv("IPROG_API_TOKEN")
+        self.sender_name = os.getenv("IPROG_SENDER_NAME", "PawikanSentinel")
         self.cooldown_period = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10")) * 60  # Convert minutes to seconds
         self.last_sms_times = {}  # Track last SMS time per contact
-        self.enabled = bool(self.api_key)
+        self.enabled = bool(self.api_token)
         
         if not self.enabled:
-            logger.warning("Semaphore SMS not configured - SEMAPHORE_API_KEY not set")
+            logger.warning("iprog SMS not configured - IPROG_API_TOKEN not set")
     
     def is_enabled(self) -> bool:
-        """Check if Semaphore SMS is properly configured and enabled."""
+        """Check if iprog SMS is properly configured and enabled."""
         return self.enabled
+    
+    def _normalize_phone_number(self, phone_number: str) -> str:
+        """
+        Normalize phone number to international format (63 prefix for Philippines).
+        Handles various formats like 09xxxxxxxxx, +639xxxxxxxxx, 639xxxxxxxxx.
+        """
+        # Remove any non-digit characters
+        clean_number = ''.join(filter(str.isdigit, phone_number))
+        
+        # Handle different formats
+        if clean_number.startswith('09'):
+            # Convert 09xxxxxxxxx to 639xxxxxxxxx
+            clean_number = '63' + clean_number[1:]
+        elif clean_number.startswith('+63'):
+            # Convert +639xxxxxxxxx to 639xxxxxxxxx
+            clean_number = clean_number[1:]
+        elif clean_number.startswith('63') and len(clean_number) == 11:
+            # Already in correct format
+            pass
+        elif clean_number.startswith('9') and len(clean_number) == 10:
+            # Convert 9xxxxxxxxx to 639xxxxxxxxx
+            clean_number = '63' + clean_number
+        
+        return clean_number
     
     def _send_single_sms(self, message: str, number: str) -> bool:
         """
-        Send a single SMS message using Semaphore API.
+        Send a single SMS message using iprog API.
         
         Args:
             message: The message to send
-            number: The phone number to send to (format: 09xxxxxxxxx for Philippines)
+            number: The phone number to send to (format: 09xxxxxxxxx or 639xxxxxxxxx for Philippines)
             
         Returns:
             bool: True if message was sent successfully, False otherwise
         """
         if not self.enabled:
-            logger.error("Semaphore not enabled - cannot send SMS")
+            logger.error("iprog not enabled - cannot send SMS")
             return False
         
         try:
-            # Prepare the API parameters
-            params = {
-                'apikey': self.api_key,
-                'sendername': self.sender_name,
+            # Normalize phone number to international format
+            normalized_number = self._normalize_phone_number(number)
+            
+            # Prepare the API parameters - using POST with form data based on documentation
+            api_url = "https://sms.iprogtech.com/api/v1/sms_messages"
+            data = {
+                'api_token': self.api_token,
                 'message': message,
-                'number': number
+                'phone_number': normalized_number
             }
             
-            # Make the API request to Semaphore
-            response = requests.post('https://semaphore.co/api/v4/messages', data=params)
+            # Make the API request to iprog - using POST with form data as per documentation
+            response = requests.post(api_url, data=data)
             
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 result = response.json()
-                message_id = result.get('message_id', 'unknown')
-                logger.info(f"SMS sent to {number}: Message ID {message_id}")
+                logger.info(f"SMS sent to {number} (normalized: {normalized_number}): Response {result}")
                 return True
             else:
                 logger.error(f"Failed to send SMS to {number}: {response.status_code} - {response.text}")
@@ -79,7 +105,7 @@ class SemaphoreSMSSender:
             Dict mapping phone numbers to success status
         """
         if not self.enabled:
-            logger.error("Semaphore not enabled - cannot send SMS notifications")
+            logger.error("iprog not enabled - cannot send SMS notifications")
             return {num: False for num in phone_numbers}
         
         results = {}

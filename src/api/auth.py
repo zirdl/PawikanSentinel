@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from datetime import timedelta
 import re
 
@@ -67,7 +68,12 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         data={"sub": user["username"]},
         expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    response = JSONResponse({"access_token": access_token, "token_type": "bearer"})
+    # Add cache control headers to prevent caching of authentication responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 
@@ -92,7 +98,13 @@ async def change_password(old_password: str, new_password: str, current_user: Us
     c.execute("UPDATE users SET hashed_password = ? WHERE id = ?", (hashed_new_password, current_user.id))
     conn.commit()
     conn.close()
-    return {"message": "Password changed successfully"}
+    
+    response = JSONResponse({"message": "Password changed successfully"})
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @router.post("/auth/change-username")
 async def change_username(new_username: str, current_password: str, current_user: User = Depends(get_current_user)):
@@ -124,4 +136,9 @@ async def change_username(new_username: str, current_password: str, current_user
     conn.commit()
     conn.close()
     
-    return {"message": "Username changed successfully. Please log in again with your new username."}
+    response = JSONResponse({"message": "Username changed successfully. Please log in again with your new username."})
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
