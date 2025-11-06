@@ -12,6 +12,8 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import httpx
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -48,7 +50,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", secrets.token_hex(32))
 CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY", secrets.token_hex(16))
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 120  # Extended from 30 minutes to 2 hours
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -71,7 +73,29 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add middleware
-app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=1800)  # 30 minutes
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=7200)  # 2 hours to match token expiry
+
+# Cache control middleware to prevent sensitive pages from being cached
+class CacheControlMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        
+        # Apply cache control headers to authenticated pages only
+        if hasattr(request, 'session') and request.session.get('csrf_token'):
+            # For authenticated requests, prevent caching of sensitive pages
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        elif '/dashboard' in str(request.url) or '/settings' in str(request.url) or '/cameras' in str(request.url):
+            # Also apply to protected routes even if no session yet
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        
+        return response
+
+# Add the cache control middleware
+app.add_middleware(CacheControlMiddleware)
 
 # Create serializer for CSRF tokens
 serializer = URLSafeTimedSerializer(CSRF_SECRET_KEY)
@@ -357,11 +381,16 @@ async def cameras_page(request: Request, username: str = Depends(get_current_use
         return RedirectResponse(url="/login?next=/cameras")
     
     csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("cameras.html", {
+    response = templates.TemplateResponse("cameras.html", {
         "request": request, 
         "csrf_token": csrf_token, 
         "username": username
     })
+    # Add cache control headers to prevent caching of authenticated pages
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request, username: str = Depends(get_current_user_for_pages)):
@@ -369,11 +398,16 @@ async def dashboard_page(request: Request, username: str = Depends(get_current_u
         return RedirectResponse(url="/login?next=/dashboard")
     
     csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("dashboard.html", {
+    response = templates.TemplateResponse("dashboard.html", {
         "request": request, 
         "csrf_token": csrf_token, 
         "username": username
     })
+    # Add cache control headers to prevent caching of authenticated pages
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request, username: str = Depends(get_current_user_for_pages)):
@@ -381,24 +415,44 @@ async def settings_page(request: Request, username: str = Depends(get_current_us
         return RedirectResponse(url="/login?next=/settings")
     
     csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("settings.html", {
+    response = templates.TemplateResponse("settings.html", {
         "request": request, 
         "csrf_token": csrf_token, 
         "username": username
     })
+    # Add cache control headers to prevent caching of authenticated pages
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 # Detection API endpoints
 @app.get("/api/detections/stats")
 async def get_detection_stats_api(username: str = Depends(get_current_user_from_cookie)):
-    return get_detection_stats()
+    response = JSONResponse(get_detection_stats())
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/detections/chart")
 async def get_detection_chart_api(period: str = "month", month: str = None, username: str = Depends(get_current_user_from_cookie)):
-    return get_detection_chart_data(period, month)
+    response = JSONResponse(get_detection_chart_data(period, month))
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/detections/recent")
 async def get_recent_detections_api(username: str = Depends(get_current_user_from_cookie)):
-    return get_recent_detections()
+    response = JSONResponse(get_recent_detections())
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/detections/gallery")
 async def get_detection_gallery_api(username: str = Depends(get_current_user_from_cookie)):
@@ -465,7 +519,12 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
                 "camera_name": camera_name  # Add camera location information
             })
     
-    return images
+    response = JSONResponse(images)
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -616,6 +675,10 @@ async def logout_user(request: Request):
     response = RedirectResponse(url="/login", status_code=302)
     response.delete_cookie("access_token", httponly=True, samesite="lax")
     request.session.pop("csrf_token", None)
+    # Add cache control headers to ensure browser doesn't cache the logout response
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return response
 
 # Routes for camera management UI
@@ -624,18 +687,28 @@ async def get_camera_list(request: Request, username: str = Depends(get_current_
     conn = get_db_connection()
     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
     conn.close()
-    return templates.TemplateResponse("_camera_list.html", {
+    response = templates.TemplateResponse("_camera_list.html", {
         "request": request, 
         "cameras": [dict(camera) for camera in cameras]
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/cameras/form", response_class=HTMLResponse)
 async def get_camera_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
     csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("_camera_form.html", {
+    response = templates.TemplateResponse("_camera_form.html", {
         "request": request, 
         "csrf_token": csrf_token
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/cameras/edit-form/{camera_id}", response_class=HTMLResponse)
 async def get_edit_camera_form(request: Request, camera_id: int, username: str = Depends(get_current_user_from_cookie)):
@@ -646,11 +719,16 @@ async def get_edit_camera_form(request: Request, camera_id: int, username: str =
     if camera is None:
         raise HTTPException(status_code=404, detail="Camera not found")
     
-    return templates.TemplateResponse("_camera_form.html", {
+    response = templates.TemplateResponse("_camera_form.html", {
         "request": request, 
         "camera": dict(camera), 
         "csrf_token": generate_csrf_token(request)
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.post("/cameras/add-or-update", response_class=HTMLResponse)
 async def add_or_update_camera(
@@ -693,6 +771,10 @@ async def add_or_update_camera(
         "cameras": [dict(camera) for camera in cameras],
         "message": message
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     response.headers["HX-Trigger"] = "close-modal"
     return response
 
@@ -713,11 +795,16 @@ async def delete_camera_htmx(
     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
     conn.close()
     
-    return templates.TemplateResponse("_camera_list.html", {
+    response = templates.TemplateResponse("_camera_list.html", {
         "request": request, 
         "cameras": [dict(camera) for camera in cameras],
         "message": "Camera deleted successfully!"
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 # Routes for contact management UI
 @app.get("/contacts/list", response_class=HTMLResponse)
@@ -725,18 +812,28 @@ async def get_contact_list(request: Request, username: str = Depends(get_current
     conn = get_db_connection()
     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
     conn.close()
-    return templates.TemplateResponse("_contact_list.html", {
+    response = templates.TemplateResponse("_contact_list.html", {
         "request": request, 
         "contacts": [dict(contact) for contact in contacts]
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/contacts/form", response_class=HTMLResponse)
 async def get_contact_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
     csrf_token = generate_csrf_token(request)
-    return templates.TemplateResponse("_contact_form.html", {
+    response = templates.TemplateResponse("_contact_form.html", {
         "request": request, 
         "csrf_token": csrf_token
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/contacts/edit-form/{contact_id}", response_class=HTMLResponse)
 async def get_edit_contact_form(request: Request, contact_id: int, username: str = Depends(get_current_user_from_cookie)):
@@ -747,11 +844,16 @@ async def get_edit_contact_form(request: Request, contact_id: int, username: str
     if contact is None:
         raise HTTPException(status_code=404, detail="Contact not found")
     
-    return templates.TemplateResponse("_contact_form.html", {
+    response = templates.TemplateResponse("_contact_form.html", {
         "request": request, 
         "contact": dict(contact), 
         "csrf_token": generate_csrf_token(request)
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.post("/contacts/add-or-update", response_class=HTMLResponse)
 async def add_or_update_contact(
@@ -793,6 +895,10 @@ async def add_or_update_contact(
         "contacts": [dict(contact) for contact in contacts],
         "message": message
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     response.headers["HX-Trigger"] = "close-modal"
     return response
 
@@ -813,11 +919,16 @@ async def delete_contact_htmx(
     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
     conn.close()
     
-    return templates.TemplateResponse("_contact_list.html", {
+    response = templates.TemplateResponse("_contact_list.html", {
         "request": request, 
         "contacts": [dict(contact) for contact in contacts],
         "message": "Contact deleted successfully!"
     })
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 # Configuration API endpoints
@@ -829,7 +940,12 @@ async def get_config(username: str = Depends(get_current_user_from_cookie)):
         "frame_skip": os.getenv("FRAME_SKIP", "20"),
         "sms_cooldown": os.getenv("SMS_NOTIFICATION_COOLDOWN", "10")
     }
-    return config
+    response = JSONResponse(config)
+    # Add cache control headers to prevent caching of sensitive API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @app.post("/api/config")
@@ -946,13 +1062,23 @@ async def create_backup(
                             arc_name = os.path.relpath(file_path, ".")
                             zipf.write(file_path, arc_name)
         
-        return JSONResponse({
+        response = JSONResponse({
             "message": f"Backup created successfully: {backup_filename}",
             "filename": backup_filename
         })
+        # Add cache control headers to prevent caching of sensitive API responses
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
         
     except Exception as e:
-        return JSONResponse({"error": f"Failed to create backup: {str(e)}"}, status_code=500)
+        response = JSONResponse({"error": f"Failed to create backup: {str(e)}"}, status_code=500)
+        # Add cache control headers to prevent caching of sensitive API responses
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
 
 @app.get("/api/backup/history")
@@ -964,7 +1090,12 @@ async def get_backup_history(
     try:
         backups_dir = Path("backups")
         if not backups_dir.exists():
-            return JSONResponse({"backups": []})
+            response = JSONResponse({"backups": []})
+            # Add cache control headers to prevent caching of sensitive API responses
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            return response
         
         backup_files = list(backups_dir.glob("*.zip"))
         backup_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -978,10 +1109,20 @@ async def get_backup_history(
                 "size": format_file_size(stat.st_size)
             })
         
-        return JSONResponse({"backups": backups})
+        response = JSONResponse({"backups": backups})
+        # Add cache control headers to prevent caching of sensitive API responses
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
         
     except Exception as e:
-        return JSONResponse({"error": f"Failed to retrieve backup history: {str(e)}"}, status_code=500)
+        response = JSONResponse({"error": f"Failed to retrieve backup history: {str(e)}"}, status_code=500)
+        # Add cache control headers to prevent caching of sensitive API responses
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
 
 def format_file_size(size_bytes):

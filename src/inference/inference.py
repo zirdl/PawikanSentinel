@@ -19,7 +19,7 @@ import functools
 
 # Import WebSocket manager for real-time updates from dedicated module (will be imported locally when needed)
 
-from ..inference.sms_sender import SemaphoreSMSSender
+from ..inference.sms_sender import IprogSMSSender
 
 from ..core.database import get_db_connection
 
@@ -31,9 +31,9 @@ ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
 ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2") # Default model ID
 DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
 
-# Semaphore configuration for SMS notifications (replaces Twilio)
-SEMAPHORE_API_KEY = os.getenv("SEMAPHORE_API_KEY")
-SEMAPHORE_SENDER_NAME = os.getenv("SEMAPHORE_SENDER_NAME", "PawikanSentinel")
+# iprog configuration for SMS notifications (replaces Semaphore)
+IPROG_API_TOKEN = os.getenv("IPROG_API_TOKEN")
+IPROG_SENDER_NAME = os.getenv("IPROG_SENDER_NAME", "PawikanSentinel")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
 
 # Detection configuration
@@ -49,8 +49,8 @@ logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(threadName)s - %(le
 logger = logging.getLogger(__name__)
 # --- End Logging Setup ---
 
-# Initialize Semaphore SMS sender
-sms_sender = SemaphoreSMSSender()
+# Initialize iprog SMS sender
+sms_sender = IprogSMSSender()
 
 if not ROBOFLOW_API_KEY:
     logger.warning("ROBOFLOW_API_KEY not set in .env. Inference will not work.")

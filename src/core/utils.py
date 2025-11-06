@@ -30,7 +30,7 @@ elif SECRET_KEY == "0_y-2-1-3-5-7-9-b-d-f-h-j-l-n-p-r-t-v-x-z-A-C-E-G-I-K-M-O-Q-
     logger.critical("Using the default SECRET_KEY from .env file - THIS IS NOT SECURE! Please generate a new one.")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 120  # Extended from 30 minutes to 2 hours
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
