@@ -23,8 +23,14 @@ MAX_WORKERS = int(os.getenv("MAX_INFERENCE_WORKERS", "10"))
 
 # --- Logging Setup ---
 LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
-logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configure logging
+logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Apply sensitive data filter to prevent exposing secrets in logs
+from ..logging import setup_sensitive_data_logging
+setup_sensitive_data_logging()
 # --- End Logging Setup ---
 
 if not ROBOFLOW_API_KEY:

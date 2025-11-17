@@ -13,6 +13,42 @@
         {% endif %}
     </div>
 
+    <!-- System Status Indicator -->
+    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">System Status</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center p-3 rounded-lg border" id="docker-status">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 bg-gray-200">
+                    <i class="fas fa-circle text-gray-400 text-xs"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Docker Inference</p>
+                    <p class="text-xs text-gray-500" id="docker-status-text">Checking...</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center p-3 rounded-lg border" id="cameras-status">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 bg-gray-200">
+                    <i class="fas fa-circle text-gray-400 text-xs"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Cameras</p>
+                    <p class="text-xs text-gray-500" id="cameras-status-text">Checking...</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center p-3 rounded-lg border" id="inference-service-status">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 bg-gray-200">
+                    <i class="fas fa-circle text-gray-400 text-xs"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Inference Service</p>
+                    <p class="text-xs text-gray-500" id="inference-service-status-text">Checking...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
@@ -130,6 +166,120 @@
     let detectionsChart;
     let galleryImages = [];
     let currentImageIndex = 0;
+    
+    // Load system status
+    async function loadSystemStatus() {
+        try {
+            const response = await fetch('/api/system/status');
+            const status = await response.json();
+            
+            // Update Docker inference status
+            const dockerStatusDiv = document.getElementById('docker-status');
+            const dockerStatusText = document.getElementById('docker-status-text');
+            if (status.docker_inference) {
+                const statusInfo = status.docker_inference;
+                dockerStatusText.textContent = statusInfo.message;
+                
+                let statusClass = 'bg-gray-200';
+                let iconClass = 'text-gray-400';
+                let icon = 'fa-circle';
+                
+                if (statusInfo.status === 'running') {
+                    statusClass = 'bg-green-100';
+                    iconClass = 'text-green-500';
+                    icon = 'fa-check-circle';
+                } else if (statusInfo.status === 'stopped') {
+                    statusClass = 'bg-red-100';
+                    iconClass = 'text-red-500';
+                    icon = 'fa-times-circle';
+                } else if (statusInfo.status === 'error') {
+                    statusClass = 'bg-yellow-100';
+                    iconClass = 'text-yellow-500';
+                    icon = 'fa-exclamation-circle';
+                }
+                
+                dockerStatusDiv.className = `flex items-center p-3 rounded-lg border ${statusClass}`;
+                const iconElement = dockerStatusDiv.querySelector('i');
+                iconElement.className = `fas ${icon} ${iconClass} text-xs`;
+            }
+            
+            // Update cameras status
+            const camerasStatusDiv = document.getElementById('cameras-status');
+            const camerasStatusText = document.getElementById('cameras-status-text');
+            if (status.cameras) {
+                const statusInfo = status.cameras;
+                camerasStatusText.textContent = statusInfo.message;
+                
+                let statusClass = 'bg-gray-200';
+                let iconClass = 'text-gray-400';
+                let icon = 'fa-circle';
+                
+                if (statusInfo.status === 'running') {
+                    statusClass = 'bg-green-100';
+                    iconClass = 'text-green-500';
+                    icon = 'fa-check-circle';
+                } else if (statusInfo.status === 'stopped') {
+                    statusClass = 'bg-red-100';
+                    iconClass = 'text-red-500';
+                    icon = 'fa-times-circle';
+                } else if (statusInfo.status === 'error') {
+                    statusClass = 'bg-yellow-100';
+                    iconClass = 'text-yellow-500';
+                    icon = 'fa-exclamation-circle';
+                }
+                
+                camerasStatusDiv.className = `flex items-center p-3 rounded-lg border ${statusClass}`;
+                const iconElement = camerasStatusDiv.querySelector('i');
+                iconElement.className = `fas ${icon} ${iconClass} text-xs`;
+            }
+            
+            // Update inference service status
+            const inferenceServiceStatusDiv = document.getElementById('inference-service-status');
+            const inferenceServiceStatusText = document.getElementById('inference-service-status-text');
+            if (status.inference_service) {
+                const statusInfo = status.inference_service;
+                inferenceServiceStatusText.textContent = statusInfo.message;
+                
+                let statusClass = 'bg-gray-200';
+                let iconClass = 'text-gray-400';
+                let icon = 'fa-circle';
+                
+                if (statusInfo.status === 'running') {
+                    statusClass = 'bg-green-100';
+                    iconClass = 'text-green-500';
+                    icon = 'fa-check-circle';
+                } else if (statusInfo.status === 'stopped') {
+                    statusClass = 'bg-red-100';
+                    iconClass = 'text-red-500';
+                    icon = 'fa-times-circle';
+                } else if (statusInfo.status === 'error') {
+                    statusClass = 'bg-yellow-100';
+                    iconClass = 'text-yellow-500';
+                    icon = 'fa-exclamation-circle';
+                }
+                
+                inferenceServiceStatusDiv.className = `flex items-center p-3 rounded-lg border ${statusClass}`;
+                const iconElement = inferenceServiceStatusDiv.querySelector('i');
+                iconElement.className = `fas ${icon} ${iconClass} text-xs`;
+            }
+        } catch (error) {
+            console.error('Error loading system status:', error);
+            
+            // Update all status indicators to show error state
+            const statuses = ['docker-status', 'cameras-status', 'inference-service-status'];
+            const statusTexts = ['docker-status-text', 'cameras-status-text', 'inference-service-status-text'];
+            
+            statuses.forEach((statusId, index) => {
+                const statusDiv = document.getElementById(statusId);
+                const statusText = document.getElementById(statusTexts[index]);
+                
+                statusDiv.className = 'flex items-center p-3 rounded-lg border bg-yellow-100';
+                const iconElement = statusDiv.querySelector('i');
+                iconElement.className = 'fas fa-exclamation-circle text-yellow-500 text-xs';
+                statusText.textContent = 'Status check failed';
+            });
+        }
+    }
     
     // Load detection stats
     async function loadDetectionStats() {
@@ -413,6 +563,7 @@
 
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function() {
+        loadSystemStatus();
         loadDetectionStats();
         loadChartData('month');
         loadRecentDetections();
@@ -581,6 +732,7 @@
             
             // Perform all API calls in parallel
             Promise.allSettled([
+                loadSystemStatus(),
                 loadDetectionStats(),
                 loadChartData('month'),
                 loadRecentDetections(),
