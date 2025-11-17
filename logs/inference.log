@@ -1,0 +1,749 @@
+2025-11-06 14:19:24 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-06 14:19:24 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-06 14:19:24 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test).
+2025-11-06 14:19:24 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test)
+2025-11-06 14:19:24 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-06 14:19:24 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-06 14:19:24 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-06 14:19:24 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-06 14:19:27 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:19:37 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-06 14:19:37 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-06 14:19:37 - uvicorn.error - ERROR - Traceback (most recent call last):
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 78, in serve
+    await self.startup(sockets=sockets)
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/uvicorn/server.py", line 89, in startup
+    await self.lifespan.startup()
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/uvicorn/lifespan/on.py", line 54, in startup
+    await self.startup_event.wait()
+  File "/usr/lib/python3.11/asyncio/locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/starlette/routing.py", line 686, in lifespan
+    await receive()
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/uvicorn/lifespan/on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/queues.py", line 158, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+2025-11-06 14:20:54 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-06 14:20:54 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-06 14:20:54 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test).
+2025-11-06 14:20:54 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test)
+2025-11-06 14:20:57 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:21:38 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:21:50 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:22:03 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:22:14 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-06 14:22:14 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-06 14:22:14 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-06 14:22:14 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-06 14:22:16 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:22:16 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-06 14:22:16 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-06 14:23:31 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-06 14:23:31 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-06 14:23:31 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test).
+2025-11-06 14:23:31 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test)
+2025-11-06 14:23:33 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-06 14:23:33 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-06 14:23:33 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-06 14:23:33 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-06 14:23:34 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:23:41 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-06 14:23:41 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-06 14:23:41 - uvicorn.error - ERROR - Traceback (most recent call last):
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/starlette/routing.py", line 686, in lifespan
+    await receive()
+  File "/home/gio/PawikanSentinel/.venv/lib/python3.11/site-packages/uvicorn/lifespan/on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/queues.py", line 158, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+2025-11-06 14:30:22 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-06 14:30:22 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-06 14:30:22 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test).
+2025-11-06 14:30:22 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test)
+2025-11-06 14:30:27 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:31:00 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:31:14 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:31:26 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:31:31 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-06 14:31:31 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-06 14:31:31 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-06 14:31:31 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-06 14:31:39 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:31:39 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-06 14:31:39 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-06 14:37:16 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-06 14:37:16 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-06 14:37:16 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test).
+2025-11-06 14:37:16 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Test)
+2025-11-06 14:37:46 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:38:27 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:38:43 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:38:52 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:39:02 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 14:39:02 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:39:33 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:40:03 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:40:34 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:41:05 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:41:36 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:42:06 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:42:37 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:43:07 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:43:38 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:44:08 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:44:39 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:45:09 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:45:40 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 14:45:44 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 14:45:45 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:45:45 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-06 14:45:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:45:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-06 14:45:48 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:45:48 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-06 14:45:52 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:45:52 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-06 14:46:00 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:46:00 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-06 14:46:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:46:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:46:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:46:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:47:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:47:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:47:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:47:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:48:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:48:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:48:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:48:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:49:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:49:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:49:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:49:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:50:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:50:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:50:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:50:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:51:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:51:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:51:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:51:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:52:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:52:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:52:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:52:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:53:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:53:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:53:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:53:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:54:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:54:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:54:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:54:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:55:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:55:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:55:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:55:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:56:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:56:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:56:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:56:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:57:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:57:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:57:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:57:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:58:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:58:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:58:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:58:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:59:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:59:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 14:59:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 14:59:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:00:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:00:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:00:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:00:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:01:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:01:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:01:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:01:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:02:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:02:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:02:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:02:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:03:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:03:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:03:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:03:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:04:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:04:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:04:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:04:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:05:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:05:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:05:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:05:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:06:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:06:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:06:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:06:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:07:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:07:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:07:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:07:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:08:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:08:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:08:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:08:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:09:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:09:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:09:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:09:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:10:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:10:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:10:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:10:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:11:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:11:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:11:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:11:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:12:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:12:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:12:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:12:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:13:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:13:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:13:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:13:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:14:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:14:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:14:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:14:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:15:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:15:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:15:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:15:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:16:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:16:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:16:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:16:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:17:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:17:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:17:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:17:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:18:16 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:18:16 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:18:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:18:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:19:19 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:22:27 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:22:31 - src.inference.sms_sender - INFO - SMS sent to 09670663314 (normalized: 639670663314): Response {'status': 200, 'message': 'SMS successfully queued for delivery.', 'message_id': 'iSms-WH03GX', 'message_status_link': 'https://sms.iprogtech.com/api/v1/sms_messages/status?api_token=12345&message_id=iSms-WH03GX', 'message_status_request_mode': 'GET', 'sms_rate': 1.0}
+2025-11-06 15:22:31 - src.inference.inference - INFO - SMS sent successfully to 09670663314
+2025-11-06 15:23:12 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:23:12 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:23:12 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:28:21 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:28:21 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:28:21 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:28:40 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:28:40 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:28:40 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:29:01 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:29:01 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:29:01 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:29:19 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:29:19 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:29:19 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:29:39 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:29:39 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:29:39 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:30:01 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:30:01 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:30:01 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:30:19 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:30:19 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:30:19 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:30:38 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:30:38 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:30:38 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:30:56 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:30:56 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:30:56 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:31:15 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:31:15 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:31:15 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:32:55 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:32:57 - src.inference.sms_sender - INFO - SMS sent to 09670663314 (normalized: 639670663314): Response {'status': 200, 'message': 'SMS successfully queued for delivery.', 'message_id': 'iSms-SGQg8d', 'message_status_link': 'https://sms.iprogtech.com/api/v1/sms_messages/status?api_token=12345&message_id=iSms-SGQg8d', 'message_status_request_mode': 'GET', 'sms_rate': 1.0}
+2025-11-06 15:32:57 - src.inference.inference - INFO - SMS sent successfully to 09670663314
+2025-11-06 15:33:53 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:33:53 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:33:53 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:34:11 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:34:11 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:34:11 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:34:29 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:34:29 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:34:29 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:34:47 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:34:47 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:34:47 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:35:04 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:35:04 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:35:04 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:36:39 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:36:39 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:36:39 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:37:59 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:37:59 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:37:59 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:38:19 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:38:19 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:38:19 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:38:37 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:38:37 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:38:37 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:38:55 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:38:55 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:38:55 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:39:33 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:39:33 - src.inference.sms_sender - INFO - SMS cooldown active for 09670663314. Skipping notification.
+2025-11-06 15:39:33 - src.inference.inference - ERROR - Failed to send SMS to 09670663314
+2025-11-06 15:39:52 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:39:53 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:39:53 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-06 15:39:54 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:39:54 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-06 15:39:56 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:39:56 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-06 15:40:00 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:40:00 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-06 15:40:08 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:40:08 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-06 15:40:24 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:40:24 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:40:54 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:40:54 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:41:41 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:41:42 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:41:43 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:41:43 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-06 15:41:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:41:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-06 15:41:46 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:41:46 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-06 15:41:50 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:41:50 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-06 15:41:58 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:41:58 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-06 15:42:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:42:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:42:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:42:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:43:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:43:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:43:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:43:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:44:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:44:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:44:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:44:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:45:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:45:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:45:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:45:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:46:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:46:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:46:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:46:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:47:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:47:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:47:44 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:47:44 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:48:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 15:48:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 15:48:45 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:49:06 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:49:25 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:49:44 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:50:04 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:50:22 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:50:35 - src.inference.inference - INFO - Camera 3: Flushed 1 detections to DB.
+2025-11-06 15:51:35 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:52:06 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:52:36 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:53:07 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:53:37 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:54:08 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:54:39 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:55:10 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:55:40 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:56:11 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:56:41 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:57:12 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:57:42 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:58:13 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:58:43 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 15:59:14 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 15:59:44 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:00:15 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 16:00:45 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:01:16 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 16:01:46 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:02:17 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 16:02:47 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:03:18 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 16:03:48 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:04:19 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 16:04:49 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:05:20 - src.inference.inference - INFO - Camera 3: Successfully connected to RTSP stream
+2025-11-06 16:05:46 - src.inference.inference - WARNING - Camera 3: Failed to grab frame, attempting reconnect...
+2025-11-06 16:05:47 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:05:47 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-06 16:05:48 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:05:48 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-06 16:05:50 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:05:50 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-06 16:05:54 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:05:54 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-06 16:06:02 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:06:02 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-06 16:06:18 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:06:18 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-06 16:06:27 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-06 16:06:27 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-06 16:06:27 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-06 16:06:27 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-06 16:06:39 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-06 16:06:39 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-06 16:06:39 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel).
+2025-11-06 16:06:39 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel)
+2025-11-06 16:06:39 - src.inference.inference - INFO - Camera 4: Starting inference worker
+2025-11-06 16:06:39 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon).
+2025-11-06 16:06:39 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon)
+2025-11-06 16:06:39 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-06 16:06:39 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:39:28 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:39:28 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:39:28 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:39:28 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:39:32 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:39:32 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:39:32 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:39:32 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:39:37 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:39:37 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:39:37 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:39:37 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:39:44 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:39:44 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:39:45 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:39:45 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:39:55 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:39:55 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:40:01 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:40:01 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:40:14 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:40:14 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:40:31 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:40:31 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:40:47 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:40:47 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:41:01 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:41:01 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:41:20 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:41:20 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:41:31 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:41:31 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:41:53 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:41:53 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:42:01 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:42:01 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:42:26 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:42:26 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:42:31 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:42:31 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:42:59 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:42:59 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:43:01 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:43:01 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:43:32 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:43:32 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:43:32 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:43:32 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:44:06 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:44:06 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:44:06 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:44:06 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:44:32 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-17 08:44:32 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-17 08:44:32 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-17 08:44:32 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 4
+2025-11-17 08:44:32 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-17 08:44:32 - src.inference.inference - INFO - Camera 4: Stopping inference worker
+2025-11-17 08:44:32 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 4
+2025-11-17 08:44:36 - src.inference.inference - INFO - Camera 4: Inference worker stopped.
+2025-11-17 08:44:36 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-17 08:44:36 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-17 08:44:58 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-17 08:44:58 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-17 08:44:58 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel).
+2025-11-17 08:44:58 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel)
+2025-11-17 08:44:58 - src.inference.inference - INFO - Camera 4: Starting inference worker
+2025-11-17 08:44:58 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:44:58 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon).
+2025-11-17 08:44:58 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon)
+2025-11-17 08:44:58 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:45:01 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:45:01 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:45:01 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:45:01 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:45:05 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:45:05 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:45:05 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:45:05 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:45:10 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:45:10 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:45:10 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:45:10 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:45:17 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:45:17 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:45:18 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:45:18 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:45:28 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:45:28 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:45:34 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:45:34 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:45:47 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:45:47 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:46:04 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:46:04 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:46:20 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:46:20 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:46:34 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:46:34 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:46:53 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:46:53 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:47:04 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:47:04 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:47:26 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:47:26 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:47:34 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:47:34 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:47:59 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:47:59 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:48:04 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:48:04 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:48:32 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:48:32 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:48:34 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:48:34 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:49:05 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:49:05 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:49:05 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:49:05 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:49:39 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:49:39 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:49:39 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:49:39 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:50:12 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:50:12 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:50:12 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:50:12 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:50:45 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:50:45 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:50:45 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:50:45 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:51:18 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:51:18 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:51:18 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:51:18 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:51:48 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:51:48 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:51:51 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:51:51 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:52:18 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:52:18 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:52:24 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:52:24 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:52:48 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:52:48 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:52:57 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:52:57 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:53:18 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:53:18 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:53:30 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:53:30 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:53:40 - uvicorn.error - WARNING - StatReload detected changes in 'api/index.py'. Reloading...
+2025-11-17 08:53:40 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-17 08:53:40 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-17 08:53:40 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-17 08:53:40 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 4
+2025-11-17 08:53:40 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-17 08:53:40 - src.inference.inference - INFO - Camera 4: Stopping inference worker
+2025-11-17 08:53:40 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 4
+2025-11-17 08:53:48 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-17 08:54:00 - src.inference.inference - INFO - Camera 4: Inference worker stopped.
+2025-11-17 08:54:00 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-17 08:54:06 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-17 08:54:06 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-17 08:54:06 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:54:06 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:54:06 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel).
+2025-11-17 08:54:06 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel)
+2025-11-17 08:54:06 - src.inference.inference - INFO - Camera 4: Starting inference worker
+2025-11-17 08:54:06 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon).
+2025-11-17 08:54:06 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon)
+2025-11-17 08:54:09 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:54:09 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:54:09 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:54:09 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:54:13 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:54:13 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:54:13 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:54:13 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:54:18 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:54:18 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:54:18 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:54:18 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:54:25 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:54:25 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:54:26 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:54:26 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:54:36 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:54:36 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:54:42 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:54:42 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:54:55 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:54:55 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:55:12 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:55:12 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:55:28 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:55:28 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:55:42 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:55:42 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:56:01 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:56:01 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:56:12 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:56:12 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:56:34 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:56:34 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:56:42 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:56:42 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:57:08 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:57:08 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:57:12 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:57:12 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:57:41 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:57:41 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:57:42 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:57:42 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:58:14 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:58:14 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:58:14 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:58:14 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:58:47 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:58:47 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:58:47 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:58:47 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 08:59:00 - uvicorn.error - WARNING - StatReload detected changes in 'api/index.py'. Reloading...
+2025-11-17 08:59:00 - src.inference.inference_service - INFO - Inference Service: Shutting down inference workers...
+2025-11-17 08:59:00 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 3
+2025-11-17 08:59:00 - src.inference.inference - INFO - Camera 3: Stopping inference worker
+2025-11-17 08:59:00 - src.inference.inference_service - INFO - Inference Service: Stopping worker for camera 4
+2025-11-17 08:59:00 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 3
+2025-11-17 08:59:00 - src.inference.inference - INFO - Camera 4: Stopping inference worker
+2025-11-17 08:59:00 - src.inference.inference_service - INFO - Inference Service: Stopped worker for camera 4
+2025-11-17 08:59:17 - src.inference.inference - INFO - Camera 4: Inference worker stopped.
+2025-11-17 08:59:17 - src.inference.inference - INFO - Camera 3: Inference worker stopped.
+2025-11-17 08:59:17 - src.inference.inference_service - INFO - Inference Service: Shutdown complete.
+2025-11-17 08:59:23 - src.inference.inference_service - INFO - Inference Service: Initializing with thread pool executor
+2025-11-17 08:59:23 - src.inference.inference - INFO - Camera 3: Starting inference worker
+2025-11-17 08:59:23 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel).
+2025-11-17 08:59:23 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 3 (Awesome Hotel)
+2025-11-17 08:59:23 - src.inference.inference - INFO - Camera 4: Starting inference worker
+2025-11-17 08:59:23 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:59:23 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon).
+2025-11-17 08:59:23 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:59:23 - src.inference.inference_service - INFO - Inference Service: Started worker for camera 4 (Balkon)
+2025-11-17 08:59:26 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:59:26 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:59:26 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 1s
+2025-11-17 08:59:26 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:59:30 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:59:30 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 2s
+2025-11-17 08:59:30 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:59:30 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:59:35 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:59:35 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 4s
+2025-11-17 08:59:35 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:59:35 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:59:42 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:59:42 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 8s
+2025-11-17 08:59:43 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:59:43 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:59:53 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 08:59:53 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 16s
+2025-11-17 08:59:59 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 08:59:59 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:00:12 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:00:12 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:00:29 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:00:29 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:00:45 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:00:45 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:00:59 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:00:59 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:01:18 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:01:18 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:01:29 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:01:29 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:01:51 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:01:51 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:01:59 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:01:59 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:02:24 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:02:24 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:02:29 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:02:29 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:02:57 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:02:57 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:02:59 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:02:59 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:03:30 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:03:30 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:03:30 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:03:30 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:04:03 - src.inference.inference - ERROR - Camera 4: Cannot open RTSP stream at rtsp://admin:9_to_32_Characters@192.168.100.146:554/stream2
+2025-11-17 09:04:03 - src.inference.inference - WARNING - Camera 4: Failed to connect to RTSP stream, retrying in 30s
+2025-11-17 09:04:03 - src.inference.inference - ERROR - Camera 3: Cannot open RTSP stream at rtsp://localhost:8554/test
+2025-11-17 09:04:03 - src.inference.inference - WARNING - Camera 3: Failed to connect to RTSP stream, retrying in 30s

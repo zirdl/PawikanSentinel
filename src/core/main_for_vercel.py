@@ -7,7 +7,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import WebSocket
-from fastapi import WebSocket
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import httpx
@@ -44,8 +43,13 @@ from slowapi.errors import RateLimitExceeded
 # Load environment variables
 load_dotenv()
 
-# Configuration
-DATABASE_PATH = "pawikan.db"
+# Configuration - use in-memory database for Vercel or temporary file
+DATABASE_PATH = os.getenv("DATABASE_PATH", "pawikan.db")
+if os.getenv("VERCEL_ENV"):  # Check if running on Vercel
+    DATABASE_PATH = ":memory:"  # Use in-memory database on Vercel
+else:
+    DATABASE_PATH = "pawikan.db"  # Use file-based database locally
+
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", secrets.token_hex(32))
 CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY", secrets.token_hex(16))
@@ -79,7 +83,7 @@ app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET_KEY, max_age=720
 class CacheControlMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
-        
+
         # Apply cache control headers to authenticated pages only
         if hasattr(request, 'session') and request.session.get('csrf_token'):
             # For authenticated requests, prevent caching of sensitive pages
@@ -91,7 +95,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
-        
+
         return response
 
 # Add the cache control middleware
@@ -106,13 +110,13 @@ detections_dir = os.getenv("DETECTIONS_DIR", "detections")
 if not os.path.isabs(detections_dir):
     detections_dir = os.path.abspath(detections_dir)
 
-app.mount("/detections", StaticFiles(directory=detections_dir), name="detections")
-app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
+# Mount static file directories - don't mount them here for Vercel deployment since api/index.py handles it
+# app.mount("/detections", StaticFiles(directory=detections_dir), name="detections")
+# app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
+
+# Vercel deployment doesn't need these mounted here since they're mounted in api/index.py
+
 templates = Jinja2Templates(directory="src/web/templates")
-
-
-
-
 
 # Include API routers
 from src.api import auth, cameras, contacts, detections, analytics
@@ -126,13 +130,21 @@ app.include_router(analytics.router)
 
 # Database helper
 def get_db_connection():
-    conn = sqlite3.connect(DATABASE_PATH)
+    if DATABASE_PATH == ":memory:":
+        conn = sqlite3.connect(DATABASE_PATH)
+    else:
+        conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 # Create tables if they don't exist
 def create_tables():
-    conn = get_db_connection()
+    if DATABASE_PATH == ":memory:":
+        # For in-memory database, always create tables
+        conn = sqlite3.connect(":memory:")
+    else:
+        conn = get_db_connection()
+    
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -141,7 +153,7 @@ def create_tables():
             role TEXT NOT NULL DEFAULT 'user'
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS cameras (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,7 +162,7 @@ def create_tables():
             active BOOLEAN DEFAULT TRUE
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS contacts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -159,7 +171,7 @@ def create_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS detections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,7 +183,32 @@ def create_tables():
             FOREIGN KEY (camera_id) REFERENCES cameras (id)
         )
     """)
-    
+
+    conn.commit()
+    conn.close()
+
+# For Vercel, create initial tables and add default admin user in startup
+@app.on_event("startup")
+async def startup_event():
+    global main_event_loop
+    main_event_loop = asyncio.get_running_loop()
+    print(f"Main event loop stored in startup: {main_event_loop}, running: {main_event_loop.is_running()}")
+
+    create_tables()
+
+    # Ensure the admin user exists - create if not present
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
+    if not user:
+        # Create default admin user if it doesn't exist
+        hashed_password = get_password_hash("admin")
+        conn.execute(
+            "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
+            ("admin", hashed_password, "admin")
+        )
+        conn.commit()
+    # Remove any non-admin users to enforce single-account policy
+    conn.execute("DELETE FROM users WHERE username != ?", ("admin",))
     conn.commit()
     conn.close()
 
@@ -179,35 +216,35 @@ def create_tables():
 def get_detection_stats():
     """Get detection statistics for the dashboard cards"""
     conn = get_db_connection()
-    
+
     # Total detections
     total = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
-    
+
     # Today's detections
     today = conn.execute("""
-        SELECT COUNT(*) as count FROM detections 
+        SELECT COUNT(*) as count FROM detections
         WHERE DATE(timestamp) = DATE('now')
     """).fetchone()["count"]
-    
+
     # This month's detections
     this_month = conn.execute("""
-        SELECT COUNT(*) as count FROM detections 
+        SELECT COUNT(*) as count FROM detections
         WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
     """).fetchone()["count"]
-    
+
     conn.close()
     return {"total": total, "today": today, "this_month": this_month}
 
 def get_detection_chart_data(period="month", month=None):
     """Get detection data for chart visualization"""
     conn = get_db_connection()
-    
+
     if period == "month":
         if month:
             # Get daily counts for a specific month
             data = conn.execute("""
-                SELECT DATE(timestamp) as date, COUNT(*) as count 
-                FROM detections 
+                SELECT DATE(timestamp) as date, COUNT(*) as count
+                FROM detections
                 WHERE strftime('%Y-%m', timestamp) = ?
                 GROUP BY DATE(timestamp)
                 ORDER BY date
@@ -215,8 +252,8 @@ def get_detection_chart_data(period="month", month=None):
         else:
             # Get daily counts for the current month
             data = conn.execute("""
-                SELECT DATE(timestamp) as date, COUNT(*) as count 
-                FROM detections 
+                SELECT DATE(timestamp) as date, COUNT(*) as count
+                FROM detections
                 WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
                 GROUP BY DATE(timestamp)
                 ORDER BY date
@@ -224,12 +261,12 @@ def get_detection_chart_data(period="month", month=None):
     else:
         # Get monthly counts for all time
         data = conn.execute("""
-            SELECT strftime('%Y-%m', timestamp) as month, COUNT(*) as count 
-            FROM detections 
+            SELECT strftime('%Y-%m', timestamp) as month, COUNT(*) as count
+            FROM detections
             GROUP BY strftime('%Y-%m', timestamp)
             ORDER BY month
         """).fetchall()
-    
+
     conn.close()
     return [dict(row) for row in data]
 
@@ -285,7 +322,7 @@ async def verify_csrf_token(request: Request):
         session_token = serializer.loads(form_csrf_token, max_age=3600)
         if session_token != request.session.get("csrf_token"):
             raise HTTPException(status_code=403, detail="Invalid CSRF token")
-            
+
         # Regenerate CSRF token after successful validation
         request.session["csrf_token"] = secrets.token_hex(16)
     except SignatureExpired:
@@ -299,74 +336,27 @@ async def verify_csrf_token(request: Request):
 async def get_current_user_from_cookie(access_token: str = Cookie(None)):
     if not access_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     payload = decode_access_token(access_token)
     if payload is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     username: str = payload.get("sub")
     if username is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     return username
 
 async def get_current_user_for_pages(access_token: str = Cookie(None)):
     if not access_token:
         return None
-    
+
     payload = decode_access_token(access_token)
     if payload is None:
         return None
-    
+
     username: str = payload.get("sub")
     return username
-
-# Startup event to create tables
-@app.on_event("startup")
-async def startup_event():
-    # Store the main event loop
-    global main_event_loop
-    main_event_loop = asyncio.get_running_loop()
-    print(f"Main event loop stored in startup: {main_event_loop}, running: {main_event_loop.is_running()}")
-    
-    create_tables()
-    
-    # Ensure only the admin user exists - remove any non-admin users
-    conn = get_db_connection()
-    # Check if admin user exists
-    user = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
-    if not user:
-        # Create default admin user if it doesn't exist
-        hashed_password = get_password_hash("admin")
-        conn.execute(
-            "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
-            ("admin", hashed_password, "admin")
-        )
-        conn.commit()
-    # Remove any non-admin users to enforce single-account policy
-    conn.execute("DELETE FROM users WHERE username != ?", ("admin",))
-    conn.commit()
-    conn.close()
-        
-    # """ # Add some sample detection data for testing
-    # detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
-    # if detection_count == 0:
-        # Add sample detections for the past 30 days
-        # from datetime import datetime, timedelta
-        
-        # for i in range(30):
-            # date = datetime.now() - timedelta(days=i)
-            # Add random number of detections per day (0-10)
-            # for j in range(random.randint(0, 10)):
-                # camera_id = random.randint(1, 3)  # Assuming we have up to 3 cameras
-                # confidence = round(random.uniform(0.7, 0.99), 2)
-                # conn.execute(
-                    # "INSERT INTO detections (camera_id, timestamp, class, confidence) VALUES (?, ?, ?, ?)",
-                    # (camera_id, date, "pawikan", confidence)
-                # )
-        # conn.commit()
-    # conn.close() 
-    # """
 
 # Routes
 
@@ -379,11 +369,11 @@ async def read_root(request: Request):
 async def cameras_page(request: Request, username: str = Depends(get_current_user_for_pages)):
     if not username:
         return RedirectResponse(url="/login?next=/cameras")
-    
+
     csrf_token = generate_csrf_token(request)
     response = templates.TemplateResponse("cameras.html", {
-        "request": request, 
-        "csrf_token": csrf_token, 
+        "request": request,
+        "csrf_token": csrf_token,
         "username": username
     })
     # Add cache control headers to prevent caching of authenticated pages
@@ -396,11 +386,11 @@ async def cameras_page(request: Request, username: str = Depends(get_current_use
 async def dashboard_page(request: Request, username: str = Depends(get_current_user_for_pages)):
     if not username:
         return RedirectResponse(url="/login?next=/dashboard")
-    
+
     csrf_token = generate_csrf_token(request)
     response = templates.TemplateResponse("dashboard.html", {
-        "request": request, 
-        "csrf_token": csrf_token, 
+        "request": request,
+        "csrf_token": csrf_token,
         "username": username
     })
     # Add cache control headers to prevent caching of authenticated pages
@@ -413,11 +403,11 @@ async def dashboard_page(request: Request, username: str = Depends(get_current_u
 async def settings_page(request: Request, username: str = Depends(get_current_user_for_pages)):
     if not username:
         return RedirectResponse(url="/login?next=/settings")
-    
+
     csrf_token = generate_csrf_token(request)
     response = templates.TemplateResponse("settings.html", {
-        "request": request, 
-        "csrf_token": csrf_token, 
+        "request": request,
+        "csrf_token": csrf_token,
         "username": username
     })
     # Add cache control headers to prevent caching of authenticated pages
@@ -459,57 +449,57 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
     # Get detection images from the specified directory
     import os
     import glob
-    
+
     detection_dir = os.getenv("DETECTIONS_DIR", "detections")
     # Ensure we're using an absolute path
     if not os.path.isabs(detection_dir):
         detection_dir = os.path.abspath(detection_dir)
-    
+
     images = []
-    
+
     if os.path.exists(detection_dir):
         # Get all image files in the directory and subdirectories
         image_patterns = [
             os.path.join(detection_dir, "**", "*.jpg"),
-            os.path.join(detection_dir, "**", "*.jpeg"), 
+            os.path.join(detection_dir, "**", "*.jpeg"),
             os.path.join(detection_dir, "**", "*.png"),
             os.path.join(detection_dir, "**", "*.gif"),
             os.path.join(detection_dir, "**", "*.webp")
         ]
-        
+
         image_files = []
         for pattern in image_patterns:
             image_files.extend(glob.glob(pattern, recursive=True))
-        
+
         # Sort by modification time (newest first)
         image_files.sort(key=os.path.getmtime, reverse=True)
-        
+
         # Get the 24 most recent images for 6x4 grid
         for image_file in image_files[:24]:
             # Get file info
             stat = os.stat(image_file)
-            
+
             # Extract detection ID or camera ID from filename or path to get camera location
             image_filename = os.path.basename(image_file)
-            
+
             # Try to find corresponding detection record in database to get camera info
             conn = get_db_connection()
             c = conn.cursor()
             # Look for the image in the detections table by filename
             c.execute("""
-                SELECT d.camera_id, c.name as camera_name 
-                FROM detections d 
-                LEFT JOIN cameras c ON d.camera_id = c.id 
+                SELECT d.camera_id, c.name as camera_name
+                FROM detections d
+                LEFT JOIN cameras c ON d.camera_id = c.id
                 WHERE d.image_path LIKE ?
             """, (f'%{image_filename}',))
-            
+
             detection_record = c.fetchone()
             conn.close()
-            
+
             camera_name = "Unknown Location"
             if detection_record:
                 camera_name = detection_record["camera_name"] or f"Camera {detection_record['camera_id']}"
-            
+
             # Create path for the static file mount point
             images.append({
                 "filename": image_filename,
@@ -518,7 +508,7 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
                 "modified": stat.st_mtime,
                 "camera_name": camera_name  # Add camera location information
             })
-    
+
     response = JSONResponse(images)
     # Add cache control headers to prevent caching of sensitive API responses
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
@@ -532,9 +522,9 @@ async def login_page(request: Request):
     registered = request.query_params.get("registered") == "true"
     next_url = request.query_params.get("next", "/dashboard")
     return templates.TemplateResponse("login.html", {
-        "request": request, 
-        "csrf_token": csrf_token, 
-        "registered": registered, 
+        "request": request,
+        "csrf_token": csrf_token,
+        "registered": registered,
         "next_url": next_url
     })
 
@@ -546,45 +536,45 @@ async def login_user(request: Request):
     password = form.get("password")
     csrf_token = form.get("csrf_token")
     next_url = request.query_params.get("next", "/dashboard")
-    
+
     # Verify CSRF token
     try:
         await verify_csrf_token(request)
     except HTTPException:
         return templates.TemplateResponse("login.html", {
-            "request": request, 
-            "error": "Invalid CSRF token", 
+            "request": request,
+            "error": "Invalid CSRF token",
             "csrf_token": generate_csrf_token(request),
             "next_url": next_url
         })
-    
+
     # Authenticate user
     conn = get_db_connection()
     user = conn.execute("SELECT id, username, hashed_password FROM users WHERE username = ?", (username,)).fetchone()
     conn.close()
-    
+
     if not user or not verify_password(password, user["hashed_password"]):
         return templates.TemplateResponse("login.html", {
-            "request": request, 
-            "error": "Invalid username or password", 
+            "request": request,
+            "error": "Invalid username or password",
             "csrf_token": generate_csrf_token(request),
             "next_url": next_url
         })
-    
+
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user["username"]}, 
+        data={"sub": user["username"]},
         expires_delta=access_token_expires
     )
-    
+
     # Redirect with token cookie
     response = RedirectResponse(url=next_url, status_code=302)
     response.set_cookie(
-        key="access_token", 
-        value=access_token, 
-        httponly=True, 
-        samesite="lax", 
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
         secure=False  # Set to True in production with HTTPS
     )
     return response
@@ -598,29 +588,29 @@ async def change_password(request: Request, username: str = Depends(get_current_
     current_password = form.get("current_password")
     new_password = form.get("new_password")
     confirm_new_password = form.get("confirm_new_password")
-    
+
     # Verify current password
     conn = get_db_connection()
     user = conn.execute("SELECT id, hashed_password FROM users WHERE username = ?", (username,)).fetchone()
     conn.close()
-    
+
     if not user or not verify_password(current_password, user["hashed_password"]):
         return JSONResponse({"error": "Current password is incorrect"}, status_code=400)
-    
+
     # Validate new password
     if not new_password or len(new_password) < 8:
         return JSONResponse({"error": "New password must be at least 8 characters long"}, status_code=400)
-    
+
     if new_password != confirm_new_password:
         return JSONResponse({"error": "New passwords do not match"}, status_code=400)
-    
+
     # Update password
     hashed_password = get_password_hash(new_password)
     conn = get_db_connection()
     conn.execute("UPDATE users SET hashed_password = ? WHERE id = ?", (hashed_password, user["id"]))
     conn.commit()
     conn.close()
-    
+
     return JSONResponse({"message": "Password changed successfully"})
 
 @app.post("/change-username")
@@ -628,44 +618,44 @@ async def change_username(request: Request, current_username: str = Depends(get_
     form = await request.form()
     current_password = form.get("current_password")
     new_username = form.get("new_username")
-    
+
     # Verify current password
     conn = get_db_connection()
     user = conn.execute("SELECT id, hashed_password FROM users WHERE username = ?", (current_username,)).fetchone()
-    
+
     if not user or not verify_password(current_password, user["hashed_password"]):
         conn.close()
         return JSONResponse({"error": "Current password is incorrect"}, status_code=400)
-    
+
     # Validate new username
     if not new_username or len(new_username) < 3 or len(new_username) > 30:
         conn.close()
         return JSONResponse({"error": "Username must be between 3 and 30 characters"}, status_code=400)
-    
+
     # Check if username is already taken (should not happen with single account but let's be safe)
     existing_user = conn.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user["id"])).fetchone()
     if existing_user:
         conn.close()
         return JSONResponse({"error": "Username is already taken"}, status_code=400)
-    
+
     # Update username
     conn.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, user["id"]))
     conn.commit()
     conn.close()
-    
+
     # Create new access token with new username
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": new_username}, 
+        data={"sub": new_username},
         expires_delta=access_token_expires
     )
-    
+
     response = JSONResponse({"message": "Username changed successfully"})
     response.set_cookie(
-        key="access_token", 
-        value=access_token, 
-        httponly=True, 
-        samesite="lax", 
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
         secure=False
     )
     return response
@@ -688,7 +678,7 @@ async def get_camera_list(request: Request, username: str = Depends(get_current_
     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
     conn.close()
     response = templates.TemplateResponse("_camera_list.html", {
-        "request": request, 
+        "request": request,
         "cameras": [dict(camera) for camera in cameras]
     })
     # Add cache control headers to prevent caching of sensitive API responses
@@ -701,7 +691,7 @@ async def get_camera_list(request: Request, username: str = Depends(get_current_
 async def get_camera_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
     csrf_token = generate_csrf_token(request)
     response = templates.TemplateResponse("_camera_form.html", {
-        "request": request, 
+        "request": request,
         "csrf_token": csrf_token
     })
     # Add cache control headers to prevent caching of sensitive API responses
@@ -715,13 +705,13 @@ async def get_edit_camera_form(request: Request, camera_id: int, username: str =
     conn = get_db_connection()
     camera = conn.execute("SELECT id, name, rtsp_url, active FROM cameras WHERE id = ?", (camera_id,)).fetchone()
     conn.close()
-    
+
     if camera is None:
         raise HTTPException(status_code=404, detail="Camera not found")
-    
+
     response = templates.TemplateResponse("_camera_form.html", {
-        "request": request, 
-        "camera": dict(camera), 
+        "request": request,
+        "camera": dict(camera),
         "csrf_token": generate_csrf_token(request)
     })
     # Add cache control headers to prevent caching of sensitive API responses
@@ -741,7 +731,7 @@ async def add_or_update_camera(
     name = form.get("name")
     rtsp_url = form.get("rtsp_url")
     active = form.get("active") == "on"
-    
+
     conn = get_db_connection()
     if camera_id:
         # Update existing camera
@@ -757,17 +747,17 @@ async def add_or_update_camera(
             (name, rtsp_url, active)
         )
         message = f"Camera '{name}' added successfully!"
-    
+
     conn.commit()
     conn.close()
-    
+
     # Return updated camera list
     conn = get_db_connection()
     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
     conn.close()
-    
+
     response = templates.TemplateResponse("_camera_list.html", {
-        "request": request, 
+        "request": request,
         "cameras": [dict(camera) for camera in cameras],
         "message": message
     })
@@ -789,14 +779,14 @@ async def delete_camera_htmx(
     conn.execute("DELETE FROM cameras WHERE id = ?", (camera_id,))
     conn.commit()
     conn.close()
-    
+
     # Return updated camera list
     conn = get_db_connection()
     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
     conn.close()
-    
+
     response = templates.TemplateResponse("_camera_list.html", {
-        "request": request, 
+        "request": request,
         "cameras": [dict(camera) for camera in cameras],
         "message": "Camera deleted successfully!"
     })
@@ -813,7 +803,7 @@ async def get_contact_list(request: Request, username: str = Depends(get_current
     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
     conn.close()
     response = templates.TemplateResponse("_contact_list.html", {
-        "request": request, 
+        "request": request,
         "contacts": [dict(contact) for contact in contacts]
     })
     # Add cache control headers to prevent caching of sensitive API responses
@@ -826,7 +816,7 @@ async def get_contact_list(request: Request, username: str = Depends(get_current
 async def get_contact_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
     csrf_token = generate_csrf_token(request)
     response = templates.TemplateResponse("_contact_form.html", {
-        "request": request, 
+        "request": request,
         "csrf_token": csrf_token
     })
     # Add cache control headers to prevent caching of sensitive API responses
@@ -840,13 +830,13 @@ async def get_edit_contact_form(request: Request, contact_id: int, username: str
     conn = get_db_connection()
     contact = conn.execute("SELECT id, name, phone FROM contacts WHERE id = ?", (contact_id,)).fetchone()
     conn.close()
-    
+
     if contact is None:
         raise HTTPException(status_code=404, detail="Contact not found")
-    
+
     response = templates.TemplateResponse("_contact_form.html", {
-        "request": request, 
-        "contact": dict(contact), 
+        "request": request,
+        "contact": dict(contact),
         "csrf_token": generate_csrf_token(request)
     })
     # Add cache control headers to prevent caching of sensitive API responses
@@ -865,7 +855,7 @@ async def add_or_update_contact(
     contact_id = form.get("contact_id")
     name = form.get("name")
     phone = form.get("phone")
-    
+
     conn = get_db_connection()
     if contact_id:
         # Update existing contact
@@ -881,17 +871,17 @@ async def add_or_update_contact(
             (name, phone)
         )
         message = f"Contact '{name}' added successfully!"
-    
+
     conn.commit()
     conn.close()
-    
+
     # Return updated contact list
     conn = get_db_connection()
     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
     conn.close()
-    
+
     response = templates.TemplateResponse("_contact_list.html", {
-        "request": request, 
+        "request": request,
         "contacts": [dict(contact) for contact in contacts],
         "message": message
     })
@@ -913,14 +903,14 @@ async def delete_contact_htmx(
     conn.execute("DELETE FROM contacts WHERE id = ?", (contact_id,))
     conn.commit()
     conn.close()
-    
+
     # Return updated contact list
     conn = get_db_connection()
     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
     conn.close()
-    
+
     response = templates.TemplateResponse("_contact_list.html", {
-        "request": request, 
+        "request": request,
         "contacts": [dict(contact) for contact in contacts],
         "message": "Contact deleted successfully!"
     })
@@ -957,24 +947,24 @@ async def update_config(
     """Update configuration values"""
     try:
         data = await request.json()
-        
+
         # Get current config values with defaults
         confidence_threshold = data.get("confidence_threshold", "80")
         frame_skip = data.get("frame_skip", "20")
         sms_cooldown = data.get("sms_cooldown", "10")
-        
+
         # Update .env file
         env_path = ".env"
         if os.path.exists(env_path):
             with open(env_path, "r") as file:
                 lines = file.readlines()
-            
+
             # Update or add the configuration values
             updated_lines = []
             confidence_found = False
             frame_skip_found = False
             sms_cooldown_found = False
-            
+
             for line in lines:
                 if line.startswith("CONFIDENCE_THRESHOLD="):
                     updated_lines.append(f"CONFIDENCE_THRESHOLD={confidence_threshold}\n")
@@ -987,7 +977,7 @@ async def update_config(
                     sms_cooldown_found = True
                 else:
                     updated_lines.append(line)
-            
+
             # Add missing config values if not found
             if not confidence_found:
                 updated_lines.append(f"CONFIDENCE_THRESHOLD={confidence_threshold}\n")
@@ -995,18 +985,18 @@ async def update_config(
                 updated_lines.append(f"FRAME_SKIP={frame_skip}\n")
             if not sms_cooldown_found:
                 updated_lines.append(f"SMS_NOTIFICATION_COOLDOWN={sms_cooldown}\n")
-            
+
             # Write updated config back to file
             with open(env_path, "w") as file:
                 file.writelines(updated_lines)
-            
+
             # Reload environment variables
             load_dotenv(env_path, override=True)
-            
+
             return JSONResponse({"message": "Configuration updated successfully!"})
         else:
             return JSONResponse({"error": "Configuration file not found"}, status_code=500)
-            
+
     except Exception as e:
         return JSONResponse({"error": f"Failed to update configuration: {str(e)}"}, status_code=500)
 
@@ -1017,9 +1007,9 @@ async def get_system_status(username: str = Depends(get_current_user_from_cookie
     """Get the status of all system components"""
     import subprocess
     import json
-    
+
     system_status = {}
-    
+
     # Check Docker inference service status (on port 9001)
     try:
         # Try to make an HTTP request to 0.0.0.0:9001 to confirm it's accessible
@@ -1034,7 +1024,7 @@ async def get_system_status(username: str = Depends(get_current_user_from_cookie
     except requests.RequestException:
         # If direct HTTP request fails, try alternate method using curl via subprocess
         try:
-            curl_result = subprocess.run(['curl', '-s', '-f', 'http://0.0.0.0:9001'], 
+            curl_result = subprocess.run(['curl', '-s', '-f', 'http://0.0.0.0:9001'],
                                          capture_output=True, text=True, timeout=10)
             if curl_result.returncode == 0:
                 system_status['docker_inference'] = {
@@ -1067,13 +1057,13 @@ async def get_system_status(username: str = Depends(get_current_user_from_cookie
             'status': 'stopped',
             'message': 'Not accessible'
         }
-    
+
     # Check camera status (check if there are active cameras in the database)
     try:
         conn = get_db_connection()
         active_cameras = conn.execute("SELECT COUNT(*) as count FROM cameras WHERE active = 1").fetchone()["count"]
         conn.close()
-        
+
         if active_cameras > 0:
             # Try to verify if cameras are accessible (basic check)
             system_status['cameras'] = {
@@ -1092,10 +1082,10 @@ async def get_system_status(username: str = Depends(get_current_user_from_cookie
             'status': 'error',
             'message': 'Error'
         }
-    
+
     # Check inference service status (systemd)
     try:
-        result = subprocess.run(['systemctl', 'is-active', 'pawikan-inference.service'], 
+        result = subprocess.run(['systemctl', 'is-active', 'pawikan-inference.service'],
                                 capture_output=True, text=True, timeout=10)
         if result.returncode == 0 and result.stdout.strip() == 'active':
             system_status['inference_service'] = {
@@ -1109,15 +1099,15 @@ async def get_system_status(username: str = Depends(get_current_user_from_cookie
             }
     except subprocess.TimeoutExpired:
         system_status['inference_service'] = {
-            'status': 'error',
-            'message': 'Timeout'
+                'status': 'error',
+                'message': 'Timeout'
         }
     except Exception as e:
         system_status['inference_service'] = {
-            'status': 'error',
-            'message': 'Error'
+                'status': 'error',
+                'message': 'Error'
         }
-    
+
     response = JSONResponse(system_status)
     # Add cache control headers to prevent caching of sensitive API responses
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
@@ -1138,12 +1128,12 @@ async def create_backup(
         # Create backups directory if it doesn't exist
         backups_dir = Path("backups")
         backups_dir.mkdir(exist_ok=True)
-        
+
         # Generate backup filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_filename = f"pawikan_backup_{timestamp}.zip"
         backup_path = backups_dir / backup_filename
-        
+
         # Files to include in backup
         files_to_backup = [
             ".env",
@@ -1152,13 +1142,13 @@ async def create_backup(
             "requirements.txt",
             "pyproject.toml"
         ]
-        
+
         # Create zip file
         with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for file_path in files_to_backup:
                 if os.path.exists(file_path):
                     zipf.write(file_path)
-            
+
             # Add detections directory if it exists
             if os.path.exists("detections"):
                 for root, dirs, files in os.walk("detections"):
@@ -1166,7 +1156,7 @@ async def create_backup(
                         file_path = os.path.join(root, file)
                         arc_name = os.path.relpath(file_path, ".")
                         zipf.write(file_path, arc_name)
-            
+
             # Add any other important directories
             important_dirs = ["deployments", "docs"]
             for dir_name in important_dirs:
@@ -1176,7 +1166,7 @@ async def create_backup(
                             file_path = os.path.join(root, file)
                             arc_name = os.path.relpath(file_path, ".")
                             zipf.write(file_path, arc_name)
-        
+
         response = JSONResponse({
             "message": f"Backup created successfully: {backup_filename}",
             "filename": backup_filename
@@ -1186,7 +1176,7 @@ async def create_backup(
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
-        
+
     except Exception as e:
         response = JSONResponse({"error": f"Failed to create backup: {str(e)}"}, status_code=500)
         # Add cache control headers to prevent caching of sensitive API responses
@@ -1211,10 +1201,10 @@ async def get_backup_history(
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
             return response
-        
+
         backup_files = list(backups_dir.glob("*.zip"))
         backup_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-        
+
         backups = []
         for backup_file in backup_files[:10]:  # Limit to 10 most recent backups
             stat = backup_file.stat()
@@ -1223,14 +1213,14 @@ async def get_backup_history(
                 "timestamp": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
                 "size": format_file_size(stat.st_size)
             })
-        
+
         response = JSONResponse({"backups": backups})
         # Add cache control headers to prevent caching of sensitive API responses
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
-        
+
     except Exception as e:
         response = JSONResponse({"error": f"Failed to retrieve backup history: {str(e)}"}, status_code=500)
         # Add cache control headers to prevent caching of sensitive API responses
@@ -1244,14 +1234,11 @@ def format_file_size(size_bytes):
     """Format file size in human readable format"""
     if size_bytes == 0:
         return "0 B"
-    
+
     size_names = ["B", "KB", "MB", "GB"]
     i = 0
     while size_bytes >= 1024 and i < len(size_names) - 1:
         size_bytes /= 1024.0
         i += 1
-    
+
     return f"{size_bytes:.1f} {size_names[i]}"
-
-
-
