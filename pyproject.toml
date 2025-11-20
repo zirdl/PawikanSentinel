@@ -4,20 +4,19 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-
-[project.dependencies]
-# Web application dependencies (for Vercel)
-fastapi = "0.103.2"
-uvicorn = "0.23.2"
-python-jose = {extras = ["cryptography"], version = "3.3.0"}
-passlib = {extras = ["bcrypt"], version = "1.7.4"}
-python-dotenv = "1.0.0"
-httpx = "0.25.2"
-jinja2 = "3.1.2"
-itsdangerous = "2.2.0"
-python-multipart = "0.0.20"
-slowapi = "0.1.9"
-websockets = "11.0.3"
+dependencies = [
+    "fastapi==0.103.2",
+    "uvicorn==0.23.2",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-dotenv==1.0.0",
+    "httpx==0.25.2",
+    "jinja2==3.1.2",
+    "itsdangerous==2.2.0",
+    "python-multipart==0.0.20",
+    "slowapi==0.1.9",
+    "websockets==11.0.3"
+]
 
 [project.optional-dependencies]
 # Dependencies for inference system (not needed for web deployment)
@@ -25,5 +24,5 @@ inference = [
     "numpy<2",
     "opencv-python",
     "inference-cli>=0.45.1",
-    "inference>=0.45.1",
+    "inference>=0.45.1"
 ]
