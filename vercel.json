@@ -4,7 +4,10 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python",
-      "config": { "runtime": "python3.11" }
+      "config": {
+        "runtime": "python3.11",
+        "installCommand": "pip install -r requirements.txt"
+      }
     }
   ],
   "routes": [
@@ -12,5 +15,10 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60
+    }
+  }
 }

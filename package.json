@@ -6,7 +6,8 @@
   "scripts": {
     "build:tailwind": "npx tailwindcss -i ./src/web/static/css/input.css -o ./src/web/static/css/tailwind.css",
     "watch:tailwind": "npx tailwindcss -i ./src/web/static/css/input.css -o ./src/web/static/css/tailwind.css --watch",
-    "build": "npm run build:tailwind"
+    "build": "npm run build:tailwind",
+    "vercel-build": "bash vercel-build.sh"
   },
   "keywords": [],
   "author": "",
