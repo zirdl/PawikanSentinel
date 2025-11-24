@@ -527,14 +527,19 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
     return response
 
 @app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
+async def login_page(request: Request, username: str = Depends(get_current_user_for_pages)):
+    # If user is already authenticated, redirect to dashboard or next URL
+    if username:
+        next_url = request.query_params.get("next", "/dashboard")
+        return RedirectResponse(url=next_url)
+
     csrf_token = generate_csrf_token(request)
     registered = request.query_params.get("registered") == "true"
     next_url = request.query_params.get("next", "/dashboard")
     return templates.TemplateResponse("login.html", {
-        "request": request, 
-        "csrf_token": csrf_token, 
-        "registered": registered, 
+        "request": request,
+        "csrf_token": csrf_token,
+        "registered": registered,
         "next_url": next_url
     })
 
