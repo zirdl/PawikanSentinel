@@ -19,3 +19,4 @@ GEMINI.md
 # Node.js
 node_modules/
 tailwindcss-cli
+logs/*.log
