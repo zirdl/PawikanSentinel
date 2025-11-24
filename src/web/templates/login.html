@@ -69,4 +69,27 @@
             </p>
         </div>
     </div>
+
+    <!-- JavaScript to handle browser back button and ensure redirection when already authenticated -->
+    <script>
+        // Check if we have an access token in cookies
+        function hasAccessToken() {
+            return document.cookie.split(';').some((item) => {
+                return item.trim().startsWith('access_token=');
+            });
+        }
+
+        // On page load, if we have a token, redirect to dashboard
+        if (hasAccessToken()) {
+            window.location.href = '/dashboard';
+        }
+
+        // Also handle when the page is restored from bfcache (back-forward cache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted && hasAccessToken()) {
+                // If page was restored from bfcache and user is logged in, redirect to dashboard
+                window.location.href = '/dashboard';
+            }
+        });
+    </script>
 {% endblock %}

@@ -56,12 +56,12 @@
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
             evt.detail.headers['X-CSRFToken'] = csrfToken;
         });
-        
+
         // Password peek functionality
         function togglePasswordVisibility(fieldId, iconId) {
             const passwordField = document.getElementById(fieldId);
             const icon = document.getElementById(iconId);
-            
+
             if (passwordField.type === "password") {
                 passwordField.type = "text";
                 icon.classList.remove("fa-eye");
