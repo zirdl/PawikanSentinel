@@ -51,85 +51,114 @@ class IprogSMSSender:
         
         return clean_number
     
-    def _send_single_sms(self, message: str, number: str) -> bool:
+    def _send_bulk_sms(self, message: str, phone_numbers: List[str]) -> Dict[str, bool]:
         """
-        Send a single SMS message using iprog API.
-        
+        Send a bulk SMS message using iprog API to multiple phone numbers.
+
         Args:
             message: The message to send
-            number: The phone number to send to (format: 09xxxxxxxxx or 639xxxxxxxxx for Philippines)
-            
+            phone_numbers: List of phone numbers to send the message to (format: 09xxxxxxxxx or 639xxxxxxxxx for Philippines)
+
         Returns:
-            bool: True if message was sent successfully, False otherwise
+            Dict mapping phone numbers to success status
         """
         if not self.enabled:
             logger.error("iprog not enabled - cannot send SMS")
-            return False
-        
+            return {num: False for num in phone_numbers}
+
         try:
-            # Normalize phone number to international format
-            normalized_number = self._normalize_phone_number(number)
-            
-            # Prepare the API parameters - using POST with form data based on documentation
-            api_url = "https://sms.iprogtech.com/api/v1/sms_messages"
+            # Normalize all phone numbers to international format and join with commas
+            normalized_numbers = [self._normalize_phone_number(number) for number in phone_numbers]
+            phone_numbers_str = ','.join(normalized_numbers)
+
+            # Prepare the API parameters - using POST with form data for bulk API
+            api_url = "https://www.iprogsms.com/api/v1/sms_messages/send_bulk"
             data = {
                 'api_token': self.api_token,
                 'message': message,
-                'phone_number': normalized_number
+                'phone_number': phone_numbers_str
             }
-            
-            # Make the API request to iprog - using POST with form data as per documentation
+
+            # Make the API request to iprog bulk API
             response = requests.post(api_url, data=data)
-            
+
             if response.status_code in [200, 201]:
                 result = response.json()
-                logger.info(f"SMS sent to {number} (normalized: {normalized_number}): Response {result}")
-                return True
+                logger.info(f"Bulk SMS sent to {len(phone_numbers)} numbers: Response {result}")
+
+                # For bulk SMS, we assume all numbers in the batch were sent successfully
+                # if the API call was successful
+                results = {num: True for num in phone_numbers}
+
+                # If the API returns more specific information about individual numbers,
+                # we could parse that result and return more granular success/failure
+                return results
             else:
-                logger.error(f"Failed to send SMS to {number}: {response.status_code} - {response.text}")
-                return False
-                
+                logger.error(f"Failed to send bulk SMS to {len(phone_numbers)} numbers: {response.status_code} - {response.text}")
+                return {num: False for num in phone_numbers}
+
         except Exception as e:
-            logger.error(f"Exception when sending SMS to {number}: {e}")
-            return False
+            logger.error(f"Exception when sending bulk SMS to {len(phone_numbers)} numbers: {e}")
+            return {num: False for num in phone_numbers}
     
     def send_sms_notification(self, phone_numbers: List[str], message_body: str) -> Dict[str, bool]:
         """
-        Send SMS notifications to multiple contacts with cooldown.
-        
+        Send SMS notifications to multiple contacts with cooldown using bulk API.
+
         Args:
             phone_numbers: List of phone numbers to send the message to
             message_body: The message to send
-            
+
         Returns:
             Dict mapping phone numbers to success status
         """
         if not self.enabled:
             logger.error("iprog not enabled - cannot send SMS notifications")
             return {num: False for num in phone_numbers}
-        
+
         results = {}
         current_time = time.time()
-        
+
+        # Filter phone numbers based on cooldown period
+        valid_phone_numbers = []
+
         for phone_number in phone_numbers:
             # Check cooldown period for this contact
             last_sms_time = self.last_sms_times.get(phone_number, 0)
-            
+
             if current_time - last_sms_time < self.cooldown_period:
                 logger.info(f"SMS cooldown active for {phone_number}. Skipping notification.")
                 results[phone_number] = False
-                continue
-            
-            # Send the SMS
-            success = self._send_single_sms(message_body, phone_number)
+            else:
+                valid_phone_numbers.append(phone_number)
+
+        if not valid_phone_numbers:
+            logger.info("No phone numbers passed cooldown check. Skipping bulk SMS.")
+            # Return the results dictionary with False for all numbers that were skipped
+            for phone_number in phone_numbers:
+                if phone_number not in results:  # Only set if not already set
+                    results[phone_number] = False
+            return results
+
+        # Send bulk SMS to all valid phone numbers
+        bulk_results = self._send_bulk_sms(message_body, valid_phone_numbers)
+
+        # Merge results and update cooldown times for successful sends
+        for phone_number in valid_phone_numbers:
+            success = bulk_results.get(phone_number, False)
             results[phone_number] = success
-            
+
             if success:
                 # Update last SMS time for this contact
                 self.last_sms_times[phone_number] = current_time
             else:
                 logger.error(f"Failed to send SMS to {phone_number}")
-        
+
+        # Ensure all original phone numbers are in results
+        for phone_number in phone_numbers:
+            if phone_number not in results:
+                results[phone_number] = False
+
         return results
 
     def send_detailed_notification(self, phone_numbers: List[str], 

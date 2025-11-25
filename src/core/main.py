@@ -126,6 +126,11 @@ app.include_router(analytics.router)
 
 # Database helper
 def get_db_connection():
+    # Ensure the database file is created if it doesn't exist or is empty
+    if not os.path.exists(DATABASE_PATH) or os.path.getsize(DATABASE_PATH) == 0:
+        # Create a fresh database file if it doesn't exist or is empty
+        conn = sqlite3.connect(DATABASE_PATH)
+        conn.close()
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -328,9 +333,13 @@ async def startup_event():
     global main_event_loop
     main_event_loop = asyncio.get_running_loop()
     print(f"Main event loop stored in startup: {main_event_loop}, running: {main_event_loop.is_running()}")
-    
+
+    # Ensure the detections directory exists
+    os.makedirs(detections_dir, exist_ok=True)
+    print(f"Detections directory ensured at: {detections_dir}")
+
     create_tables()
-    
+
     # Ensure only the admin user exists - remove any non-admin users
     conn = get_db_connection()
     # Check if admin user exists
@@ -343,6 +352,7 @@ async def startup_event():
             ("admin", hashed_password, "admin")
         )
         conn.commit()
+        print("Default admin user created with username 'admin' and password 'admin'")
     # Remove any non-admin users to enforce single-account policy
     conn.execute("DELETE FROM users WHERE username != ?", ("admin",))
     conn.commit()
