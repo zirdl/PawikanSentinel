@@ -1,16 +1,26 @@
 import os
 import secrets
 import logging
+from contextlib import asynccontextmanager
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, Optional
+from dotenv import load_dotenv
+import httpx
+import shutil
+import zipfile
+from pathlib import Path
+import glob
+import asyncio
+import threading
+import sqlite3
+import random
+
 from fastapi import FastAPI, HTTPException, Request, Depends, Form, Cookie, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import WebSocket
-from fastapi import WebSocket
-from contextlib import asynccontextmanager
-from dotenv import load_dotenv
-import httpx
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
@@ -18,14 +28,6 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignat
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-import sqlite3
-import random
-import shutil
-import zipfile
-from pathlib import Path
-import glob
-import asyncio
-import threading
 
 # --- Logging Setup ---
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -64,11 +66,200 @@ limiter = Limiter(key_func=get_remote_address)
 # Global variable to store the background task
 background_task = None
 
-# Create FastAPI app without lifespan for now to fix session issues
-# We'll start the broadcast thread separately
+# ============================================================
+# Inference Worker Management (merged from inference_service)
+# ============================================================
+from src.inference import RTSPInferenceWorker
+from src.inference.yolo_detector import load_model, download_model
 
-# Create FastAPI app
-app = FastAPI(title="Pawikan Sentinel", version="1.0.0")
+# YOLO11 model configuration
+YOLO_MODEL_DIR = os.getenv("YOLO_MODEL_DIR", "models")
+YOLO_INPUT_SIZE = int(os.getenv("YOLO_INPUT_SIZE", "320"))
+MAX_INFERENCE_WORKERS = int(os.getenv("MAX_INFERENCE_WORKERS", "10"))
+
+# Thread pool for inference workers
+inference_executor: Optional[ThreadPoolExecutor] = None
+active_inference_workers: Dict[int, RTSPInferenceWorker] = {}
+worker_futures = {}
+
+# YOLO model (lazy-loaded)
+_yolo_model = None
+_model_load_lock = threading.Lock()
+
+logger_inference = logging.getLogger("inference")
+
+
+# ============================================================
+# Inference Worker Management Functions
+# ============================================================
+async def _start_inference_for_camera_internal(camera_id: int) -> bool:
+    """Start inference worker for a camera."""
+    global inference_executor, active_inference_workers, worker_futures
+
+    if inference_executor is None:
+        logger_inference.warning("Inference executor not initialized.")
+        return False
+
+    if camera_id in active_inference_workers:
+        worker = active_inference_workers[camera_id]
+        if worker.running and not worker.paused:
+            logger_inference.info(f"Worker for camera {camera_id} already running.")
+            return True
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, name, rtsp_url, active FROM cameras WHERE id = ?", (camera_id,))
+    camera = c.fetchone()
+    conn.close()
+
+    if not camera:
+        logger_inference.warning(f"Camera {camera_id} not found.")
+        return False
+
+    if not camera["active"]:
+        logger_inference.warning(f"Camera {camera_id} is not active.")
+        return False
+
+    # Stop existing worker
+    if camera_id in active_inference_workers:
+        old_worker = active_inference_workers[camera_id]
+        old_worker.stop()
+        if camera_id in worker_futures:
+            worker_futures[camera_id].cancel()
+
+    worker = RTSPInferenceWorker(
+        camera_id=camera["id"],
+        rtsp_url=camera["rtsp_url"],
+    )
+
+    future = inference_executor.submit(worker.run)
+    active_inference_workers[camera_id] = worker
+    worker_futures[camera_id] = future
+
+    logger_inference.info(f"Started inference worker for camera {camera_id} ({camera['name']}).")
+    return True
+
+
+async def _stop_inference_for_camera_internal(camera_id: int) -> bool:
+    """Stop inference worker for a camera."""
+    global active_inference_workers, worker_futures
+
+    if camera_id not in active_inference_workers:
+        return False
+
+    worker = active_inference_workers[camera_id]
+    worker.stop()
+
+    if camera_id in worker_futures:
+        try:
+            worker_futures[camera_id].result(timeout=5)
+        except Exception as e:
+            logger_inference.warning(f"Timeout stopping worker {camera_id}: {e}")
+        del worker_futures[camera_id]
+
+    del active_inference_workers[camera_id]
+    logger_inference.info(f"Stopped inference worker for camera {camera_id}.")
+    return True
+
+
+async def _start_all_active_cameras():
+    """Start inference workers for all active cameras."""
+    global inference_executor, active_inference_workers, worker_futures
+
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT id, name, rtsp_url, active FROM cameras WHERE active = TRUE")
+        active_cameras = c.fetchall()
+        conn.close()
+
+        for camera in active_cameras:
+            await _start_inference_for_camera_internal(camera["id"])
+            logger_inference.info(f"Started worker for camera {camera['id']} ({camera['name']}).")
+    except Exception as e:
+        logger_inference.error(f"Error starting inference workers: {e}", exc_info=True)
+
+
+async def _stop_all_inference_workers():
+    """Gracefully stop all inference workers."""
+    global inference_executor, active_inference_workers, worker_futures
+
+    logger_inference.info("Stopping all inference workers...")
+
+    stop_futures = []
+    for camera_id, worker in active_inference_workers.items():
+        worker.stop()
+        if camera_id in worker_futures:
+            stop_futures.append((camera_id, worker_futures[camera_id]))
+
+    for camera_id, future in stop_futures:
+        try:
+            future.result(timeout=10)
+            logger_inference.info(f"Stopped worker for camera {camera_id}.")
+        except Exception as e:
+            logger_inference.error(f"Error stopping worker {camera_id}: {e}")
+
+    active_inference_workers.clear()
+    worker_futures.clear()
+
+    if inference_executor is not None:
+        inference_executor.shutdown(wait=True)
+        inference_executor = None
+
+    logger_inference.info("All inference workers stopped.")
+
+
+# ============================================================
+# Lifespan (startup + shutdown)
+# ============================================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup and shutdown logic."""
+    global main_event_loop, inference_executor, active_inference_workers
+
+    # --- Startup ---
+    main_event_loop = asyncio.get_running_loop()
+    logger.info(f"Starting Pawikan Sentinel v1.0.0")
+
+    # Ensure directories
+    os.makedirs(detections_dir, exist_ok=True)
+    os.makedirs(YOLO_MODEL_DIR, exist_ok=True)
+    logger.info(f"Detections directory: {detections_dir}")
+
+    # Create tables
+    create_tables()
+    logger.info("Database tables created (WAL mode enabled).")
+
+    # Ensure admin user
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
+    if not user:
+        hashed_password = get_password_hash("admin")
+        conn.execute(
+            "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
+            ("admin", hashed_password, "admin")
+        )
+        conn.commit()
+        logger.info("Default admin user created: admin/admin")
+    conn.execute("DELETE FROM users WHERE username != ?", ("admin",))
+    conn.commit()
+    conn.close()
+
+    # Initialize inference executor and start workers
+    inference_executor = ThreadPoolExecutor(max_workers=MAX_INFERENCE_WORKERS)
+    logger.info(f"Inference executor initialized (max {MAX_INFERENCE_WORKERS} workers).")
+    await _start_all_active_cameras()
+
+    yield
+
+    # --- Shutdown ---
+    logger.info("Shutting down Pawikan Sentinel...")
+    await _stop_all_inference_workers()
+    logger.info("Shutdown complete.")
+
+
+# Create FastAPI app with lifespan
+app = FastAPI(title="Pawikan Sentinel", version="1.0.0", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -115,27 +306,17 @@ templates = Jinja2Templates(directory="src/web/templates")
 
 
 # Include API routers
-from src.api import auth, cameras, contacts, detections, analytics
+from src.api import auth, cameras, contacts, detections, analytics, system
+from src.core.database import get_db_connection
 
 app.include_router(auth.router)
 app.include_router(cameras.router)
 app.include_router(contacts.router)
 app.include_router(detections.router)
 app.include_router(analytics.router)
+app.include_router(system.router)
 
-
-# Database helper
-def get_db_connection():
-    # Ensure the database file is created if it doesn't exist or is empty
-    if not os.path.exists(DATABASE_PATH) or os.path.getsize(DATABASE_PATH) == 0:
-        # Create a fresh database file if it doesn't exist or is empty
-        conn = sqlite3.connect(DATABASE_PATH)
-        conn.close()
-    conn = sqlite3.connect(DATABASE_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# Create tables if they don't exist
+# Create tables if they don't exist (uses shared get_db_connection with WAL mode)
 def create_tables():
     conn = get_db_connection()
     conn.execute("""
@@ -146,7 +327,7 @@ def create_tables():
             role TEXT NOT NULL DEFAULT 'user'
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS cameras (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,7 +336,7 @@ def create_tables():
             active BOOLEAN DEFAULT TRUE
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS contacts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -164,7 +345,7 @@ def create_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS detections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -176,7 +357,13 @@ def create_tables():
             FOREIGN KEY (camera_id) REFERENCES cameras (id)
         )
     """)
-    
+
+    # Indexes for query performance
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_detections_timestamp ON detections (timestamp)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_detections_camera_id ON detections (camera_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_detections_camera_timestamp ON detections (camera_id, timestamp)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_cameras_active ON cameras (active)")
+
     conn.commit()
     conn.close()
 
@@ -326,57 +513,6 @@ async def get_current_user_for_pages(access_token: str = Cookie(None)):
     username: str = payload.get("sub")
     return username
 
-# Startup event to create tables
-@app.on_event("startup")
-async def startup_event():
-    # Store the main event loop
-    global main_event_loop
-    main_event_loop = asyncio.get_running_loop()
-    print(f"Main event loop stored in startup: {main_event_loop}, running: {main_event_loop.is_running()}")
-
-    # Ensure the detections directory exists
-    os.makedirs(detections_dir, exist_ok=True)
-    print(f"Detections directory ensured at: {detections_dir}")
-
-    create_tables()
-
-    # Ensure only the admin user exists - remove any non-admin users
-    conn = get_db_connection()
-    # Check if admin user exists
-    user = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",)).fetchone()
-    if not user:
-        # Create default admin user if it doesn't exist
-        hashed_password = get_password_hash("admin")
-        conn.execute(
-            "INSERT INTO users (username, hashed_password, role) VALUES (?, ?, ?)",
-            ("admin", hashed_password, "admin")
-        )
-        conn.commit()
-        print("Default admin user created with username 'admin' and password 'admin'")
-    # Remove any non-admin users to enforce single-account policy
-    conn.execute("DELETE FROM users WHERE username != ?", ("admin",))
-    conn.commit()
-    conn.close()
-        
-    # """ # Add some sample detection data for testing
-    # detection_count = conn.execute("SELECT COUNT(*) as count FROM detections").fetchone()["count"]
-    # if detection_count == 0:
-        # Add sample detections for the past 30 days
-        # from datetime import datetime, timedelta
-        
-        # for i in range(30):
-            # date = datetime.now() - timedelta(days=i)
-            # Add random number of detections per day (0-10)
-            # for j in range(random.randint(0, 10)):
-                # camera_id = random.randint(1, 3)  # Assuming we have up to 3 cameras
-                # confidence = round(random.uniform(0.7, 0.99), 2)
-                # conn.execute(
-                    # "INSERT INTO detections (camera_id, timestamp, class, confidence) VALUES (?, ?, ?, ?)",
-                    # (camera_id, date, "pawikan", confidence)
-                # )
-        # conn.commit()
-    # conn.close() 
-    # """
 
 # Routes
 
@@ -1026,120 +1162,172 @@ async def update_config(
         return JSONResponse({"error": f"Failed to update configuration: {str(e)}"}, status_code=500)
 
 
-# System status check
+# ============================================================
+# System Status (single-process aware)
+# ============================================================
 @app.get("/api/system/status")
 async def get_system_status(username: str = Depends(get_current_user_from_cookie)):
-    """Get the status of all system components"""
-    import subprocess
-    import json
-    
+    """Get the status of all system components."""
     system_status = {}
-    
-    # Check Docker inference service status (on port 9001)
-    try:
-        # Try to make an HTTP request to 0.0.0.0:9001 to confirm it's accessible
-        # This is the primary check since we just want to know if the service is running
-        import requests
-        response = requests.get('http://0.0.0.0:9001', timeout=5)
-        if response.status_code:
-            system_status['docker_inference'] = {
-                'status': 'running',
-                'message': 'Operational'
-            }
-    except requests.RequestException:
-        # If direct HTTP request fails, try alternate method using curl via subprocess
-        try:
-            curl_result = subprocess.run(['curl', '-s', '-f', 'http://0.0.0.0:9001'], 
-                                         capture_output=True, text=True, timeout=10)
-            if curl_result.returncode == 0:
-                system_status['docker_inference'] = {
-                    'status': 'running',
-                    'message': 'Operational'
-                }
-            else:
-                system_status['docker_inference'] = {
-                    'status': 'stopped',
-                    'message': 'Not accessible'
-                }
-        except FileNotFoundError:
-            # curl command not found
-            system_status['docker_inference'] = {
-                'status': 'error',
-                'message': 'Tool missing'
-            }
-        except subprocess.TimeoutExpired:
-            system_status['docker_inference'] = {
-                'status': 'stopped',
-                'message': 'Timeout'
-            }
-        except Exception:
-            system_status['docker_inference'] = {
-                'status': 'stopped',
-                'message': 'Not accessible'
-            }
-    except Exception:
-        system_status['docker_inference'] = {
-            'status': 'stopped',
-            'message': 'Not accessible'
-        }
-    
-    # Check camera status (check if there are active cameras in the database)
+
+    # Local inference workers status
+    worker_count = len(active_inference_workers)
+    running_workers = sum(1 for w in active_inference_workers.values() if w.running and not w.paused)
+
+    system_status['inference'] = {
+        'status': 'running' if running_workers > 0 else 'idle',
+        'active_workers': running_workers,
+        'total_workers': worker_count,
+        'max_workers': MAX_INFERENCE_WORKERS,
+        'model_dir': YOLO_MODEL_DIR,
+        'input_size': YOLO_INPUT_SIZE,
+    }
+
+    # Camera status
     try:
         conn = get_db_connection()
         active_cameras = conn.execute("SELECT COUNT(*) as count FROM cameras WHERE active = 1").fetchone()["count"]
         conn.close()
-        
-        if active_cameras > 0:
-            # Try to verify if cameras are accessible (basic check)
-            system_status['cameras'] = {
-                'status': 'running',
-                'active_cameras': active_cameras,
-                'message': f'{active_cameras} active'
-            }
-        else:
-            system_status['cameras'] = {
-                'status': 'stopped',
-                'active_cameras': 0,
-                'message': 'No active'
-            }
+
+        system_status['cameras'] = {
+            'status': 'running' if active_cameras > 0 else 'idle',
+            'active_cameras': active_cameras,
+        }
     except Exception as e:
         system_status['cameras'] = {
             'status': 'error',
-            'message': 'Error'
+            'message': str(e),
         }
-    
-    # Check inference service status (systemd)
-    try:
-        result = subprocess.run(['systemctl', 'is-active', 'pawikan-inference.service'], 
-                                capture_output=True, text=True, timeout=10)
-        if result.returncode == 0 and result.stdout.strip() == 'active':
-            system_status['inference_service'] = {
-                'status': 'running',
-                'message': 'Operational'
-            }
-        else:
-            system_status['inference_service'] = {
-                'status': 'stopped',
-                'message': 'Not running'
-            }
-    except subprocess.TimeoutExpired:
-        system_status['inference_service'] = {
-            'status': 'error',
-            'message': 'Timeout'
+
+    # Model status
+    model_path = Path(YOLO_MODEL_DIR) / "turtle_detector.pt"
+    if model_path.exists():
+        size_mb = model_path.stat().st_size / (1024 * 1024)
+        system_status['model'] = {
+            'status': 'loaded',
+            'path': str(model_path),
+            'size_mb': round(size_mb, 1),
         }
-    except Exception as e:
-        system_status['inference_service'] = {
-            'status': 'error',
-            'message': 'Error'
+    else:
+        system_status['model'] = {
+            'status': 'not_downloaded',
+            'message': 'Model will be downloaded on first inference.',
         }
-    
+
     response = JSONResponse(system_status)
-    # Add cache control headers to prevent caching of sensitive API responses
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
 
+
+# ============================================================
+# Inference Management API Routes
+# ============================================================
+class WorkerStats:
+    """Simple dict-compatible stats object."""
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+
+@app.post("/api/inference/start/{camera_id}")
+async def start_inference_for_camera(
+    camera_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """Start inference for a specific camera."""
+    success = await _start_inference_for_camera_internal(camera_id)
+    if success:
+        return {"message": f"Started worker for camera {camera_id}."}
+    else:
+        raise HTTPException(status_code=400, detail="Failed to start inference worker.")
+
+
+@app.post("/api/inference/stop/{camera_id}")
+async def stop_inference_for_camera(
+    camera_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """Stop inference for a specific camera."""
+    if camera_id not in active_inference_workers:
+        return {"message": f"No worker running for camera {camera_id}."}
+
+    await _stop_inference_for_camera_internal(camera_id)
+    return {"message": f"Stopped worker for camera {camera_id}."}
+
+
+@app.post("/api/inference/pause/{camera_id}")
+async def pause_inference_for_camera(
+    camera_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """Pause inference for a specific camera."""
+    if camera_id not in active_inference_workers:
+        raise HTTPException(status_code=404, detail="Camera worker not found.")
+
+    worker = active_inference_workers[camera_id]
+    worker.pause()
+    return {"message": f"Paused worker for camera {camera_id}."}
+
+
+@app.post("/api/inference/resume/{camera_id}")
+async def resume_inference_for_camera(
+    camera_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """Resume inference for a specific camera."""
+    if camera_id not in active_inference_workers:
+        raise HTTPException(status_code=404, detail="Camera worker not found.")
+
+    worker = active_inference_workers[camera_id]
+    worker.resume()
+    return {"message": f"Resumed worker for camera {camera_id}."}
+
+
+@app.get("/api/inference/stats/{camera_id}")
+async def get_worker_stats(
+    camera_id: int,
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """Get statistics for a specific worker."""
+    if camera_id not in active_inference_workers:
+        raise HTTPException(status_code=404, detail="Camera worker not found.")
+
+    worker = active_inference_workers[camera_id]
+    return worker.get_stats()
+
+
+@app.get("/api/inference/health")
+async def get_inference_health(
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """Get overall inference service health."""
+    worker_stats_list = []
+    for camera_id, worker in active_inference_workers.items():
+        worker_stats_list.append(worker.get_stats())
+
+    conn = get_db_connection()
+    total_cameras = conn.execute("SELECT COUNT(*) as count FROM cameras").fetchone()["count"]
+    conn.close()
+
+    return {
+        "status": "healthy" if len(active_inference_workers) > 0 else "idle",
+        "active_workers": len(active_inference_workers),
+        "total_cameras": total_cameras,
+        "worker_stats": worker_stats_list,
+    }
+
+
+@app.get("/api/inference/workers")
+async def list_workers(
+    username: str = Depends(get_current_user_from_cookie),
+):
+    """List all active inference workers."""
+    return {
+        "active_workers": list(active_inference_workers.keys()),
+        "max_workers": MAX_INFERENCE_WORKERS,
+        "current_workers": len(active_inference_workers),
+    }
 
 # Backup API endpoints
 @app.post("/api/backup")
