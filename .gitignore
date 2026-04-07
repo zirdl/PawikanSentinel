@@ -24,3 +24,9 @@ logs/*.log
 # Models
 models/*.pt
 !models/.gitkeep
+
+# Images
+*.jpg
+*.png
+*.mp4
+*.mkv
