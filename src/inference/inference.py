@@ -62,6 +62,7 @@ sms_sender = IprogSMSSender()
 # Global YOLO model instance (lazy-loaded on first worker start)
 _yolo_model: Optional[YOLOModel] = None
 _model_lock = threading.Lock()
+_inference_lock = threading.Lock()  # Lock to ensure only one inference runs at a time on limited CPU
 
 
 def get_yolo_model() -> YOLOModel:
@@ -153,7 +154,8 @@ class RTSPInferenceWorker(threading.Thread):
             "detections_made": 0,
             "errors": 0,
             "last_error": None,
-            "last_success": None
+            "last_success": None,
+            "last_frame_time": None
         }
         
         # SMS notification tracking
@@ -336,13 +338,13 @@ class RTSPInferenceWorker(threading.Thread):
             return None
 
     def _perform_inference(self, frame) -> Optional[Dict]:
-        """Perform inference using local YOLO11 model with circuit breaker and retry logic"""
-        # Lazy-load model on first use
+        """Perform inference using local YOLO11 model with global lock to protect Pi CPU"""
         if self.model is None:
             self.model = get_yolo_model()
 
         def inference_call():
-            return self.model.infer(frame)
+            with _inference_lock:  # Prevent multiple workers from hitting the CPU at once
+                return self.model.infer(frame)
 
         try:
             results = self.circuit_breaker.call(inference_call)
@@ -394,6 +396,9 @@ class RTSPInferenceWorker(threading.Thread):
                     time.sleep(self.reconnect_delay)
                     continue
                 
+                # Update last frame time
+                self.stats["last_frame_time"] = time.time()
+                
                 frame_count += 1
                 self.stats["frames_processed"] += 1
                 
@@ -402,7 +407,8 @@ class RTSPInferenceWorker(threading.Thread):
                     continue
                 
                 # Resize for faster inference (use YOLO_INPUT_SIZE for square input)
-                resized = cv2.resize(frame, (YOLO_INPUT_SIZE, YOLO_INPUT_SIZE))
+                # Use INTER_NEAREST for maximum speed on Raspberry Pi
+                resized = cv2.resize(frame, (YOLO_INPUT_SIZE, YOLO_INPUT_SIZE), interpolation=cv2.INTER_NEAREST)
                 
                 # Perform inference with retry logic
                 results = None

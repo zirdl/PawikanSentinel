@@ -1,1 +1,1 @@
-# src/inference/__init__.py
+from .inference import RTSPInferenceWorker

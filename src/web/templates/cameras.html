@@ -3,184 +3,188 @@
 {% block title %}Cameras - Pawikan Sentinel{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto bg-gradient-to-br from-white/80 to-white/60 min-h-screen rounded-2xl shadow-lg p-6 border border-gray-200">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Camera Feeds</h1>
-        <p class="mt-2 text-gray-600">View live RTSP streams from your cameras</p>
-    </div>
-
-    <!-- Cameras Grid -->
-    <div id="cameras-container" class="grid grid-cols-2 gap-6">
-        <div class="text-center py-8">
-            <div class="spinner" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+<div x-data="camerasPage" x-init="load()">
+    <!-- Page Header -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+            <h1 class="text-h1 text-gray-900 tracking-tight">Camera Feeds</h1>
+            <p class="text-body text-gray-500 mt-1">View live RTSP streams from your cameras</p>
         </div>
+        <button @click="load()"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl
+                       text-body-sm font-semibold text-gray-700 shadow-card hover:shadow-card-hover
+                       hover:bg-gray-50 transition-all duration-200">
+            <span class="material-icons text-ocean-500 text-base" :class="{ 'animate-spin': loading }">refresh</span>
+            Refresh
+        </button>
     </div>
-</div>
 
-<!-- Camera Modal -->
-<div id="camera-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4">
-    <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-[60vh] overflow-hidden">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="modal-camera-name" class="text-xl font-bold text-gray-900"></h3>
-                <button onclick="closeCameraModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
-            </div>
-            
-            <div class="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
-                <a id="modal-vlc-link" href="#" 
-                   class="inline-flex justify-center items-center px-5 py-2.5 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                    <i class="fas fa-play-circle mr-2"></i> Launch in VLC
-                </a>
-                <button onclick="closeCameraModal()" 
-                        class="inline-flex justify-center items-center px-5 py-2.5 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-gradient-to-r from-sand-medium to-sand-dark hover:from-sand-dark hover:to-sand-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Load cameras on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        loadCamerasList();
-    });
-    
-    async function loadCamerasList() {
-        try {
-            const response = await fetch('/api/cameras');
-            const cameras = await response.json();
-            
-            const container = document.getElementById('cameras-container');
-            
-            if (cameras.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <i class="fas fa-video mx-auto h-12 w-12 text-gray-400 text-4xl mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No cameras configured</h3>
-                        <p class="text-gray-500 mb-6">Get started by adding a camera in the Settings section.</p>
-                        <a href="/settings" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                            Go to Settings
-                        </a>
+    <!-- Loading skeleton -->
+    <div x-show="loading && cameras.length === 0" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <template x-for="i in 4" :key="i">
+            <div class="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-gray-200"></div>
+                    <div class="flex-1">
+                        <div class="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+                        <div class="h-3 w-48 bg-gray-200 rounded"></div>
                     </div>
-                `;
-                return;
-            }
-            
-            // Generate camera cards
-            const cameraCards = cameras.map(camera => `
-                <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200 overflow-hidden">
-                    <div class="flex justify-between items-start mb-4">
+                </div>
+                <div class="flex gap-2">
+                    <div class="flex-1 h-9 bg-gray-200 rounded"></div>
+                    <div class="flex-1 h-9 bg-gray-200 rounded"></div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Empty state -->
+    <div x-show="!loading && cameras.length === 0" x-cloak class="bg-white rounded-xl shadow-card border border-gray-100 p-12 text-center">
+        <span class="material-icons text-5xl text-gray-300 mb-4">videocam_off</span>
+        <h3 class="text-title text-gray-900">No cameras configured</h3>
+        <p class="text-body text-gray-500 mt-1 mb-6">Get started by adding a camera in Settings.</p>
+        <a href="/settings"
+           class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600 text-white
+                  font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-turtle-500 focus:ring-offset-2
+                  transition-colors duration-200 shadow-card">
+            <span class="material-icons text-base">settings</span> Go to Settings
+        </a>
+    </div>
+
+    <!-- Camera cards -->
+    <div x-show="cameras.length > 0" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="camera in cameras" :key="camera.id">
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-card-hover transition-shadow duration-200">
+                <div class="p-5">
+                    <div class="flex items-start justify-between gap-3 mb-4">
                         <div class="flex items-center min-w-0 flex-1">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4 text-xl bg-gradient-to-br from-turtle-green/20 to-ocean-blue/20 text-turtle-green">
-                                <i class="fas fa-video"></i>
+                            <div class="w-10 h-10 rounded-full bg-turtle-50 flex items-center justify-center mr-3 flex-shrink-0">
+                                <span class="material-icons text-turtle-600">videocam</span>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <h3 class="font-semibold text-gray-900 truncate">${camera.name}</h3>
-                                <p class="text-sm text-gray-500 truncate" title="${camera.rtsp_url}">${camera.rtsp_url}</p>
+                                <h3 class="text-body-lg font-semibold text-gray-900 truncate" x-text="camera.name"></h3>
+                                <p class="text-caption text-gray-500 truncate" :title="camera.rtsp_url" x-text="camera.rtsp_url"></p>
                             </div>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-4 whitespace-nowrap ${camera.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${camera.active ? 'Active' : 'Inactive'}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium flex-shrink-0"
+                              :class="camera.active ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'">
+                            <span class="status-dot" :class="camera.active ? 'active' : 'inactive'"></span>
+                            <span x-text="camera.active ? 'Active' : 'Inactive'"></span>
                         </span>
                     </div>
-                    
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <a href="${camera.rtsp_url}" 
-                           class="flex-1 text-center inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                            <i class="fas fa-external-link-alt mr-1"></i> VLC
+
+                    <div class="flex gap-2">
+                        <a :href="camera.rtsp_url"
+                           class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-body-sm font-medium
+                                  text-white bg-turtle-500 hover:bg-turtle-600 rounded-lg transition-colors duration-200">
+                            <span class="material-icons text-sm">open_in_new</span> VLC
                         </a>
-                        <button onclick="openCameraModal(${camera.id}, '${escapeHtml(camera.name)}', '${escapeHtml(camera.rtsp_url)}')" 
-                                class="flex-1 text-center inline-flex justify-center items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green">
-                            <i class="fas fa-expand mr-1"></i> View
+                        <button @click="openModal(camera)"
+                                class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-body-sm font-medium
+                                       text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <span class="material-icons text-sm">fullscreen</span> View
                         </button>
                     </div>
                 </div>
-            `).join('');
-            
-            container.innerHTML = cameraCards;
-        } catch (error) {
-            console.error('Error loading cameras:', error);
-            const container = document.getElementById('cameras-container');
-            container.innerHTML = `
-                <div class="col-span-full text-center py-8">
-                    <i class="fas fa-exclamation-triangle mx-auto h-12 w-12 text-red-400 text-4xl mb-2"></i>
-                    <h3 class="text-lg font-medium text-gray-900">Error loading cameras</h3>
-                    <p class="text-gray-500">Please try refreshing the page or check your connection.</p>
-                </div>
-            `;
-        }
-    }
-    
-    // Function to escape HTML to prevent XSS
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-    
-    // Open camera modal with details
-    function openCameraModal(id, name, rtspUrl) {
-        document.getElementById('modal-camera-name').textContent = name;
-        document.getElementById('modal-vlc-link').href = rtspUrl;
-        
-        const modal = document.getElementById('camera-modal');
-        modal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-    }
-    
-    // Close camera modal
-    function closeCameraModal() {
-        const modal = document.getElementById('camera-modal');
-        modal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-    
-    // Close modal when clicking outside
-    document.getElementById('camera-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCameraModal();
-        }
-    });
-    
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-        const modal = document.getElementById('camera-modal');
-        if (!modal.classList.contains('hidden') && e.key === 'Escape') {
-            closeCameraModal();
-        }
-    });
-    
-    // Refresh button for cameras list
-    function refreshCamerasList() {
-        loadCamerasList();
-    }
-</script>
+            </div>
+        </template>
+    </div>
 
-<!-- Add refresh button to toolbar if needed -->
+    <!-- Camera detail modal -->
+    <div x-show="modalOpen" x-cloak
+         @keydown.escape.window="closeModal()"
+         class="fixed inset-0 z-90 overflow-y-auto"
+         aria-modal="true" role="dialog">
+        <!-- Backdrop -->
+        <div x-show="modalOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
+             @click="closeModal()"></div>
+
+        <!-- Panel -->
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div x-show="modalOpen"
+                 x-transition:enter="transition ease-out duration-250"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="relative bg-white rounded-xl shadow-overlay w-full max-w-md overflow-hidden"
+            >
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-title text-gray-900" x-text="selectedCamera?.name || ''"></h3>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div class="px-6 py-6 space-y-4">
+                    <div>
+                        <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">RTSP URL</label>
+                        <p class="mt-1 text-body-sm text-gray-900 break-all" x-text="selectedCamera?.rtsp_url || ''"></p>
+                    </div>
+                    <div>
+                        <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Status</label>
+                        <div class="mt-1">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium"
+                                  :class="selectedCamera?.active ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'">
+                                <span class="status-dot" :class="selectedCamera?.active ? 'active' : 'inactive'"></span>
+                                <span x-text="selectedCamera?.active ? 'Active' : 'Inactive'"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-2">
+                    <a :href="selectedCamera?.rtsp_url"
+                       class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-body-sm font-semibold
+                              text-white bg-turtle-500 hover:bg-turtle-600 rounded-lg transition-colors duration-200">
+                        <span class="material-icons text-base">play_circle</span> Launch in VLC
+                    </a>
+                    <button @click="closeModal()"
+                            class="flex-1 inline-flex items-center justify-center px-4 py-2 text-body-sm font-medium
+                                   text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Add refresh button to header if it doesn't exist
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add custom refresh functionality if needed
-        const existingRefresh = document.querySelector('.refresh-btn');
-        if (!existingRefresh) {
-            // Ensure refresh can be triggered via keyboard shortcut
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.key === 'r') {
-                    e.preventDefault();
-                    refreshCamerasList();
-                }
-            });
-        }
-    });
+document.addEventListener('alpine:init', () => {
+    Alpine.data('camerasPage', () => ({
+        cameras: [],
+        loading: true,
+        modalOpen: false,
+        selectedCamera: null,
+
+        async load() {
+            this.loading = true;
+            try {
+                const r = await fetch('/api/cameras');
+                this.cameras = await r.json();
+            } catch (e) { console.error('Error loading cameras:', e); }
+            this.loading = false;
+        },
+
+        openModal(camera) {
+            this.selectedCamera = camera;
+            this.modalOpen = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        closeModal() {
+            this.modalOpen = false;
+            this.selectedCamera = null;
+            document.body.classList.remove('overflow-hidden');
+        },
+    }));
+});
 </script>
 
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

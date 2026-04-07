@@ -1,140 +1,140 @@
 {% extends "base.html" %}
 
-<div id="toast-container" class="fixed top-0 right-0 p-4 z-50"></div>
-
 {% block title %}Dashboard - Pawikan Sentinel{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Detection Analytics</h1>
-        {% if username %}
-        <p class="mt-2 text-gray-600">Welcome, <span class="font-semibold">{{ username }}</span>!</p>
-        {% endif %}
+<div x-data="dashboard">
+    <!-- Page Header -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+            <h1 class="text-h1 text-gray-900 tracking-tight">Detection Analytics</h1>
+            <p class="text-body text-gray-500 mt-1">Real-time sea turtle monitoring data</p>
+        </div>
+        <button @click="refreshAll()"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl
+                       text-body-sm font-semibold text-gray-700 shadow-card hover:shadow-card-hover
+                       hover:bg-gray-50 transition-all duration-200"
+                :disabled="loading">
+            <span class="material-icons text-ocean-500 text-base" :class="{ 'animate-spin': loading }">refresh</span>
+            Refresh
+        </button>
     </div>
 
-    <!-- System Status Indicator -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">System Status</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="flex items-center p-3 rounded-lg border" id="docker-status">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 bg-gray-200">
-                    <i class="fas fa-circle text-gray-400 text-xs"></i>
+    <!-- Loading indicator -->
+    <div x-show="loading && stats.total === 0" x-cloak class="mb-8">
+        <div class="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <template x-for="i in 4" :key="i">
+                <div class="bg-white rounded-xl p-5 border border-gray-100">
+                    <div class="h-10 w-10 bg-gray-200 rounded-lg mb-3"></div>
+                    <div class="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+                    <div class="h-8 w-16 bg-gray-200 rounded"></div>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-700">Docker Inference</p>
-                    <p class="text-xs text-gray-500" id="docker-status-text">Checking...</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center p-3 rounded-lg border" id="cameras-status">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 bg-gray-200">
-                    <i class="fas fa-circle text-gray-400 text-xs"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-700">Cameras</p>
-                    <p class="text-xs text-gray-500" id="cameras-status-text">Checking...</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center p-3 rounded-lg border" id="inference-service-status">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 bg-gray-200">
-                    <i class="fas fa-circle text-gray-400 text-xs"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-700">Inference Service</p>
-                    <p class="text-xs text-gray-500" id="inference-service-status-text">Checking...</p>
-                </div>
-            </div>
+            </template>
         </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
-            <div class="flex items-center">
-                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-2xl bg-gradient-to-br from-ocean-blue/20 to-ocean-dark-blue/20 text-ocean-dark-blue mr-4">
-                    <i class="fas fa-chart-bar"></i>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" x-show="!loading || stats.total > 0" x-cloak>
+        <!-- Total Detections -->
+        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-info-50 flex items-center justify-center">
+                    <span class="material-icons text-info-600">analytics</span>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Total Detections</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="total-detections">0</p>
-                </div>
+                <div class="status-dot" :class="camerasStatus === 'running' ? 'active' : camerasStatus === 'error' ? 'error' : 'inactive'"></div>
             </div>
+            <p class="text-3xl font-bold text-gray-900" x-text="stats.total">0</p>
+            <p class="text-body-sm text-gray-500 mt-1">Total Detections</p>
         </div>
 
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
-            <div class="flex items-center">
-                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-2xl bg-gradient-to-br from-turtle-green/20 to-turtle-dark-green/20 text-turtle-dark-green mr-4">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Today's Detections</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="today-detections">0</p>
+        <!-- Today -->
+        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-success-50 flex items-center justify-center">
+                    <span class="material-icons text-success-600">today</span>
                 </div>
             </div>
+            <p class="text-3xl font-bold text-gray-900" x-text="stats.today">0</p>
+            <p class="text-body-sm text-gray-500 mt-1">Today</p>
         </div>
 
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 transition-all duration-300 ease-in-out border border-gray-200 hover:-translate-y-1 hover:shadow-2xl">
-            <div class="flex items-center">
-                <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-2xl bg-gradient-to-br from-turtle-shell/20 to-turtle-shell/20 text-turtle-shell mr-4">
-                    <i class="fas fa-calendar-alt"></i>
+        <!-- This Month -->
+        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-turtle-50 flex items-center justify-center">
+                    <span class="material-icons text-turtle-600">calendar_month</span>
                 </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500">This Month</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="month-detections">0</p>
+            </div>
+            <p class="text-3xl font-bold text-gray-900" x-text="stats.month">0</p>
+            <p class="text-body-sm text-gray-500 mt-1">This Month</p>
+        </div>
+
+        <!-- System Status -->
+        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
+            <p class="text-caption font-bold text-gray-400 uppercase tracking-widest mb-3">System Status</p>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-body-sm text-gray-600">Cameras</span>
+                    <span class="text-caption font-bold"
+                          :class="camerasStatus === 'running' ? 'text-success-600' : 'text-danger-600'"
+                          x-text="camerasStatusText">Checking...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-body-sm text-gray-600">Inference</span>
+                    <span class="text-caption font-bold"
+                          :class="inferenceStatus === 'running' ? 'text-success-600' : 'text-danger-600'"
+                          x-text="inferenceStatusText">Checking...</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Chart Section -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800">Detection Trends</h2>
-                <div class="flex items-center space-x-2">
-                    <select id="chart-period" class="block w-32 pl-2 pr-8 py-1 text-sm border-gray-300 focus:outline-none focus:ring-turtle-green focus:border-turtle-green rounded-md">
-                        <option value="month">This Month</option>
-                        <option value="specific-month">Specific Month</option>
-                        <option value="all">All Time</option>
-                    </select>
-                    <select id="chart-month" class="block w-40 pl-2 pr-8 py-1 text-sm border-gray-300 focus:outline-none focus:ring-turtle-green focus:border-turtle-green rounded-md hidden">
-                        <!-- Month options will be populated by JavaScript -->
-                    </select>
-                </div>
-            </div>
+    <!-- Chart -->
+    <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="text-title text-gray-800 flex items-center gap-2">
+                <span class="material-icons text-ocean-500 text-sm">trending_up</span>
+                Confidence History
+            </h2>
+            <span class="text-caption font-bold text-gray-400 uppercase tracking-wider">Last 200 Logs</span>
         </div>
-        <div class="p-6">
-            <canvas id="detections-chart" width="400" height="200"></canvas>
+        <div class="p-4" style="height: 400px;">
+            <canvas id="detections-chart"></canvas>
         </div>
     </div>
 
-    <!-- Recent Detections and Gallery -->
+    <!-- Recent Detections + Gallery -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Recent Detections -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-800">Recent Detections</h2>
+        <!-- Recent Detections Table -->
+        <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-title text-gray-800">Recent Detections</h2>
             </div>
-            <div class="p-6">
-                <div class="overflow-x-auto">
+            <div class="p-4">
+                <div x-show="recentDetections.length === 0" class="py-8 text-center">
+                    <span class="material-icons text-4xl text-gray-300 mb-2">videocam_off</span>
+                    <p class="text-body text-gray-500">No recent detections</p>
+                </div>
+                <div class="overflow-x-auto" x-show="recentDetections.length > 0">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Camera</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
+                                <th class="px-4 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-4 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">Camera</th>
+                                <th class="px-4 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">Confidence</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="recent-detections-body">
-                            <tr>
-                                <td colspan="3" class="px-6 py-4 text-center text-gray-500">
-                                    <div class="spinner" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </td>
-                            </tr>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            <template x-for="det in recentDetections" :key="det.id">
+                                <tr class="even:bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-3 text-body-sm text-gray-600 whitespace-nowrap" x-text="formatDate(det.timestamp)"></td>
+                                    <td class="px-4 py-3 text-body-sm font-medium text-gray-900 whitespace-nowrap" x-text="det.camera_name || det.camera_location || 'Unknown'"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium bg-success-100 text-success-800"
+                                              x-text="(det.confidence * 100).toFixed(1) + '%'"></span>
+                                    </td>
+                                </tr>
+                            </template>
                         </tbody>
                     </table>
                 </div>
@@ -142,15 +142,127 @@
         </div>
 
         <!-- Detection Gallery -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 mb-6 border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-800">Detection Gallery</h2>
+        <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-title text-gray-800">Detection Gallery</h2>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4" id="detection-gallery">
-                    <div class="text-center py-8">
-                        <div class="spinner" role="status">
-                            <span class="visually-hidden">Loading...</span>
+            <div class="p-4">
+                <div x-show="gallery.length === 0" class="py-8 text-center">
+                    <span class="material-icons text-4xl text-gray-300 mb-2">no_photography</span>
+                    <p class="text-body text-gray-500">No detection images</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-show="gallery.length > 0">
+                    <template x-for="(img, idx) in gallery.slice(0, 24)" :key="img.filename">
+                        <div @click="openImageModal(idx)"
+                             class="aspect-square rounded-lg overflow-hidden cursor-pointer group relative">
+                            <img :src="img.path" :alt="img.filename" loading="lazy"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                 @error="$el.parentElement.innerHTML = '<div class=\'w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg\'><span class=\'material-icons text-2xl\'>image_not_supported</span></div>'">
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal (Alpine-driven) -->
+<div x-data="imageModal"
+     x-show="open" x-cloak
+     @keydown.escape.window="close()"
+     @keydown.arrow-left.window="prev()"
+     @keydown.arrow-right.window="next()"
+     class="fixed inset-0 z-90 overflow-y-auto"
+     aria-modal="true" role="dialog"
+>
+    <!-- Backdrop -->
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm"
+         @click="close()"></div>
+
+    <!-- Panel -->
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-250"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="relative bg-white rounded-xl shadow-overlay w-full max-w-4xl overflow-hidden"
+        >
+            <div class="flex flex-col md:flex-row">
+                <!-- Image -->
+                <div class="md:w-2/3 relative bg-gray-100">
+                    <!-- Toolbar -->
+                    <div class="absolute top-3 right-3 z-10 flex gap-2">
+                        <button @click="zoomIn()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Zoom in">
+                            <span class="material-icons text-gray-600 text-base">zoom_in</span>
+                        </button>
+                        <button @click="zoomOut()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Zoom out">
+                            <span class="material-icons text-gray-600 text-base">zoom_out</span>
+                        </button>
+                        <button @click="resetZoom()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Reset zoom">
+                            <span class="material-icons text-gray-600 text-base">restart_alt</span>
+                        </button>
+                        <button @click="close()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Close">
+                            <span class="material-icons text-gray-600 text-base">close</span>
+                        </button>
+                    </div>
+                    <!-- Nav arrows -->
+                    <button @click="prev()" class="absolute top-1/2 left-3 z-10 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Previous image">
+                        <span class="material-icons text-gray-600 text-base">chevron_left</span>
+                    </button>
+                    <button @click="next()" class="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Next image">
+                        <span class="material-icons text-gray-600 text-base">chevron_right</span>
+                    </button>
+
+                    <div class="flex items-center justify-center p-4 overflow-hidden" style="height: 500px;">
+                        <img :src="currentImage?.path || ''" :alt="currentImage?.filename || ''"
+                             class="max-w-full max-h-full object-contain rounded transition-transform duration-200 cursor-grab"
+                             :style="`transform: translate(${tx}px, ${ty}px) scale(${scale})`"
+                             @mousedown="startPan($event)"
+                             @mousemove="pan($event)"
+                             @mouseup="stopPan"
+                             @mouseleave="stopPan"
+                             @wheel.prevent="onWheel($event)">
+                    </div>
+                </div>
+
+                <!-- Details sidebar -->
+                <div class="md:w-1/3 p-6 bg-gray-50 overflow-y-auto border-l border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-title text-gray-900">Detection Details</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Camera</label>
+                            <p class="mt-1 text-body-sm text-gray-900" x-text="currentImage?.camera_name || currentImage?.camera_location || 'Unknown'"></p>
+                        </div>
+                        <div>
+                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Filename</label>
+                            <p class="mt-1 text-body-sm text-gray-900 break-all" x-text="currentImage?.filename || '—'"></p>
+                        </div>
+                        <div>
+                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">File Size</label>
+                            <p class="mt-1 text-body-sm text-gray-900" x-text="currentImage ? formatSize(currentImage.size) : '—'"></p>
+                        </div>
+                        <div>
+                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Captured</label>
+                            <p class="mt-1 text-body-sm text-gray-900" x-text="currentImage ? formatDate(currentImage.modified * 1000) : '—'"></p>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200">
+                            <p class="text-caption text-gray-500 flex items-center gap-1">
+                                <span class="material-icons text-sm">info</span>
+                                Arrow keys to navigate, scroll to zoom
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -162,726 +274,197 @@
 <!-- Chart.js -->
 <script src="/static/js/chart.umd.js"></script>
 <script>
-    // Initialize chart
-    let detectionsChart;
-    let galleryImages = [];
-    let currentImageIndex = 0;
-    
-    // Load system status
-    async function loadSystemStatus() {
-        try {
-            const response = await fetch('/api/system/status');
-            const status = await response.json();
-            
-            // Update Docker inference status
-            const dockerStatusDiv = document.getElementById('docker-status');
-            const dockerStatusText = document.getElementById('docker-status-text');
-            if (status.docker_inference) {
-                const statusInfo = status.docker_inference;
-                dockerStatusText.textContent = statusInfo.message;
-                
-                let statusClass = 'bg-gray-200';
-                let iconClass = 'text-gray-400';
-                let icon = 'fa-circle';
-                
-                if (statusInfo.status === 'running') {
-                    statusClass = 'bg-green-100';
-                    iconClass = 'text-green-500';
-                    icon = 'fa-check-circle';
-                } else if (statusInfo.status === 'stopped') {
-                    statusClass = 'bg-red-100';
-                    iconClass = 'text-red-500';
-                    icon = 'fa-times-circle';
-                } else if (statusInfo.status === 'error') {
-                    statusClass = 'bg-yellow-100';
-                    iconClass = 'text-yellow-500';
-                    icon = 'fa-exclamation-circle';
-                }
-                
-                dockerStatusDiv.className = `flex items-center p-3 rounded-lg border ${statusClass}`;
-                const iconElement = dockerStatusDiv.querySelector('i');
-                iconElement.className = `fas ${icon} ${iconClass} text-xs`;
-            }
-            
-            // Update cameras status
-            const camerasStatusDiv = document.getElementById('cameras-status');
-            const camerasStatusText = document.getElementById('cameras-status-text');
-            if (status.cameras) {
-                const statusInfo = status.cameras;
-                camerasStatusText.textContent = statusInfo.message;
-                
-                let statusClass = 'bg-gray-200';
-                let iconClass = 'text-gray-400';
-                let icon = 'fa-circle';
-                
-                if (statusInfo.status === 'running') {
-                    statusClass = 'bg-green-100';
-                    iconClass = 'text-green-500';
-                    icon = 'fa-check-circle';
-                } else if (statusInfo.status === 'stopped') {
-                    statusClass = 'bg-red-100';
-                    iconClass = 'text-red-500';
-                    icon = 'fa-times-circle';
-                } else if (statusInfo.status === 'error') {
-                    statusClass = 'bg-yellow-100';
-                    iconClass = 'text-yellow-500';
-                    icon = 'fa-exclamation-circle';
-                }
-                
-                camerasStatusDiv.className = `flex items-center p-3 rounded-lg border ${statusClass}`;
-                const iconElement = camerasStatusDiv.querySelector('i');
-                iconElement.className = `fas ${icon} ${iconClass} text-xs`;
-            }
-            
-            // Update inference service status
-            const inferenceServiceStatusDiv = document.getElementById('inference-service-status');
-            const inferenceServiceStatusText = document.getElementById('inference-service-status-text');
-            if (status.inference_service) {
-                const statusInfo = status.inference_service;
-                inferenceServiceStatusText.textContent = statusInfo.message;
-                
-                let statusClass = 'bg-gray-200';
-                let iconClass = 'text-gray-400';
-                let icon = 'fa-circle';
-                
-                if (statusInfo.status === 'running') {
-                    statusClass = 'bg-green-100';
-                    iconClass = 'text-green-500';
-                    icon = 'fa-check-circle';
-                } else if (statusInfo.status === 'stopped') {
-                    statusClass = 'bg-red-100';
-                    iconClass = 'text-red-500';
-                    icon = 'fa-times-circle';
-                } else if (statusInfo.status === 'error') {
-                    statusClass = 'bg-yellow-100';
-                    iconClass = 'text-yellow-500';
-                    icon = 'fa-exclamation-circle';
-                }
-                
-                inferenceServiceStatusDiv.className = `flex items-center p-3 rounded-lg border ${statusClass}`;
-                const iconElement = inferenceServiceStatusDiv.querySelector('i');
-                iconElement.className = `fas ${icon} ${iconClass} text-xs`;
-            }
-        } catch (error) {
-            console.error('Error loading system status:', error);
-            
-            // Update all status indicators to show error state
-            const statuses = ['docker-status', 'cameras-status', 'inference-service-status'];
-            const statusTexts = ['docker-status-text', 'cameras-status-text', 'inference-service-status-text'];
-            
-            statuses.forEach((statusId, index) => {
-                const statusDiv = document.getElementById(statusId);
-                const statusText = document.getElementById(statusTexts[index]);
-                
-                statusDiv.className = 'flex items-center p-3 rounded-lg border bg-yellow-100';
-                const iconElement = statusDiv.querySelector('i');
-                iconElement.className = 'fas fa-exclamation-circle text-yellow-500 text-xs';
-                statusText.textContent = 'Status check failed';
-            });
-        }
-    }
-    
-    // Load detection stats
-    async function loadDetectionStats() {
-        try {
-            const response = await fetch('/api/detections/stats');
-            const stats = await response.json();
-            
-            document.getElementById('total-detections').textContent = stats.total;
-            document.getElementById('today-detections').textContent = stats.today;
-            document.getElementById('month-detections').textContent = stats.this_month;
-        } catch (error) {
-            console.error('Error loading detection stats:', error);
-            // Optional: Show error indicator in UI
-        }
-    }
-    
-    // Load chart data
-    async function loadChartData(period = 'month', month = null) {
-        try {
-            let url = `/api/detections/chart?period=${period}`;
-            if (month) {
-                url += `&month=${month}`;
-            }
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            // Prepare chart data
-            let labels, values, label;
-            if (period === 'month') {
-                if (month) {
-                    label = `Detections per day (${month})`;
+// ============================================================
+// Dashboard Alpine.js component
+// ============================================================
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dashboard', () => ({
+        stats: { total: 0, today: 0, month: 0 },
+        recentDetections: [],
+        gallery: [],
+        camerasStatus: 'checking',
+        camerasStatusText: 'Checking...',
+        inferenceStatus: 'checking',
+        inferenceStatusText: 'Checking...',
+        loading: true,
+        chart: null,
+        pollInterval: null,
+        pollMs: 5000,
+
+        init() {
+            this.loadAll();
+            this.startPolling();
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    this.stopPolling();
+                    this.pollMs = 30000;
+                    this.startPolling();
                 } else {
-                    label = 'Detections per day (This Month)';
+                    this.stopPolling();
+                    this.pollMs = 5000;
+                    this.startPolling();
                 }
-                labels = data.map(item => item.date);
-            } else {
-                label = 'Detections per month';
-                labels = data.map(item => item.month);
-            }
-            values = data.map(item => item.count);
-            
-            // Create or update chart
-            const ctx = document.getElementById('detections-chart').getContext('2d');
-            
-            if (detectionsChart) {
-                // Update existing chart instead of destroying and recreating to prevent blinking
-                detectionsChart.data.labels = labels;
-                detectionsChart.data.datasets[0].data = values;
-                detectionsChart.data.datasets[0].label = label;
-                detectionsChart.update('active'); // Use 'active' animation for smooth update
-            } else {
-                // Create new chart if it doesn't exist
-                detectionsChart = new Chart(ctx, {
+            });
+        },
+
+        async loadAll() {
+            this.loading = true;
+            await Promise.allSettled([
+                this.loadStats(),
+                this.loadChart(),
+                this.loadRecent(),
+                this.loadGallery(),
+                this.loadSystemStatus(),
+            ]);
+            this.loading = false;
+        },
+
+        async refreshAll() {
+            this.loading = true;
+            await this.loadAll();
+        },
+
+        async loadStats() {
+            try {
+                const r = await fetch('/api/detections/stats');
+                const s = await r.json();
+                this.stats = { total: s.total, today: s.today, month: s.this_month };
+            } catch (e) { console.error('Stats error:', e); }
+        },
+
+        async loadSystemStatus() {
+            try {
+                const r = await fetch('/api/system/status');
+                const s = await r.json();
+                if (s.cameras) {
+                    this.camerasStatusText = s.cameras.message;
+                    this.camerasStatus = s.cameras.status;
+                }
+                if (s.inference_service) {
+                    this.inferenceStatusText = s.inference_service.message;
+                    this.inferenceStatus = s.inference_service.status;
+                }
+            } catch (e) { console.error('Status error:', e); }
+        },
+
+        async loadChart() {
+            try {
+                const r = await fetch('/api/detections/chart');
+                const data = await r.json();
+                const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }));
+                const values = data.map(d => d.confidence.toFixed(1));
+
+                if (this.chart) {
+                    this.chart.data.labels = labels;
+                    this.chart.data.datasets[0].data = values;
+                    this.chart.update('none');
+                    return;
+                }
+
+                const ctx = document.getElementById('detections-chart');
+                if (!ctx) return;
+                this.chart = new Chart(ctx.getContext('2d'), {
                     type: 'line',
                     data: {
-                        labels: labels,
+                        labels,
                         datasets: [{
-                            label: label,
                             data: values,
-                            borderColor: 'rgb(74, 124, 89)',
-                            backgroundColor: 'rgba(74, 124, 89, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4
+                            borderColor: '#4a7c59',
+                            backgroundColor: 'rgba(74,124,89,0.06)',
+                            borderWidth: 2, fill: true, tension: 0.15,
+                            pointRadius: 2, pointHoverRadius: 5,
+                            pointBackgroundColor: '#4a7c59', pointBorderColor: '#fff',
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: {
-                            duration: 300, // Animation duration in ms
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: item => `Confidence: ${item.parsed.y}%` } }
                         },
                         scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
+                            y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { callback: v => v+'%', font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { maxTicksLimit: 15, font: { size: 9 }, maxRotation: 0 } }
                         }
                     }
                 });
-            }
-        } catch (error) {
-            console.error('Error loading chart data:', error);
-            // Optional: Show error indicator in UI
-        }
+            } catch (e) { console.error('Chart error:', e); }
+        },
+
+        async loadRecent() {
+            try {
+                const r = await fetch('/api/detections/recent');
+                this.recentDetections = await r.json();
+            } catch (e) { console.error('Recent error:', e); }
+        },
+
+        async loadGallery() {
+            try {
+                const r = await fetch('/api/detections/gallery');
+                this.gallery = await r.json();
+            } catch (e) { console.error('Gallery error:', e); }
+        },
+
+        formatDate(ts) { return new Date(ts).toLocaleString(); },
+
+        startPolling() {
+            if (this.pollInterval) clearInterval(this.pollInterval);
+            this.pollInterval = setInterval(() => {
+                this.loadStats(); this.loadChart(); this.loadRecent(); this.loadGallery(); this.loadSystemStatus();
+            }, this.pollMs);
+        },
+        stopPolling() { if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; } },
+    }));
+
+    Alpine.data('imageModal', () => ({
+        open: false,
+        images: [],
+        index: 0,
+        scale: 1,
+        tx: 0,
+        ty: 0,
+        panning: false,
+        panStart: { x: 0, y: 0 },
+
+        get currentImage() { return this.images[this.index] || null; },
+
+        openModal(images, idx) {
+            this.images = images;
+            this.index = idx;
+            this.scale = 1; this.tx = 0; this.ty = 0;
+            this.open = true;
+            document.body.classList.add('overflow-hidden');
+        },
+        close() {
+            this.open = false;
+            document.body.classList.remove('overflow-hidden');
+        },
+        next() { this.index = (this.index + 1) % this.images.length; this.resetZoom(); },
+        prev() { this.index = (this.index - 1 + this.images.length) % this.images.length; this.resetZoom(); },
+        zoomIn() { this.scale = Math.min(this.scale + 0.2, 4); },
+        zoomOut() { this.scale = Math.max(this.scale - 0.2, 0.5); },
+        resetZoom() { this.scale = 1; this.tx = 0; this.ty = 0; },
+        onWheel(e) { e.deltaY < 0 ? this.zoomIn() : this.zoomOut(); },
+        startPan(e) { if (this.scale > 1) { this.panning = true; this.panStart = { x: e.clientX - this.tx, y: e.clientY - this.ty }; } },
+        pan(e) { if (this.panning) { this.tx = e.clientX - this.panStart.x; this.ty = e.clientY - this.panStart.y; } },
+        stopPan() { this.panning = false; },
+        formatSize(bytes) {
+            if (!bytes) return '—';
+            const k = 1024, sizes = ['Bytes','KB','MB','GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        },
+        formatDate(ts) { return new Date(ts).toLocaleString(); },
+    }));
+});
+
+// Hook up gallery clicks to the modal
+function openImageModal(idx) {
+    const scope = Alpine.$data(document.querySelector('[x-data="imageModal"]'));
+    const dashScope = Alpine.$data(document.querySelector('[x-data="dashboard"]'));
+    if (scope && dashScope) {
+        scope.openModal(dashScope.gallery, idx);
     }
-    
-    // Load recent detections
-    async function loadRecentDetections() {
-        try {
-            const response = await fetch('/api/detections/recent');
-            const detections = await response.json();
-            
-            const tbody = document.getElementById('recent-detections-body');
-            
-            if (detections.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="px-6 py-4 text-center text-gray-500">
-                            <i class="fas fa-camera mx-auto text-4xl text-gray-300 mb-2"></i>
-                            <p class="mt-2">No recent detections</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            // Create new content without showing loading indicator to reduce flicker
-            const newContent = detections.map(detection => `
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${new Date(detection.timestamp).toLocaleString()}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${detection.camera_name || detection.camera_location || 'Unknown Location'}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            ${(detection.confidence * 100).toFixed(1)}%
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
-            
-            // Only update if content has actually changed to prevent unnecessary flicker
-            if (tbody.innerHTML.trim() !== newContent.trim()) {
-                tbody.innerHTML = newContent;
-            }
-        } catch (error) {
-            console.error('Error loading recent detections:', error);
-            const tbody = document.getElementById('recent-detections-body');
-            const errorContent = `
-                <tr>
-                    <td colspan="3" class="px-6 py-4 text-center text-red-500">
-                        Error loading detections
-                    </td>
-                </tr>
-            `;
-            if (tbody.innerHTML.trim() !== errorContent.trim()) {
-                tbody.innerHTML = errorContent;
-            }
-        }
-    }
-    
-    // Load detection gallery
-    async function loadDetectionGallery() {
-        try {
-            const response = await fetch('/api/detections/gallery');
-            const newGalleryImages = await response.json();
-            
-            const gallery = document.getElementById('detection-gallery');
-            
-            if (newGalleryImages.length === 0) {
-                const noImagesContent = `
-                    <div class="text-center py-8 col-span-full">
-                        <i class="fas fa-images mx-auto text-4xl text-gray-300 mb-2"></i>
-                        <p class="mt-2">No detection images found</p>
-                    </div>
-                `;
-                if (gallery.innerHTML.trim() !== noImagesContent.trim()) {
-                    gallery.innerHTML = noImagesContent;
-                }
-                galleryImages = newGalleryImages;
-                return;
-            }
-            
-            // Compare with existing images to minimize DOM changes
-            const hasChanges = JSON.stringify(galleryImages) !== JSON.stringify(newGalleryImages);
-            
-            if (hasChanges) {
-                galleryImages = newGalleryImages;
-                
-                // Update gallery content efficiently
-                const neededItems = Math.min(galleryImages.length, 24);
-                
-                // Ensure we have enough elements
-                while (gallery.children.length < neededItems) {
-                    const galleryItem = document.createElement('div');
-                    galleryItem.className = 'gallery-item overflow-hidden rounded-lg';
-                    
-                    const img = document.createElement('img');
-                    img.loading = 'lazy';
-                    img.className = 'w-full h-full object-cover rounded-lg';
-                    img.onerror = function() {
-                        this.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg"><i class="fas fa-image text-2xl"></i></div>';
-                    };
-                    
-                    galleryItem.appendChild(img);
-                    gallery.appendChild(galleryItem);
-                }
-                
-                // Update existing elements with new image data
-                for (let i = 0; i < neededItems; i++) {
-                    const img = gallery.children[i].querySelector('img');
-                    if (img && img.src !== galleryImages[i].path) {
-                        // Update image source if different to prevent unnecessary reloads
-                        img.src = galleryImages[i].path;
-                    }
-                    // Update onclick handler with correct index
-                    gallery.children[i].onclick = () => openImageModal(i);
-                }
-                
-                // Remove extra elements if we have fewer images than before
-                while (gallery.children.length > neededItems) {
-                    gallery.removeChild(gallery.lastChild);
-                }
-            }
-        } catch (error) {
-            console.error('Error loading detection gallery:', error);
-            const gallery = document.getElementById('detection-gallery');
-            const errorContent = `
-                <div class="text-center py-8 col-span-full text-red-500">
-                    Error loading detection images
-                </div>
-            `;
-            if (gallery.innerHTML.trim() !== errorContent.trim()) {
-                gallery.innerHTML = errorContent;
-            }
-        }
-    }
-    
-    // Open image modal with details
-    function openImageModal(index) {
-        currentImageIndex = index;
-        showImageAtIndex(currentImageIndex);
-        
-        const modal = document.getElementById('image-modal');
-        modal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-    }
-
-    function showImageAtIndex(index) {
-        const image = galleryImages[index];
-        if (!image) return;
-
-        const modalImage = document.getElementById('modal-image');
-        const modalFilename = document.getElementById('modal-filename');
-        const modalSize = document.getElementById('modal-size');
-        const modalDate = document.getElementById('modal-date');
-        const modalCameraLocation = document.getElementById('modal-camera-location');
-
-        modalImage.src = image.path;
-        modalFilename.textContent = image.filename;
-        modalSize.textContent = formatFileSize(image.size);
-        modalDate.textContent = new Date(image.modified * 1000).toLocaleString();
-        
-        // Set camera location - try to extract from image data or use a default
-        modalCameraLocation.textContent = image.camera_name || image.camera_location || 'Unknown Location';
-        
-        resetZoom();
-    }
-    
-    // Close image modal
-    function closeImageModal() {
-        const modal = document.getElementById('image-modal');
-        modal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    function showNextImage() {
-        currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
-        showImageAtIndex(currentImageIndex);
-    }
-
-    function showPrevImage() {
-        currentImageIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
-        showImageAtIndex(currentImageIndex);
-    }
-    
-    // Format file size
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    // Initialize dashboard
-    document.addEventListener('DOMContentLoaded', function() {
-        loadSystemStatus();
-        loadDetectionStats();
-        loadChartData('month');
-        loadRecentDetections();
-        loadDetectionGallery();
-        
-        // Add event listener for period selector
-        const periodSelector = document.getElementById('chart-period');
-        const monthSelector = document.getElementById('chart-month');
-        
-        // Populate month dropdown with last 12 months
-        function populateMonthDropdown() {
-            const today = new Date();
-            const months = [];
-            
-            for (let i = 0; i < 12; i++) {
-                const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const monthString = `${year}-${month}`;
-                const monthName = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-                months.push({ value: monthString, name: monthName });
-            }
-            
-            monthSelector.innerHTML = '';
-            months.forEach(month => {
-                const option = document.createElement('option');
-                option.value = month.value;
-                option.textContent = month.name;
-                monthSelector.appendChild(option);
-            });
-        }
-        
-        // Initialize month dropdown
-        populateMonthDropdown();
-        
-        // Handle period change
-        periodSelector.addEventListener('change', function() {
-            const period = this.value;
-            
-            if (period === 'specific-month') {
-                monthSelector.classList.remove('hidden');
-                const selectedMonth = monthSelector.value;
-                loadChartData('month', selectedMonth);
-            } else {
-                monthSelector.classList.add('hidden');
-                loadChartData(period);
-            }
-        });
-        
-        // Handle month change
-        monthSelector.addEventListener('change', function() {
-            const selectedMonth = this.value;
-            loadChartData('month', selectedMonth);
-        });
-
-        // Zoom and pan functionality
-        const modalImage = document.getElementById('modal-image');
-        let scale = 1;
-        let isPanning = false;
-        let start = { x: 0, y: 0 };
-        let transform = { x: 0, y: 0 };
-
-        window.zoomIn = function() {
-            scale = Math.min(scale + 0.1, 3);
-            updateImageTransform();
-        }
-
-        window.zoomOut = function() {
-            scale = Math.max(scale - 0.1, 0.5);
-            updateImageTransform();
-        }
-
-        window.resetZoom = function() {
-            scale = 1;
-            transform = { x: 0, y: 0 }
-            updateImageTransform();
-        }
-
-        function updateImageTransform() {
-            modalImage.style.transform = `translate(${transform.x}px, ${transform.y}px) scale(${scale})`;
-        }
-
-        modalImage.addEventListener('mousedown', (e) => {
-            if (scale > 1) {
-                isPanning = true;
-                start = { x: e.clientX - transform.x, y: e.clientY - transform.y }
-                modalImage.style.cursor = 'grabbing';
-            }
-        });
-
-        modalImage.addEventListener('mouseup', () => {
-            isPanning = false;
-            modalImage.style.cursor = 'grab';
-        });
-
-        modalImage.addEventListener('mouseleave', () => {
-            isPanning = false;
-            modalImage.style.cursor = 'grab';
-        });
-
-        modalImage.addEventListener('mousemove', (e) => {
-            if (isPanning) {
-                transform.x = e.clientX - start.x;
-                transform.y = e.clientY - start.y;
-                updateImageTransform();
-            }
-        });
-
-        modalImage.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                zoomIn();
-            } else {
-                zoomOut();
-            }
-        });
-
-        // Close modal with ESC key and handle arrow keys
-        document.addEventListener('keydown', function(e) {
-            const modal = document.getElementById('image-modal');
-            if (!modal.classList.contains('hidden')) {
-                if (e.key === 'Escape') {
-                    closeImageModal();
-                } else if (e.key === 'ArrowLeft') {
-                    showPrevImage();
-                } else if (e.key === 'ArrowRight') {
-                    showNextImage();
-                }
-            }
-        });
-        
-        // Set up periodic AJAX polling for real-time updates (as an alternative to WebSockets)
-        let pollingInterval = null;
-        let pollInterval = 5000; // Default 5 seconds
-        let consecutiveErrors = 0;
-        const maxErrorInterval = 60000; // Max 60 seconds on errors
-
-        function startPolling() {
-            if (pollingInterval) {
-                // Clear existing interval if present
-                clearInterval(pollingInterval);
-            }
-            
-            // Initial load
-            loadDetectionStats();
-            loadChartData('month');
-            loadRecentDetections();
-            loadDetectionGallery();
-            
-            // Set up polling with current interval
-            pollingInterval = setInterval(pollForUpdates, pollInterval);
-            
-            console.log('Started polling for real-time updates with interval:', pollInterval);
-        }
-
-        function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-                console.log('Stopped polling for real-time updates');
-            }
-        }
-
-        function pollForUpdates() {
-            console.log('Polling for updates...');
-            
-            // Perform all API calls in parallel
-            Promise.allSettled([
-                loadSystemStatus(),
-                loadDetectionStats(),
-                loadChartData('month'),
-                loadRecentDetections(),
-                loadDetectionGallery()
-            ]).then(results => {
-                // Check if any promises were rejected
-                const rejected = results.filter(result => result.status === 'rejected');
-                
-                if (rejected.length > 0) {
-                    consecutiveErrors++;
-                    console.warn(`Polling error: ${rejected.length} out of ${results.length} requests failed`);
-                    
-                    // Exponential backoff on errors, up to max interval
-                    pollInterval = Math.min(pollInterval * 2, maxErrorInterval);
-                    console.log(`Increased polling interval to ${pollInterval}ms due to errors`);
-                    
-                    // Restart polling with new interval
-                    stopPolling();
-                    startPolling();
-                } else {
-                    // Reset error counter on success
-                    consecutiveErrors = 0;
-                    
-                    // If interval was increased due to errors, gradually return to normal
-                    if (pollInterval > 5000) {
-                        pollInterval = 5000;
-                        console.log('Reset polling interval to 5000ms after successful requests');
-                        
-                        // Restart polling with normal interval
-                        stopPolling();
-                        startPolling();
-                    }
-                }
-            });
-        }
-
-        // Function to adjust polling based on page visibility
-        function handleVisibilityChange() {
-            if (document.hidden) {
-                // Pause polling when tab is not active (reduce resource usage)
-                console.log('Tab is hidden, reducing polling frequency');
-                stopPolling();
-                // Use a longer interval when page is hidden
-                pollInterval = 30000; // 30 seconds when tab is hidden
-                pollingInterval = setInterval(pollForUpdates, pollInterval);
-            } else {
-                // Resume normal polling when tab becomes active
-                console.log('Tab is visible, resuming normal polling');
-                clearInterval(pollingInterval);
-                pollInterval = 5000; // 5 seconds when tab is visible
-                startPolling();
-            }
-        }
-
-        // Start the polling when the page loads
-        startPolling();
-
-        // Add visibility change listener to reduce polling when tab is not active
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        // Optional: Stop polling when the user navigates away
-        window.addEventListener('beforeunload', function() {
-            stopPolling();
-        });
-    });
+}
 </script>
-
-<!-- Image Modal -->
-<div id="image-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4">
-    <div class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
-            <div class="md:w-2/3 relative"> <!-- Wrapper for image with absolute positioned buttons -->
-                <div class="absolute top-4 right-4 z-20 flex space-x-2">
-                    <button onclick="zoomIn()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow w-10 h-10 flex items-center justify-center"><i class="fas fa-search-plus"></i></button>
-                    <button onclick="zoomOut()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow w-10 h-10 flex items-center justify-center"><i class="fas fa-search-minus"></i></button>
-                    <button onclick="resetZoom()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow w-10 h-10 flex items-center justify-center"><i class="fas fa-sync-alt"></i></button>
-                    <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow w-10 h-10 flex items-center justify-center"><i class="fas fa-times"></i></button>
-                </div>
-                
-                <div class="absolute top-1/2 left-4 z-20 transform -translate-y-1/2">
-                    <button onclick="showPrevImage()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow w-10 h-10 flex items-center justify-center"><i class="fas fa-chevron-left"></i></button>
-                </div>
-                <div class="absolute top-1/2 right-4 z-20 transform -translate-y-1/2">
-                    <button onclick="showNextImage()" class="text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow w-10 h-10 flex items-center justify-center"><i class="fas fa-chevron-right"></i></button>
-                </div>
-                
-                <div class="p-4 flex items-center justify-center overflow-hidden bg-gray-200 h-full">
-                    <img id="modal-image" src="" alt="Detection image" class="max-w-full max-h-full object-contain rounded transform transition-transform duration-200 ease-in-out cursor-grab">
-                </div>
-            </div>
-            
-            <div class="md:w-1/3 p-6 bg-gray-50 overflow-y-auto">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Detection Details</h3>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Camera Location</label>
-                        <p id="modal-camera-location" class="mt-1 text-sm text-gray-900"></p>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Filename</label>
-                        <p id="modal-filename" class="mt-1 text-sm text-gray-900"></p>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">File Size</label>
-                        <p id="modal-size" class="mt-1 text-sm text-gray-900"></p>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Captured</label>
-                        <p id="modal-date" class="mt-1 text-sm text-gray-900"></p>
-                    </div>
-                    
-                    <div class="pt-4">
-                        <p class="text-sm text-gray-600">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Use arrow keys to navigate, scroll to zoom.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Close modal when clicking outside or pressing ESC -->
-<script>
-    // Close modal when clicking outside the content
-    document.getElementById('image-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeImageModal();
-        }
-    });
-    
-    // Close modal with ESC key and handle arrow keys
-    document.addEventListener('keydown', function(e) {
-        const modal = document.getElementById('image-modal');
-        if (!modal.classList.contains('hidden')) {
-            if (e.key === 'Escape') {
-                closeImageModal();
-            } else if (e.key === 'ArrowLeft') {
-                showPrevImage();
-            } else if (e.key === 'ArrowRight') {
-                showNextImage();
-            }
-        }
-    });
-</script>
-
 {% endblock %}

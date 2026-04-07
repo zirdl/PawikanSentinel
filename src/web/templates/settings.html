@@ -3,859 +3,484 @@
 {% block title %}Settings - Pawikan Sentinel{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
+<div x-data="settingsPage">
+    <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Settings</h1>
-        <p class="mt-2 text-gray-600">Manage your system configuration and account settings</p>
+        <h1 class="text-h1 text-gray-900 tracking-tight">Settings</h1>
+        <p class="text-body text-gray-500 mt-1">Manage your system configuration and account</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Camera Management -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-800">Cameras</h2>
-                    <button hx-get="/cameras/form" hx-target="#modal-content" hx-swap="innerHTML" 
-                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                        <i class="fas fa-plus mr-1"></i> Add Camera
+    <div class="page-content">
+        <!-- Cameras + Contacts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Cameras -->
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-title text-gray-800">Cameras</h2>
+                    <button hx-get="/cameras/form" hx-target="#modal-content" hx-swap="innerHTML"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-turtle-500 hover:bg-turtle-600
+                                   text-white text-caption font-semibold rounded-lg transition-colors duration-200">
+                        <span class="material-icons text-sm">add</span> Add
                     </button>
                 </div>
+                <div class="p-4" id="cameras-container">
+                    <div class="animate-pulse space-y-3">
+                        <div class="h-14 bg-gray-100 rounded"></div>
+                        <div class="h-14 bg-gray-100 rounded"></div>
+                    </div>
+                </div>
             </div>
-            <div class="p-6 overflow-hidden" id="cameras-container">
-                <div class="text-center py-8">
-                    <div class="spinner" role="status">
-                        <span class="visually-hidden">Loading...</span>
+
+            <!-- Contacts -->
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-title text-gray-800">Contacts</h2>
+                    <button hx-get="/contacts/form" hx-target="#modal-content" hx-swap="innerHTML"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-turtle-500 hover:bg-turtle-600
+                                   text-white text-caption font-semibold rounded-lg transition-colors duration-200">
+                        <span class="material-icons text-sm">add</span> Add
+                    </button>
+                </div>
+                <div class="p-4" id="contacts-container">
+                    <div class="animate-pulse space-y-3">
+                        <div class="h-14 bg-gray-100 rounded"></div>
+                        <div class="h-14 bg-gray-100 rounded"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Contact Management -->
-        <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-800">Contacts</h2>
-                    <button hx-get="/contacts/form" hx-target="#modal-content" hx-swap="innerHTML" 
-                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                        <i class="fas fa-plus mr-1"></i> Add Contact
-                    </button>
+        <!-- Account Settings + System Config Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Account Settings -->
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-title text-gray-800">Account</h2>
                 </div>
-            </div>
-            <div class="p-6 overflow-hidden" id="contacts-container">
-                <div class="text-center py-8">
-                    <div class="spinner" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-<!-- Account Settings and System Configuration -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-    <!-- Account Settings -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">Account Settings</h2>
-        </div>
-        <div class="p-6">
-            <div class="space-y-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Change Password</h3>
-                    <form id="change-password-form" class="mt-4 space-y-4">
-                        <div>
-                            <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                            <div class="relative">
-                                <input type="password" name="current_password" id="current_password" required
-                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('current_password', 'password-icon-3')">
-                                    <span id="password-icon-3"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                                </button>
+                <div class="p-6 space-y-8">
+                    <!-- Change Password -->
+                    <div>
+                        <h3 class="text-h6 text-gray-900 mb-4">Change Password</h3>
+                        <form @submit.prevent="changePassword" class="space-y-4">
+                            <div x-data="{ visible: false }">
+                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                                <div class="relative">
+                                    <input :type="visible ? 'text' : 'password'" name="current_password"
+                                           x-model="passwordForm.current" required
+                                           class="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg text-body bg-white
+                                                  focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
+                                    <button type="button" @click="visible = !visible"
+                                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                                        <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                            <div class="relative">
-                                <input type="password" name="new_password" id="new_password" required
-                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('new_password', 'password-icon-4')">
-                                    <span id="password-icon-4"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                                </button>
+                            <div x-data="{ visible: false }">
+                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                                <div class="relative">
+                                    <input :type="visible ? 'text' : 'password'" name="new_password"
+                                           x-model="passwordForm.new" required
+                                           class="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg text-body bg-white
+                                                  focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
+                                    <button type="button" @click="visible = !visible"
+                                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                                        <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label for="confirm_new_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                            <div class="relative">
-                                <input type="password" name="confirm_new_password" id="confirm_new_password" required
-                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('confirm_new_password', 'password-icon-5')">
-                                    <span id="password-icon-5"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
                             <button type="submit"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                                <i class="fas fa-key mr-1"></i> Change Password
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
+                                           text-white text-body-sm font-semibold rounded-lg transition-colors duration-200
+                                           disabled:opacity-50 disabled:cursor-not-allowed"
+                                    :disabled="passwordLoading">
+                                <span class="material-icons text-base" x-show="passwordLoading" class="animate-spin">refresh</span>
+                                <span class="material-icons text-base">vpn_key</span> Change Password
                             </button>
-                        </div>
-                    </form>
-                    <div id="password-message" class="mt-2 hidden"></div>
-                </div>
-                
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-medium text-gray-900">Change Username</h3>
-                    <form id="change-username-form" class="mt-4 space-y-4">
-                        <div>
-                            <label for="current_password_username" class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                            <div class="relative">
-                                <input type="password" name="current_password" id="current_password_username" required
-                                       class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('current_password_username', 'password-icon-6')">
-                                    <span id="password-icon-6"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                                </button>
+                            <div x-show="passwordMessage" x-cloak
+                                 class="p-3 rounded-lg text-body-sm border"
+                                 :class="passwordError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
+                                 x-text="passwordMessage"></div>
+                        </form>
+                    </div>
+
+                    <!-- Change Username -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-h6 text-gray-900 mb-4">Change Username</h3>
+                        <form @submit.prevent="changeUsername" class="space-y-4">
+                            <div x-data="{ visible: false }">
+                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                                <div class="relative">
+                                    <input :type="visible ? 'text' : 'password'" x-model="usernameForm.current" required
+                                           class="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg text-body bg-white
+                                                  focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
+                                    <button type="button" @click="visible = !visible"
+                                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                                        <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label for="new_username" class="block text-sm font-medium text-gray-700 mb-2">New Username</label>
-                            <input type="text" name="new_username" id="new_username" required
-                                   class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
-                        </div>
-                        
-                        <div>
+                            <div>
+                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">New Username</label>
+                                <input type="text" x-model="usernameForm.new" required
+                                       class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-body bg-white
+                                              focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
+                            </div>
                             <button type="submit"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                                <i class="fas fa-user-edit mr-1"></i> Change Username
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
+                                           text-white text-body-sm font-semibold rounded-lg transition-colors duration-200
+                                           disabled:opacity-50 disabled:cursor-not-allowed"
+                                    :disabled="usernameLoading">
+                                <span class="material-icons text-base" x-show="usernameLoading" class="animate-spin">refresh</span>
+                                <span class="material-icons text-base">manage_accounts</span> Change Username
                             </button>
-                        </div>
-                    </form>
-                    <div id="username-message" class="mt-2 hidden"></div>
+                            <div x-show="usernameMessage" x-cloak
+                                 class="p-3 rounded-lg text-body-sm border"
+                                 :class="usernameError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
+                                 x-text="usernameMessage"></div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- System Configuration -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">System Configuration</h2>
-        </div>
-        <div class="p-6">
-            <div class="space-y-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Detection Settings</h3>
-                    <form id="detection-config-form" class="mt-4 space-y-4">
-                        <div>
-                            <label for="confidence_threshold" class="block text-sm font-medium text-gray-700 mb-2">
-                                Confidence Threshold: <span id="confidence_value">80</span>%
-                            </label>
-                            <input type="range" name="confidence_threshold" id="confidence_threshold" min="50" max="99" value="80" 
-                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-turtle-green">
-                            <p class="mt-1 text-sm text-gray-500">Minimum confidence level for detections to be considered valid.</p>
-                        </div>
-                        
-                        <div>
-                            <label for="frame_skip" class="block text-sm font-medium text-gray-700 mb-2">
-                                Frame Skip: <span id="frame_skip_value">20</span> frames
-                            </label>
-                            <input type="range" name="frame_skip" id="frame_skip" min="1" max="50" value="20" 
-                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-turtle-green">
-                            <p class="mt-1 text-sm text-gray-500">Number of frames to skip between inference runs (higher = better performance, lower = more responsive).</p>
-                        </div>
-                    </form>
+            <!-- System Configuration -->
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-title text-gray-800">System Configuration</h2>
                 </div>
-                
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-medium text-gray-900">Notification Settings</h3>
-                    <form id="notification-config-form" class="mt-4 space-y-4">
-                        <div>
-                            <label for="sms_cooldown" class="block text-sm font-medium text-gray-700 mb-2">
-                                SMS Cooldown: <span id="sms_cooldown_value">10</span> minutes
-                            </label>
-                            <input type="range" name="sms_cooldown" id="sms_cooldown" min="1" max="60" value="10" 
-                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-turtle-green">
-                            <p class="mt-1 text-sm text-gray-500">Minimum time between SMS notifications to prevent spam.</p>
-                        </div>
-                    </form>
-                </div>
-                
-                <div class="border-t border-gray-200 pt-6">
-                    <button id="reset-config-btn"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gradient-to-r from-red-100 to-red-200 hover:from-red-200 hover:to-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 mr-2">
-                        <i class="fas fa-undo mr-1"></i> Reset to Default
-                    </button>
-                    <button id="save-config-btn"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                        <i class="fas fa-save mr-1"></i> Save Configuration
-                    </button>
-                    <div id="config-message" class="mt-2 hidden"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Backup & Export Section -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-    <!-- System Backup Card -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">System Backup</h2>
-        </div>
-        <div class="p-6">
-            <div class="space-y-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Create Backup</h3>
-                    <p class="mt-2 text-sm text-gray-600">Create a backup of your database and configuration files.</p>
-                    <button id="create-backup-btn"
-                            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                        <i class="fas fa-download mr-1"></i> Create Backup
-                    </button>
-                    <div id="backup-message" class="mt-2 hidden"></div>
-                </div>
-                
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-medium text-gray-900">Backup History</h3>
-                    <p class="mt-2 text-sm text-gray-600">List of recent backups (stored in the backups directory).</p>
-                    <div id="backup-history" class="mt-4">
-                        <div class="text-center py-4">
-                            <div class="spinner" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                <div class="p-6 space-y-6">
+                    <!-- Detection Settings -->
+                    <div>
+                        <h3 class="text-h6 text-gray-900 mb-4">Detection</h3>
+                        <div class="space-y-5">
+                            <div x-data="{ val: {{ config.confidence_threshold if config else 50 }} }">
+                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">
+                                    Confidence Threshold: <span x-text="val"></span>%
+                                </label>
+                                <input type="range" x-model.number="val" min="50" max="99" step="1"
+                                       name="confidence_threshold" id="confidence_threshold"
+                                       class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-turtle-500">
+                                <p class="text-caption text-gray-500 mt-1">Minimum confidence level for valid detections.</p>
+                            </div>
+                            <div x-data="{ val: {{ config.frame_skip if config else 20 }} }">
+                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">
+                                    Frame Skip: <span x-text="val"></span> frames
+                                </label>
+                                <input type="range" x-model.number="val" min="1" max="50" step="1"
+                                       name="frame_skip" id="frame_skip"
+                                       class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-turtle-500">
+                                <p class="text-caption text-gray-500 mt-1">Frames to skip between inference runs.</p>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-h6 text-gray-900 mb-4">Notifications</h3>
+                        <div x-data="{ val: {{ config.sms_cooldown if config else 10 }} }" class="space-y-1">
+                            <label class="block text-body-sm font-medium text-gray-700 mb-1.5">
+                                SMS Cooldown: <span x-text="val"></span> minutes
+                            </label>
+                            <input type="range" x-model.number="val" min="1" max="60" step="1"
+                                   name="sms_cooldown" id="sms_cooldown"
+                                   class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-turtle-500">
+                            <p class="text-caption text-gray-500 mt-1">Minimum time between SMS notifications.</p>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="border-t border-gray-200 pt-6 flex gap-2">
+                        <button @click="resetConfig()"
+                                class="px-4 py-2 text-body-sm font-medium text-gray-700 bg-white border border-gray-300
+                                       rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center gap-1.5">
+                            <span class="material-icons text-base">undo</span> Reset Defaults
+                        </button>
+                        <button @click="saveConfig()"
+                                :disabled="configLoading"
+                                class="px-4 py-2 text-body-sm font-semibold text-white bg-turtle-500 hover:bg-turtle-600
+                                       rounded-lg transition-colors duration-200 flex items-center gap-1.5
+                                       disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-icons text-base" x-show="configLoading" class="animate-spin">refresh</span>
+                            <span class="material-icons text-base">save</span> Save Configuration
+                        </button>
+                    </div>
+                    <div x-show="configMessage" x-cloak
+                         class="p-3 rounded-lg text-body-sm border"
+                         :class="configError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
+                         x-text="configMessage"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup + Export Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Backup -->
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-title text-gray-800">System Backup</h2>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <h3 class="text-h6 text-gray-900 mb-2">Create Backup</h3>
+                        <p class="text-body text-gray-500 mb-4">Backup your database and configuration files.</p>
+                        <button @click="createBackup()"
+                                :disabled="backupLoading"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
+                                       text-white text-body-sm font-semibold rounded-lg transition-colors duration-200
+                                       disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-icons text-base" x-show="backupLoading" class="animate-spin">refresh</span>
+                            <span class="material-icons text-base">cloud_download</span> Create Backup
+                        </button>
+                        <div x-show="backupMessage" x-cloak
+                             class="mt-3 p-3 rounded-lg text-body-sm border"
+                             :class="backupError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
+                             x-text="backupMessage"></div>
+                    </div>
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-h6 text-gray-900 mb-2">Backup History</h3>
+                        <div id="backup-history">
+                            <div class="animate-pulse space-y-2">
+                                <div class="h-10 bg-gray-100 rounded"></div>
+                                <div class="h-10 bg-gray-100 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export -->
+            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-title text-gray-800">Export Data</h2>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <h3 class="text-h6 text-gray-900 mb-2">Export Detection Data</h3>
+                        <p class="text-body text-gray-500 mb-4">Export all detection records to a CSV file.</p>
+                        <a href="/api/detections/export-csv"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
+                                  text-white text-body-sm font-semibold rounded-lg transition-colors duration-200">
+                            <span class="material-icons text-base">file_download</span> Export to CSV
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Export Data Card -->
-    <div class="bg-gradient-to-br from-white/80 to-white/60 rounded-2xl shadow-lg p-6 border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">Export Data</h2>
-        </div>
-        <div class="p-6">
-            <div class="space-y-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Export Detection Data</h3>
-                    <p class="mt-2 text-sm text-gray-600">Export all detection records to a CSV file for further analysis.</p>
-                    <button id="export-csv-btn"
-                            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                        <i class="fas fa-file-export mr-1"></i> Export to CSV
-                    </button>
-                    <div id="export-message" class="mt-2 hidden"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal -->
-<div id="modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-        </div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div id="modal-content">
-                <!-- Content will be loaded here via HTMX -->
+    <!-- HTMX Modal -->
+    <div id="modal" x-data="{ open: false }" x-show="open" x-cloak
+         @keydown.escape.window="open = false"
+         @open-modal.window="open = true"
+         class="fixed inset-0 z-90 overflow-y-auto"
+         aria-modal="true" role="dialog">
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
+             @click="open = false"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-250"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="relative bg-white rounded-xl shadow-overlay w-full max-w-lg overflow-hidden">
+                <div id="modal-content"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Load cameras and contacts on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        htmx.ajax('GET', '/cameras/list', '#cameras-container');
-        htmx.ajax('GET', '/contacts/list', '#contacts-container');
-        
-        // Handle change password form submission
-        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const messageDiv = document.getElementById('password-message');
-            
+document.addEventListener('alpine:init', () => {
+    Alpine.data('settingsPage', () => ({
+        // Password
+        passwordForm: { current: '', new: '' },
+        passwordLoading: false,
+        passwordMessage: '',
+        passwordError: false,
+
+        // Username
+        usernameForm: { current: '', new: '' },
+        usernameLoading: false,
+        usernameMessage: '',
+        usernameError: false,
+
+        // Config
+        configLoading: false,
+        configMessage: '',
+        configError: false,
+        configDefaults: { confidence_threshold: 50, frame_skip: 20, sms_cooldown: 10 },
+
+        // Backup
+        backupLoading: false,
+        backupMessage: '',
+        backupError: false,
+
+        async changePassword() {
+            this.passwordLoading = true;
+            this.passwordMessage = '';
             try {
-                const response = await fetch('/change-password', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    messageDiv.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
-                    messageDiv.textContent = result.message;
-                    messageDiv.classList.remove('hidden');
-                    // Reset form
-                    this.reset();
-                } else {
-                    messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                    messageDiv.textContent = result.error;
-                    messageDiv.classList.remove('hidden');
-                }
-            } catch (error) {
-                messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                messageDiv.textContent = 'An error occurred. Please try again.';
-                messageDiv.classList.remove('hidden');
+                const fd = new FormData();
+                fd.append('current_password', this.passwordForm.current);
+                fd.append('new_password', this.passwordForm.new);
+                const r = await fetch('/change-password', { method: 'POST', body: fd });
+                const data = await r.json();
+                this.passwordError = !r.ok;
+                this.passwordMessage = r.ok ? data.message : data.error;
+                if (r.ok) { this.passwordForm = { current: '', new: '' }; }
+            } catch (e) {
+                this.passwordError = true; this.passwordMessage = 'An error occurred. Please try again.';
             }
-        });
-        
-        // Handle change username form submission
-        document.getElementById('change-username-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const messageDiv = document.getElementById('username-message');
-            
+            this.passwordLoading = false;
+        },
+
+        async changeUsername() {
+            this.usernameLoading = true;
+            this.usernameMessage = '';
             try {
-                const response = await fetch('/change-username', {
+                const fd = new FormData();
+                fd.append('current_password', this.usernameForm.current);
+                fd.append('new_username', this.usernameForm.new);
+                const r = await fetch('/change-username', { method: 'POST', body: fd });
+                const data = await r.json();
+                this.usernameError = !r.ok;
+                this.usernameMessage = r.ok ? data.message : data.error;
+                if (r.ok) { setTimeout(() => window.location.reload(), 1000); }
+            } catch (e) {
+                this.usernameError = true; this.usernameMessage = 'An error occurred. Please try again.';
+            }
+            this.usernameLoading = false;
+        },
+
+        async saveConfig() {
+            this.configLoading = true;
+            this.configMessage = '';
+            try {
+                const csrf = document.querySelector('input[name="csrf_token"]')?.value;
+                const body = {
+                    confidence_threshold: document.getElementById('confidence_threshold')?._x_model || this.configDefaults.confidence_threshold,
+                    frame_skip: document.getElementById('frame_skip')?._x_model || this.configDefaults.frame_skip,
+                    sms_cooldown: document.getElementById('sms_cooldown')?._x_model || this.configDefaults.sms_cooldown,
+                };
+                // Use x-data values directly
+                const scopes = document.querySelectorAll('[x-model]');
+                // Grab from Alpine via the DOM input values
+                body.confidence_threshold = parseInt(document.getElementById('confidence_threshold').value);
+                body.frame_skip = parseInt(document.getElementById('frame_skip').value);
+                body.sms_cooldown = parseInt(document.getElementById('sms_cooldown').value);
+
+                const r = await fetch('/api/config', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify(body),
                 });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    messageDiv.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
-                    messageDiv.textContent = result.message;
-                    messageDiv.classList.remove('hidden');
-                    // Reset form
-                    this.reset();
-                    // Reload page after short delay to reflect new username
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                    messageDiv.textContent = result.error;
-                    messageDiv.classList.remove('hidden');
-                }
-            } catch (error) {
-                messageDiv.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                messageDiv.textContent = 'An error occurred. Please try again.';
-                messageDiv.classList.remove('hidden');
+                const data = await r.json();
+                this.configError = !r.ok;
+                this.configMessage = r.ok ? (data.message || 'Configuration saved!') : (data.error || 'Failed to save.');
+            } catch (e) {
+                this.configError = true; this.configMessage = 'An error occurred.';
             }
-        });
-    });
+            this.configLoading = false;
+        },
 
-    // Modal functionality
-    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-        if (evt.detail.target.id === 'modal-content') {
-            document.getElementById('modal').classList.remove('hidden');
-        }
-    });
+        resetConfig() {
+            const d = this.configDefaults;
+            document.getElementById('confidence_threshold').value = d.confidence_threshold;
+            document.getElementById('frame_skip').value = d.frame_skip;
+            document.getElementById('sms_cooldown').value = d.sms_cooldown;
+            // Dispatch input so Alpine x-model updates
+            ['confidence_threshold', 'frame_skip', 'sms_cooldown'].forEach(id => {
+                document.getElementById(id).dispatchEvent(new Event('input'));
+            });
+            this.configMessage = 'Reset to defaults (not saved yet).';
+            this.configError = false;
+        },
 
-    document.body.addEventListener('close-modal', function(evt) {
-        closeModal();
-    });
-
-    function closeModal() {
-        document.getElementById('modal').classList.add('hidden');
-    }
-
-    // Close modal when clicking outside
-    document.getElementById('modal').addEventListener('click', function(evt) {
-        if (evt.target === this) {
-            closeModal();
-        }
-    });
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(evt) {
-        if (evt.key === 'Escape') {
-            closeModal();
-        }
-    });
-
-    document.body.addEventListener('htmx:afterSwap', function(evt) {
-        htmx.process(evt.detail.elt);
-    });
-
-    // Configuration slider handlers
-    document.addEventListener('DOMContentLoaded', function() {
-        // Store default values for reset functionality
-        const defaultValues = {
-            confidence_threshold: 50,  // 50% is the optimal default
-            frame_skip: 20,           // 20 frames is the optimal default
-            sms_cooldown: 10          // 10 minutes is the optimal default
-        };
-        
-        // Store loaded values to know if current values are saved or unsaved
-        let savedConfig = {
-            confidence_threshold: null,
-            frame_skip: null,
-            sms_cooldown: null
-        };
-        
-        // Track if values have been modified since load/since last save
-        let hasUnsavedChanges = false;
-
-        // Initialize slider values on page load
-        function initializeSlider(sliderId, valueId) {
-            const slider = document.getElementById(sliderId);
-            const valueDisplay = document.getElementById(valueId);
-            if (slider && valueDisplay) {
-                // Update display value
-                valueDisplay.textContent = slider.value;
-                
-                // Update slider background
-                updateSliderBackground(slider);
-                
-                // Set initial color based on whether it differs from default
-                updateSliderColor(slider);
-                
-                // Add event listener for changes
-                slider.addEventListener('input', function() {
-                    valueDisplay.textContent = this.value;
-                    updateSliderBackground(this);
-                    hasUnsavedChanges = true; // Mark that there are unsaved changes
-                    updateSliderColor(this); // Change color when modified
+        async createBackup() {
+            this.backupLoading = true;
+            this.backupMessage = '';
+            try {
+                const csrf = document.querySelector('input[name="csrf_token"]')?.value;
+                const r = await fetch('/api/backup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
                 });
+                const data = await r.json();
+                this.backupError = !r.ok;
+                this.backupMessage = r.ok ? (data.message || 'Backup created!') : (data.error || 'Failed.');
+                if (r.ok) this.loadBackupHistory();
+            } catch (e) {
+                this.backupError = true; this.backupMessage = 'An error occurred.';
             }
-        }
+            this.backupLoading = false;
+        },
 
-        // Update slider background to show progress
-        function updateSliderBackground(slider) {
-            const min = parseFloat(slider.min) || 0;
-            const max = parseFloat(slider.max) || 100;
-            const value = parseFloat(slider.value) || 0;
-            const percentage = ((value - min) / (max - min)) * 100;
-            
-            // Update CSS variable for gradient
-            slider.style.setProperty('--slider-value', percentage + '%');
-        }
-
-        // Update slider color based on whether it differs from saved value
-        function updateSliderColor(slider) {
-            const sliderId = slider.id;
-            const currentValue = parseInt(slider.value);
-            
-            // If savedConfig values are null (not loaded yet), compare with defaults initially
-            // but after load, compare with the saved values
-            if (savedConfig[sliderId] === null) {
-                // If saved config hasn't been loaded yet, use default comparison for initial state
-                const defaultValue = defaultValues[sliderId];
-                if (currentValue !== defaultValue) {
-                    // Changed from default - use different color (red)
-                    slider.classList.add('slider-modified');
-                    slider.classList.remove('slider-default');
-                } else {
-                    // At default - use regular color (green)
-                    slider.classList.remove('slider-modified');
-                    slider.classList.add('slider-default');
-                }
-            } else {
-                // Compare with the saved configuration value
-                if (currentValue !== savedConfig[sliderId] || hasUnsavedChanges) {
-                    // Changed from saved value or has unsaved changes - use different color (red)
-                    slider.classList.add('slider-modified');
-                    slider.classList.remove('slider-default');
-                } else {
-                    // Matches saved value - use regular color (green)
-                    slider.classList.remove('slider-modified');
-                    slider.classList.add('slider-default');
-                }
-            }
-        }
-
-        // Fetch current configuration and update sliders
-        function loadCurrentConfig() {
-            fetch('/api/config', {
-                headers: {
-                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-                }
-            })
-            .then(response => response.json())
-            .then(config => {
-                // Update confidence threshold slider
-                const confidenceSlider = document.getElementById('confidence_threshold');
-                const confidenceValue = document.getElementById('confidence_value');
-                if (confidenceSlider && confidenceValue) {
-                    confidenceSlider.value = config.confidence_threshold;
-                    confidenceValue.textContent = config.confidence_threshold;
-                    // Store the loaded value as the "saved" value
-                    savedConfig.confidence_threshold = parseInt(config.confidence_threshold);
-                    updateSliderBackground(confidenceSlider);
-                    updateSliderColor(confidenceSlider);
-                }
-                
-                // Update frame skip slider
-                const frameSkipSlider = document.getElementById('frame_skip');
-                const frameSkipValue = document.getElementById('frame_skip_value');
-                if (frameSkipSlider && frameSkipValue) {
-                    frameSkipSlider.value = config.frame_skip;
-                    frameSkipValue.textContent = config.frame_skip;
-                    // Store the loaded value as the "saved" value
-                    savedConfig.frame_skip = parseInt(config.frame_skip);
-                    updateSliderBackground(frameSkipSlider);
-                    updateSliderColor(frameSkipSlider);
-                }
-                
-                // Update SMS cooldown slider
-                const smsCooldownSlider = document.getElementById('sms_cooldown');
-                const smsCooldownValue = document.getElementById('sms_cooldown_value');
-                if (smsCooldownSlider && smsCooldownValue) {
-                    smsCooldownSlider.value = config.sms_cooldown;
-                    smsCooldownValue.textContent = config.sms_cooldown;
-                    // Store the loaded value as the "saved" value
-                    savedConfig.sms_cooldown = parseInt(config.sms_cooldown);
-                    updateSliderBackground(smsCooldownSlider);
-                    updateSliderColor(smsCooldownSlider);
-                }
-                
-                // Reset the unsaved changes flag since we just loaded saved values
-                hasUnsavedChanges = false;
-            })
-            .catch(error => {
-                console.error('Error loading configuration:', error);
-            });
-        }
-
-        // Initialize all sliders with default values first
-        initializeSlider('confidence_threshold', 'confidence_value');
-        initializeSlider('frame_skip', 'frame_skip_value');
-        initializeSlider('sms_cooldown', 'sms_cooldown_value');
-        
-        // Then load current configuration from backend
-        loadCurrentConfig();
-
-        // Save configuration button
-        const saveConfigBtn = document.getElementById('save-config-btn');
-        if (saveConfigBtn) {
-            saveConfigBtn.addEventListener('click', async function() {
-                const configMessage = document.getElementById('config-message');
-                
-                // Get current values
-                const confidenceThreshold = document.getElementById('confidence_threshold').value;
-                const frameSkip = document.getElementById('frame_skip').value;
-                const smsCooldown = document.getElementById('sms_cooldown').value;
-                
-                try {
-                    const response = await fetch('/api/config', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-                        },
-                        body: JSON.stringify({
-                            confidence_threshold: confidenceThreshold,
-                            frame_skip: frameSkip,
-                            sms_cooldown: smsCooldown
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        configMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
-                        configMessage.textContent = result.message || 'Configuration saved successfully!';
-                        configMessage.classList.remove('hidden');
-                        
-                        // Store the current values as the new "saved" values
-                        savedConfig.confidence_threshold = parseInt(confidenceThreshold);
-                        savedConfig.frame_skip = parseInt(frameSkip);
-                        savedConfig.sms_cooldown = parseInt(smsCooldown);
-                        
-                        // Reset the unsaved changes flag
-                        hasUnsavedChanges = false;
-                        
-                        // Update slider colors to reflect that values are now saved
-                        updateSliderColor(document.getElementById('confidence_threshold'));
-                        updateSliderColor(document.getElementById('frame_skip'));
-                        updateSliderColor(document.getElementById('sms_cooldown'));
-                    } else {
-                        configMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                        configMessage.textContent = result.error || 'Failed to save configuration';
-                        configMessage.classList.remove('hidden');
-                    }
-                } catch (error) {
-                    configMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                    configMessage.textContent = 'An error occurred while saving configuration';
-                    configMessage.classList.remove('hidden');
-                }
-            });
-        }
-
-        // Reset to default configuration button
-        const resetConfigBtn = document.getElementById('reset-config-btn');
-        if (resetConfigBtn) {
-            resetConfigBtn.addEventListener('click', function() {
-                // Reset sliders to default values
-                document.getElementById('confidence_threshold').value = defaultValues.confidence_threshold;
-                document.getElementById('frame_skip').value = defaultValues.frame_skip;
-                document.getElementById('sms_cooldown').value = defaultValues.sms_cooldown;
-                
-                // Update the displayed values
-                document.getElementById('confidence_value').textContent = defaultValues.confidence_threshold;
-                document.getElementById('frame_skip_value').textContent = defaultValues.frame_skip;
-                document.getElementById('sms_cooldown_value').textContent = defaultValues.sms_cooldown;
-                
-                // Update slider backgrounds
-                updateSliderBackground(document.getElementById('confidence_threshold'));
-                updateSliderBackground(document.getElementById('frame_skip'));
-                updateSliderBackground(document.getElementById('sms_cooldown'));
-                
-                // Update saved config to the default values since we just reset
-                savedConfig.confidence_threshold = defaultValues.confidence_threshold;
-                savedConfig.frame_skip = defaultValues.frame_skip;
-                savedConfig.sms_cooldown = defaultValues.sms_cooldown;
-                
-                // Reset the unsaved changes flag since values are now "saved" (reset to defaults)
-                hasUnsavedChanges = false;
-                
-                // Update slider colors
-                updateSliderColor(document.getElementById('confidence_threshold'));
-                updateSliderColor(document.getElementById('frame_skip'));
-                updateSliderColor(document.getElementById('sms_cooldown'));
-                
-                // Show confirmation message
-                const configMessage = document.getElementById('config-message');
-                configMessage.className = 'mt-2 p-2 bg-blue-100 text-blue-700 rounded text-sm';
-                configMessage.textContent = 'Configuration reset to default values!';
-                configMessage.classList.remove('hidden');
-                
-                // Hide message after 3 seconds
-                setTimeout(() => {
-                    configMessage.classList.add('hidden');
-                }, 3000);
-            });
-        }
-
-        // Create backup button
-        const createBackupBtn = document.getElementById('create-backup-btn');
-        if (createBackupBtn) {
-            createBackupBtn.addEventListener('click', async function() {
-                const backupMessage = document.getElementById('backup-message');
-                const backupBtn = this;
-                
-                // Disable button and show loading state
-                backupBtn.disabled = true;
-                const originalText = backupBtn.innerHTML;
-                backupBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Creating Backup...';
-                
-                try {
-                    const response = await fetch('/api/backup', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        backupMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
-                        backupMessage.textContent = result.message || 'Backup created successfully!';
-                        backupMessage.classList.remove('hidden');
-                        
-                        // Refresh backup history
-                        loadBackupHistory();
-                    } else {
-                        backupMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                        backupMessage.textContent = result.error || 'Failed to create backup';
-                        backupMessage.classList.remove('hidden');
-                    }
-                } catch (error) {
-                    backupMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                    backupMessage.textContent = 'An error occurred while creating backup';
-                    backupMessage.classList.remove('hidden');
-                } finally {
-                    // Re-enable button and restore original text
-                    backupBtn.disabled = false;
-                    backupBtn.innerHTML = originalText;
-                }
-            });
-        }
-
-        // Load backup history
-        function loadBackupHistory() {
-            const backupHistory = document.getElementById('backup-history');
-            
-            fetch('/api/backup/history', {
-                headers: {
-                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
+        async loadBackupHistory() {
+            const el = document.getElementById('backup-history');
+            try {
+                const csrf = document.querySelector('input[name="csrf_token"]')?.value;
+                const r = await fetch('/api/backup/history', { headers: { 'X-CSRFToken': csrf } });
+                const data = await r.json();
                 if (data.backups && data.backups.length > 0) {
-                    let backupList = '<div class="space-y-2">';
-                    data.backups.forEach(backup => {
-                        backupList += `
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <div>
-                                    <div class="font-medium text-gray-900">${backup.filename}</div>
-                                    <div class="text-sm text-gray-500">${backup.timestamp}</div>
-                                </div>
-                                <div class="text-sm text-gray-500">${backup.size}</div>
+                    el.innerHTML = '<div class="space-y-2">' + data.backups.slice(0, 10).map(b => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <div class="text-body-sm font-medium text-gray-900">${b.filename}</div>
+                                <div class="text-caption text-gray-500">${b.timestamp}</div>
                             </div>
-                        `;
-                    });
-                    backupList += '</div>';
-                    backupHistory.innerHTML = backupList;
+                            <div class="text-caption text-gray-500">${b.size}</div>
+                        </div>
+                    `).join('') + '</div>';
                 } else {
-                    backupHistory.innerHTML = '<div class="text-center py-4 text-gray-500">No backups found</div>';
+                    el.innerHTML = '<div class="text-center py-6 text-caption text-gray-500">No backups found</div>';
                 }
-            })
-            .catch(error => {
-                backupHistory.innerHTML = '<div class="text-center py-4 text-red-500">Error loading backup history</div>';
-            });
-        }
+            } catch (e) {
+                el.innerHTML = '<div class="text-center py-6 text-caption text-danger-600">Error loading backups</div>';
+            }
+        },
+    }));
+});
 
-        // Load backup history on page load
-        loadBackupHistory();
-        
-        // Export CSV button
-        const exportCsvBtn = document.getElementById('export-csv-btn');
-        if (exportCsvBtn) {
-            exportCsvBtn.addEventListener('click', async function() {
-                const exportMessage = document.getElementById('export-message');
-                const exportBtn = this;
-                
-                // Disable button and show loading state
-                exportBtn.disabled = true;
-                const originalText = exportBtn.innerHTML;
-                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Exporting...';
-                
-                try {
-                    // Create a temporary link to trigger the download
-                    const response = await fetch('/api/detections/export-csv');
-                    
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.style.display = 'none';
-                        a.href = url;
-                        a.download = response.headers.get('content-disposition').split('filename=')[1];
-                        
-                        document.body.appendChild(a);
-                        a.click();
-                        
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                        
-                        exportMessage.className = 'mt-2 p-2 bg-green-100 text-green-700 rounded text-sm';
-                        exportMessage.textContent = 'Data exported successfully!';
-                        exportMessage.classList.remove('hidden');
-                        
-                        // Hide message after 5 seconds
-                        setTimeout(() => {
-                            exportMessage.classList.add('hidden');
-                        }, 5000);
-                    } else {
-                        const errorData = await response.json();
-                        exportMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                        exportMessage.textContent = errorData.error || 'Failed to export data';
-                        exportMessage.classList.remove('hidden');
-                    }
-                } catch (error) {
-                    exportMessage.className = 'mt-2 p-2 bg-red-100 text-red-700 rounded text-sm';
-                    exportMessage.textContent = 'An error occurred while exporting data';
-                    exportMessage.classList.remove('hidden');
-                } finally {
-                    // Re-enable button and restore original text
-                    exportBtn.disabled = false;
-                    exportBtn.innerHTML = originalText;
-                }
-            });
-        }
-    });
-    
-    /* Add custom CSS for slider styling */
-    const style = document.createElement('style');
-    style.innerHTML = `
-        /* Custom styling for slider when modified */
-        input[type="range"] {
-            -webkit-appearance: none;
-            height: 8px;
-            border-radius: 5px;
-            outline: none;
-        }
-        
-        input[type="range"].slider-modified::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            background: #ef4444 !important; /* red-500 */
-            border-color: #dc2626 !important; /* red-600 */
-            border: 2px solid !important;
-            height: 20px !important;
-            width: 20px !important;
-            border-radius: 50% !important;
-            cursor: pointer !important;
-            margin-top: -6px !important; /* Center the thumb on the track */
-        }
-        
-        input[type="range"].slider-modified::-moz-range-thumb {
-            background: #ef4444 !important; /* red-500 */
-            border-color: #dc2626 !important; /* red-600 */
-            border: 2px solid !important;
-            height: 20px !important;
-            width: 20px !important;
-            border-radius: 50% !important;
-            cursor: pointer !important;
-        }
-        
-        input[type="range"].slider-default::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            background: #15803d !important; /* green-600 */
-            border-color: #16a34a !important; /* green-500 */
-            border: 2px solid !important;
-            height: 20px !important;
-            width: 20px !important;
-            border-radius: 50% !important;
-            cursor: pointer !important;
-            margin-top: -6px !important; /* Center the thumb on the track */
-        }
-        
-        input[type="range"].slider-default::-moz-range-thumb {
-            background: #15803d !important; /* green-600 */
-            border-color: #16a34a !important; /* green-500 */
-            border: 2px solid !important;
-            height: 20px !important;
-            width: 20px !important;
-            border-radius: 50% !important;
-            cursor: pointer !important;
-        }
-        
-        /* Optional: Change track color as well */
-        input[type="range"].slider-modified::-webkit-slider-runnable-track {
-            background: #fee2e2 !important; /* red-100 */
-            border-color: #fecaca !important; /* red-200 */
-            border-radius: 5px !important;
-            height: 8px !important;
-        }
-        
-        input[type="range"].slider-modified::-moz-range-track {
-            background: #fee2e2 !important; /* red-100 */
-            border-color: #fecaca !important; /* red-200 */
-            border-radius: 5px !important;
-            height: 8px !important;
-        }
-        
-        input[type="range"].slider-default::-webkit-slider-runnable-track {
-            background: #bbf7d0 !important; /* green-200 */
-            border-color: #86efac !important; /* green-300 */
-            border-radius: 5px !important;
-            height: 8px !important;
-        }
-        
-        input[type="range"].slider-default::-moz-range-track {
-            background: #bbf7d0 !important; /* green-200 */
-            border-color: #86efac !important; /* green-300 */
-            border-radius: 5px !important;
-            height: 8px !important;
-        }
-    `;
-    document.head.appendChild(style);
+// HTMX modal integration
+document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+    if (evt.detail.target.id === 'modal-content') {
+        const modalScope = Alpine.$data(document.getElementById('modal'));
+        if (modalScope) { modalScope.open = true; }
+    }
+});
+document.body.addEventListener('close-modal', function() {
+    const modalScope = Alpine.$data(document.getElementById('modal'));
+    if (modalScope) { modalScope.open = false; }
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modalScope = Alpine.$data(document.getElementById('modal'));
+        if (modalScope) { modalScope.open = false; }
+    }
+});
+// Close on backdrop click
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('modal');
+    if (modal && e.target === modal) {
+        const modalScope = Alpine.$data(modal);
+        if (modalScope) { modalScope.open = false; }
+    }
+});
+
+// Load cameras, contacts, backups on page load
+document.addEventListener('DOMContentLoaded', function() {
+    htmx.ajax('GET', '/cameras/list', '#cameras-container');
+    htmx.ajax('GET', '/contacts/list', '#contacts-container');
+    const scope = Alpine.$data(document.querySelector('[x-data="settingsPage"]'));
+    if (scope) { scope.loadBackupHistory(); }
+});
 </script>
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 {% endblock %}

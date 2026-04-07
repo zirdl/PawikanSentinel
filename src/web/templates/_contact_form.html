@@ -1,36 +1,41 @@
-<form {% if contact %}hx-post="/contacts/add-or-update" hx-target="#contacts-container"{% else %}hx-post="/contacts/add-or-update" hx-target="#contacts-container"{% endif %} 
-      hx-swap="innerHTML" class="p-6">
+<form hx-post="/contacts/add-or-update" hx-target="#contacts-container" hx-swap="innerHTML" class="p-6">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     {% if contact %}
     <input type="hidden" name="contact_id" value="{{ contact.id }}">
-    <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Contact</h3>
-    {% else %}
-    <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Contact</h3>
     {% endif %}
-    
+
+    <h3 class="text-title text-gray-900 mb-5">{% if contact %}Edit Contact{% else %}Add New Contact{% endif %}</h3>
+
     <div class="space-y-4">
         <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <label for="name" class="block text-body-sm font-medium text-gray-700 mb-1.5">Full Name</label>
             <input type="text" name="name" id="name" required
-                   class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20"
-                   value="{{ contact.name if contact else '' }}">
+                   class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-body bg-white
+                          focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500
+                          transition-colors duration-150"
+                   value="{{ contact.name if contact else '' }}" placeholder="John Doe">
         </div>
-        
+
         <div>
-            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <label for="phone" class="block text-body-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
             <input type="text" name="phone" id="phone" required
-                   class="w-full p-3 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20"
+                   class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-body bg-white
+                          focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500
+                          transition-colors duration-150"
                    value="{{ contact.phone if contact else '' }}" placeholder="+1 (555) 123-4567">
         </div>
     </div>
-    
-    <div class="mt-6 flex justify-end space-x-3">
+
+    <div class="mt-6 flex justify-end gap-2">
         <button type="button" onclick="closeModal()"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-gradient-to-r from-sand-medium to-sand-dark hover:from-sand-dark hover:to-sand-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                class="px-4 py-2 text-body-sm font-medium text-gray-700 bg-white border border-gray-300
+                       rounded-lg hover:bg-gray-50 transition-colors duration-200">
             Cancel
         </button>
         <button type="submit"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
+                class="px-4 py-2 text-body-sm font-semibold text-white bg-turtle-500 hover:bg-turtle-600
+                       rounded-lg transition-colors duration-200 flex items-center gap-1.5">
+            <span class="material-icons text-base">{% if contact %}sync{% else %}person_add{% endif %}</span>
             {% if contact %}Update{% else %}Add{% endif %} Contact
         </button>
     </div>

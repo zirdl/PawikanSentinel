@@ -1,0 +1,589 @@
+{# ============================================================
+   COMPONENT MACRO LIBRARY — Pawikan Sentinel
+   Usage: {% from "components/macros.html" import card, button, ... %}
+   ============================================================ #}
+
+{# -----------------------------------------------------------
+   BUTTON
+   Variants: primary | secondary | ghost | danger | success
+   Sizes:    sm | md | lg
+   Extras:   icon (Material Icons name), disabled, full_width,
+             hx_get, hx_target, hx_swap (HTMX attributes)
+   ----------------------------------------------------------- #}
+{% macro button(label, variant="primary", size="md", icon=None, disabled=False, full_width=False,
+               type="button", extra_classes="",
+               hx_get=None, hx_target=None, hx_swap=None, hx_post=None, hx_put=None,
+               hx_delete=None, hx_confirm=None, hx_swap_oob=None) %}
+{% set variants = {
+    'primary':   'bg-turtle-500 hover:bg-turtle-600 text-white focus:ring-turtle-500',
+    'secondary': 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 focus:ring-gray-400',
+    'ghost':     'bg-transparent hover:bg-gray-100 text-gray-700 border border-transparent',
+    'danger':    'bg-danger-500 hover:bg-danger-600 text-white focus:ring-danger-500',
+    'success':   'bg-success-500 hover:bg-success-600 text-white focus:ring-success-500',
+    'info':      'bg-ocean-400 hover:bg-ocean-500 text-white focus:ring-ocean-400',
+} %}
+{% set sizes = {
+    'sm': 'px-3 py-1.5 text-caption gap-1',
+    'md': 'px-4 py-2 text-body gap-1.5',
+    'lg': 'px-6 py-2.5 text-body-lg gap-2',
+} %}
+<button
+    type="{{ type }}"
+    {% if disabled %}disabled{% endif %}
+    {% if hx_get %}hx-get="{{ hx_get }}"{% endif %}
+    {% if hx_post %}hx-post="{{ hx_post }}"{% endif %}
+    {% if hx_put %}hx-put="{{ hx_put }}"{% endif %}
+    {% if hx_delete %}hx-delete="{{ hx_delete }}"{% endif %}
+    {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+    {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+    {% if hx_confirm %}hx-confirm="{{ hx_confirm }}"{% endif %}
+    {% if hx_swap_oob %}hx-swap-oob="{{ hx_swap_oob }}"{% endif %}
+    class="
+        inline-flex items-center justify-center font-semibold rounded-lg
+        transition-all duration-200 ease-in-out
+        focus:outline-none focus:ring-2 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-turtle-500
+        {{ sizes[size] }}
+        {{ variants[variant] }}
+        {{ 'w-full' if full_width else '' }}
+        {{ extra_classes }}
+    "
+>{{ icon | material_icon if icon else '' }}{{ label }}</button>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   CARD
+   Variants: default | elevated | bordered | flush
+   Extras:   header, footer, id, extra_classes
+   ----------------------------------------------------------- #}
+{% macro card(header=None, footer=None, variant="default", id=None, extra_classes="") %}
+{% set variant_classes = {
+    'default':  'bg-white shadow-card hover:shadow-card-hover transition-shadow duration-200',
+    'elevated': 'bg-white shadow-elevated',
+    'bordered': 'bg-white border border-gray-200',
+    'flush':    'bg-white',
+} %}
+<div {% if id %}id="{{ id }}"{% endif %}
+     class="rounded-xl overflow-hidden {{ variant_classes[variant] }} {{ extra_classes }}">
+    {% if header %}
+    <div class="px-6 py-4 border-b border-gray-100 {{ header.extra_classes | default('') }}">
+        {% if header.title or header.subtitle %}
+        <div class="flex justify-between items-center">
+            <div>
+                {% if header.title %}<h3 class="text-title text-gray-900">{{ header.title }}</h3>{% endif %}
+                {% if header.subtitle %}<p class="text-body-sm text-gray-500 mt-0.5">{{ header.subtitle }}</p>{% endif %}
+            </div>
+            {% if header.action %}<div>{{ header.action }}</div>{% endif %}
+        </div>
+        {% else %}
+            {{ header.content }}
+        {% endif %}
+    </div>
+    {% endif %}
+    <div class="p-6">
+        {{ caller() }}
+    </div>
+    {% if footer %}
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+        {{ footer }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   INPUT (text, email, password, number, etc.)
+   Extras:   icon, help_text, error, required, extra_classes
+   ----------------------------------------------------------- #}
+{% macro input(name, label=None, type="text", value=None, placeholder=None, required=False,
+              disabled=False, readonly=False, help_text=None, error=None, icon=None,
+              autocomplete=None, extra_classes="") %}
+<div class="space-y-1.5 {{ extra_classes }}">
+    {% if label %}
+    <label for="{{ name }}" class="block text-body-sm font-medium text-gray-700">
+        {{ label }}{% if required %}<span class="text-danger-500 ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <div class="relative">
+        <input
+            type="{{ type }}"
+            id="{{ name }}"
+            name="{{ name }}"
+            {% if value %}value="{{ value }}"{% endif %}
+            {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+            {% if required %}required{% endif %}
+            {% if disabled %}disabled{% endif %}
+            {% if readonly %}readonly{% endif %}
+            {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+            class="
+                w-full px-3 py-2 border rounded-lg text-body
+                bg-white transition-colors duration-150
+                focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500
+                disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
+                {{ 'border-danger-400 focus:ring-danger-500/20 focus:border-danger-500' if error else 'border-gray-300' }}
+            "
+        >
+        {% if icon %}
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <span class="material-icons text-gray-400 text-base">{{ icon }}</span>
+        </div>
+        {% endif %}
+    </div>
+    {% if error %}
+    <p class="text-caption text-danger-600 flex items-center gap-1" role="alert">
+        <span class="material-icons text-sm">error</span>{{ error }}
+    </p>
+    {% elif help_text %}
+    <p class="text-caption text-gray-500">{{ help_text }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   PASSWORD INPUT (with toggle visibility)
+   ----------------------------------------------------------- #}
+{% macro password_input(name, label=None, value=None, placeholder=None, required=False,
+                        disabled=False, help_text=None, error=None, extra_classes="") %}
+<div x-data="{ visible: false }" class="space-y-1.5 {{ extra_classes }}">
+    {% if label %}
+    <label for="{{ name }}" class="block text-body-sm font-medium text-gray-700">
+        {{ label }}{% if required %}<span class="text-danger-500 ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <div class="relative">
+        <input
+            :type="visible ? 'text' : 'password'"
+            id="{{ name }}"
+            name="{{ name }}"
+            {% if value %}value="{{ value }}"{% endif %}
+            {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+            {% if required %}required{% endif %}
+            {% if disabled %}disabled{% endif %}
+            class="
+                w-full px-3 py-2 pr-10 border rounded-lg text-body
+                bg-white transition-colors duration-150
+                focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500
+                {{ 'border-danger-400' if error else 'border-gray-300' }}
+            "
+        >
+        <button type="button"
+                @click="visible = !visible"
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Toggle password visibility">
+            <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
+        </button>
+    </div>
+    {% if error %}
+    <p class="text-caption text-danger-600 flex items-center gap-1" role="alert">
+        <span class="material-icons text-sm">error</span>{{ error }}
+    </p>
+    {% elif help_text %}
+    <p class="text-caption text-gray-500">{{ help_text }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   TEXTAREA
+   ----------------------------------------------------------- #}
+{% macro textarea(name, label=None, value=None, placeholder=None, rows=3, required=False,
+                  disabled=False, help_text=None, error=None, extra_classes="") %}
+<div class="space-y-1.5 {{ extra_classes }}">
+    {% if label %}
+    <label for="{{ name }}" class="block text-body-sm font-medium text-gray-700">
+        {{ label }}{% if required %}<span class="text-danger-500 ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <textarea
+        id="{{ name }}"
+        name="{{ name }}"
+        rows="{{ rows }}"
+        {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+        {% if required %}required{% endif %}
+        {% if disabled %}disabled{% endif %}
+        class="
+            w-full px-3 py-2 border rounded-lg text-body
+            bg-white transition-colors duration-150 resize-y
+            focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500
+            {{ 'border-danger-400' if error else 'border-gray-300' }}
+        "
+    >{% if value %}{{ value }}{% endif %}</textarea>
+    {% if error %}
+    <p class="text-caption text-danger-600 flex items-center gap-1" role="alert">
+        <span class="material-icons text-sm">error</span>{{ error }}
+    </p>
+    {% elif help_text %}
+    <p class="text-caption text-gray-500">{{ help_text }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   SELECT
+   ----------------------------------------------------------- #}
+{% macro select(name, label=None, options=None, value=None, required=False, disabled=False,
+                help_text=None, error=None, extra_classes="") %}
+<div class="space-y-1.5 {{ extra_classes }}">
+    {% if label %}
+    <label for="{{ name }}" class="block text-body-sm font-medium text-gray-700">
+        {{ label }}{% if required %}<span class="text-danger-500 ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <select
+        id="{{ name }}"
+        name="{{ name }}"
+        {% if required %}required{% endif %}
+        {% if disabled %}disabled{% endif %}
+        class="
+            w-full px-3 py-2 border rounded-lg text-body
+            bg-white transition-colors duration-150 appearance-none
+            bg-no-repeat bg-[right:0.75rem_center] bg-[length:1.25em_1.25em]
+            focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500
+            {{ 'border-danger-400' if error else 'border-gray-300' }}
+        "
+        style="background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\");"
+    >
+        {% for opt in (options or []) %}
+        <option value="{{ opt.value }}" {% if opt.value == value %}selected{% endif %}>{{ opt.label }}</option>
+        {% endfor %}
+    </select>
+    {% if error %}
+    <p class="text-caption text-danger-600 flex items-center gap-1" role="alert">
+        <span class="material-icons text-sm">error</span>{{ error }}
+    </p>
+    {% elif help_text %}
+    <p class="text-caption text-gray-500">{{ help_text }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   BADGE
+   Variants: success | danger | warning | info | neutral
+   ----------------------------------------------------------- #}
+{% macro badge(label, variant="neutral", icon=None, extra_classes="") %}
+{% set variants = {
+    'success': 'bg-success-100 text-success-800',
+    'danger':  'bg-danger-100 text-danger-800',
+    'warning': 'bg-warning-100 text-warning-800',
+    'info':    'bg-info-100 text-info-800',
+    'neutral': 'bg-gray-100 text-gray-700',
+    'turtle':  'bg-turtle-100 text-turtle-800',
+    'ocean':   'bg-ocean-100 text-ocean-800',
+    'coral':   'bg-coral-100 text-coral-800',
+} %}
+<span class="
+    inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption font-medium
+    {{ variants[variant] }}
+    {{ extra_classes }}
+">
+    {% if icon %}<span class="material-icons text-xs">{{ icon }}</span>{% endif %}
+    {{ label }}
+</span>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   ALERT / BANNER
+   Variants: info | success | warning | danger
+   Extras:   dismissible, icon, title
+   ----------------------------------------------------------- #}
+{% macro alert(message, variant="info", title=None, dismissible=False, icon=None, extra_classes="", id=None) %}
+{% set variants = {
+    'info':    'bg-info-50 border-info-200 text-info-800',
+    'success': 'bg-success-50 border-success-200 text-success-800',
+    'warning': 'bg-warning-50 border-warning-200 text-warning-800',
+    'danger':  'bg-danger-50 border-danger-200 text-danger-800',
+} %}
+{% set icons = {
+    'info': 'info',
+    'success': 'check_circle',
+    'warning': 'warning',
+    'danger': 'error',
+} %}
+<div {% if id %}id="{{ id }}"{% endif %}
+    {% if dismissible %}x-data="{ shown: true }" x-show="shown"{% endif %}
+    class="
+        flex items-start gap-3 px-4 py-3 border rounded-lg text-body
+        {{ variants[variant] }}
+        {{ extra_classes }}
+    "
+    {% if variant == 'danger' %}role="alert"{% endif %}
+>
+    <span class="material-icons text-base flex-shrink-0 mt-0.5">{{ icon or icons[variant] }}</span>
+    <div class="flex-1 min-w-0">
+        {% if title %}<p class="font-semibold">{{ title }}</p>{% endif %}
+        <p>{{ message }}</p>
+    </div>
+    {% if dismissible %}
+    <button @click="shown = false" class="flex-shrink-0 ml-2 opacity-60 hover:opacity-100 transition-opacity"
+            aria-label="Dismiss">
+        <span class="material-icons text-base">close</span>
+    </button>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   MODAL
+   Usage with call block for body; opens via Alpine x-show
+   Expects: x-data on a parent with modalOpen: false
+   ----------------------------------------------------------- #}
+{% macro modal(id, title=None, size="md", footer=None) %}
+{% set sizes = {
+    'sm': 'sm:max-w-sm',
+    'md': 'sm:max-w-lg',
+    'lg': 'sm:max-w-2xl',
+    'xl': 'sm:max-w-4xl',
+    'full': 'sm:max-w-full sm:mx-4',
+} %}
+<div
+    id="{{ id }}"
+    x-show="false"
+    x-cloak
+    x-data="{ open: false }"
+    @keydown.escape.window="open = false"
+    class="fixed inset-0 z-90 overflow-y-auto"
+    aria-modal="true"
+    role="dialog"
+>
+    <!-- Backdrop -->
+    <div
+        x-show="open"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
+        @click="open = false"
+    ></div>
+
+    <!-- Panel -->
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-250"
+            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+            class="relative bg-white rounded-xl shadow-overlay w-full {{ sizes[size] }} overflow-hidden"
+        >
+            {% if title %}
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 class="text-title text-gray-900">{{ title }}</h3>
+                <button @click="open = false" class="text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="Close modal">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            {% endif %}
+            <div class="px-6 py-4">
+                {{ caller() }}
+            </div>
+            {% if footer %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                {{ footer }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   TABLE
+   Extras:   striped, hover, headers, rows (list of dicts)
+   ----------------------------------------------------------- #}
+{% macro table(headers=None, rows=None, empty_message="No data available.", striped=True, hoverable=True,
+              extra_classes="") %}
+<div class="overflow-x-auto rounded-lg border border-gray-200 {{ extra_classes }}">
+    <table class="min-w-full divide-y divide-gray-200">
+        {% if headers %}
+        <thead class="bg-gray-50">
+            <tr>
+                {% for h in headers %}
+                <th scope="col" class="px-6 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">
+                    {{ h }}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        {% endif %}
+        <tbody class="bg-white divide-y divide-gray-100">
+            {% if rows and rows|length > 0 %}
+                {% for row in rows %}
+                <tr class="{{ 'even:bg-gray-50/50' if striped else '' }} {{ 'hover:bg-gray-50' if hoverable else '' }} transition-colors">
+                    {% for cell in row %}
+                    <td class="px-6 py-4 text-body-sm text-gray-700 whitespace-nowrap">{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="{{ headers | length if headers else 1 }}" class="px-6 py-12 text-center">
+                        <span class="material-icons text-3xl text-gray-300 mb-2">inbox</span>
+                        <p class="text-body text-gray-500">{{ empty_message }}</p>
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   STAT CARD (for dashboard KPIs)
+   ----------------------------------------------------------- #}
+{% macro stat_card(label, value, icon=None, trend=None, extra_classes="") %}
+<div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200 {{ extra_classes }}">
+    <div class="flex items-center justify-between mb-3">
+        {% if icon %}
+        <div class="w-10 h-10 rounded-lg bg-turtle-50 flex items-center justify-center">
+            <span class="material-icons text-turtle-600">{{ icon }}</span>
+        </div>
+        {% endif %}
+        {% if trend %}
+        <span class="text-caption font-semibold {{ 'text-success-600' if trend == 'up' else 'text-danger-600' }}">
+            <span class="material-icons text-sm align-middle">{{ 'trending_up' if trend == 'up' else 'trending_down' }}</span>
+        </span>
+        {% endif %}
+    </div>
+    <p class="text-3xl font-bold text-gray-900">{{ value }}</p>
+    <p class="text-body-sm text-gray-500 mt-1">{{ label }}</p>
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   EMPTY STATE
+   ----------------------------------------------------------- #}
+{% macro empty_state(icon="inbox", title="Nothing here yet", description="", action_button=None) %}
+<div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+    <span class="material-icons text-5xl text-gray-300 mb-4">{{ icon }}</span>
+    <h3 class="text-title text-gray-900">{{ title }}</h3>
+    {% if description %}<p class="text-body text-gray-500 mt-1 max-w-sm">{{ description }}</p>{% endif %}
+    {% if action_button %}<div class="mt-6">{{ action_button }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   PAGE HEADER
+   ----------------------------------------------------------- #}
+{% macro page_header(title, subtitle=None, action=None) %}
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+        <h1 class="text-h1 text-gray-900 tracking-tight">{{ title }}</h1>
+        {% if subtitle %}<p class="text-body text-gray-500 mt-1">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if action %}
+    <div class="flex-shrink-0">{{ action }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   SKELETON LOADER
+   ----------------------------------------------------------- #}
+{% macro skeleton(lines=3, extra_classes="") %}
+<div class="animate-pulse space-y-3 {{ extra_classes }}" aria-hidden="true">
+    {% for i in range(lines) %}
+    <div class="h-4 bg-gray-200 rounded {{ 'w-3/4' if i == lines - 1 else 'w-full' }}"></div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   MATERIAL ICON HELPER
+   Usage: {{ 'home' | material_icon }} or {{ material_icon('home', size='lg') }}
+   ----------------------------------------------------------- #}
+{% macro material_icon(name, size=None, extra_classes="") %}
+{% set sizes = { 'sm': 'text-base', 'md': 'text-xl', 'lg': 'text-2xl', 'xl': 'text-3xl' } %}
+<span class="material-icons {{ sizes[size] if size else 'text-xl' }} {{ extra_classes }}" aria-hidden="true">{{ name }}</span>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   RANGE SLIDER
+   ----------------------------------------------------------- #}
+{% macro range_slider(name, label=None, min=0, max=100, value=50, step=1, help_text=None,
+                      show_value=True, extra_classes="") %}
+<div x-data="{ val: {{ value }} }" class="space-y-2 {{ extra_classes }}">
+    {% if label %}
+    <label for="{{ name }}" class="block text-body-sm font-medium text-gray-700">
+        {{ label }}{% if show_value %}: <span x-text="val"></span>{% endif %}
+    </label>
+    {% endif %}
+    <input
+        type="range"
+        id="{{ name }}"
+        name="{{ name }}"
+        min="{{ min }}"
+        max="{{ max }}"
+        value="{{ value }}"
+        step="{{ step }}"
+        x-model="val"
+        class="
+            w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer
+            accent-turtle-500
+        "
+    >
+    {% if help_text %}
+    <p class="text-caption text-gray-500">{{ help_text }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# -----------------------------------------------------------
+   TOAST CONTAINER (Alpine-driven)
+   Place once in base.html. Use window.toast(msg, type) to show.
+   ----------------------------------------------------------- #}
+{% macro toast_container() %}
+<div
+    x-data="{ toasts: [] }"
+    @toast.window="toasts.push({ id: Date.now(), message: $event.detail.message, type: $event.detail.type || 'info' }); setTimeout(() => { toasts.shift() }, 4000)"
+    class="fixed top-4 right-4 z-100 space-y-2 w-88 max-w-sm"
+    aria-live="polite"
+>
+    <template x-for="toast in toasts" :key="toast.id">
+        <div
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-x-4"
+            x-transition:enter-end="opacity-100 translate-x-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="
+                flex items-start gap-3 px-4 py-3 rounded-lg shadow-elevated text-body border
+                bg-white
+            "
+            :class="{
+                'border-info-200 text-info-800': toast.type === 'info',
+                'border-success-200 text-success-800': toast.type === 'success',
+                'border-warning-200 text-warning-800': toast.type === 'warning',
+                'border-danger-200 text-danger-800': toast.type === 'danger',
+            }"
+        >
+            <span class="material-icons text-base flex-shrink-0 mt-0.5"
+                  :class="{
+                      'text-info-600': toast.type === 'info',
+                      'text-success-600': toast.type === 'success',
+                      'text-warning-600': toast.type === 'warning',
+                      'text-danger-600': toast.type === 'danger',
+                  }"
+                  x-text="{
+                      'info': 'info',
+                      'success': 'check_circle',
+                      'warning': 'warning',
+                      'danger': 'error'
+                  }[toast.type]"></span>
+            <p class="flex-1 min-w-0" x-text="toast.message"></p>
+            <button @click="toasts = toasts.filter(t => t.id !== toast.id)"
+                    class="flex-shrink-0 ml-2 opacity-60 hover:opacity-100"
+                    aria-label="Dismiss">
+                <span class="material-icons text-base">close</span>
+            </button>
+        </div>
+    </template>
+</div>
+{% endmacro %}

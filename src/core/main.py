@@ -14,6 +14,7 @@ import asyncio
 import threading
 import sqlite3
 import random
+import time
 
 from fastapi import FastAPI, HTTPException, Request, Depends, Form, Cookie, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
@@ -69,8 +70,8 @@ background_task = None
 # ============================================================
 # Inference Worker Management (merged from inference_service)
 # ============================================================
-from src.inference import RTSPInferenceWorker
-from src.inference.yolo_detector import load_model, download_model
+from ..inference import RTSPInferenceWorker
+from ..inference.yolo_detector import load_model, download_model
 
 # YOLO11 model configuration
 YOLO_MODEL_DIR = os.getenv("YOLO_MODEL_DIR", "models")
@@ -306,8 +307,8 @@ templates = Jinja2Templates(directory="src/web/templates")
 
 
 # Include API routers
-from src.api import auth, cameras, contacts, detections, analytics, system
-from src.core.database import get_db_connection
+from ..api import auth, cameras, contacts, detections, analytics, system
+from .database import get_db_connection
 
 app.include_router(auth.router)
 app.include_router(cameras.router)
@@ -391,36 +392,28 @@ def get_detection_stats():
     return {"total": total, "today": today, "this_month": this_month}
 
 def get_detection_chart_data(period="month", month=None):
-    """Get detection data for chart visualization"""
+    """Get detection confidence data for chart visualization"""
     conn = get_db_connection()
     
     if period == "month":
         if month:
-            # Get daily counts for a specific month
+            # Get daily average confidence for that month
             data = conn.execute("""
-                SELECT DATE(timestamp) as date, COUNT(*) as count 
+                SELECT strftime('%Y-%m-%d', timestamp) as date, 
+                       AVG(confidence * 100) as confidence
                 FROM detections 
                 WHERE strftime('%Y-%m', timestamp) = ?
-                GROUP BY DATE(timestamp)
-                ORDER BY date
+                GROUP BY date ORDER BY date
             """, (month,)).fetchall()
         else:
-            # Get daily counts for the current month
+            # Default: Current month's daily average
             data = conn.execute("""
-                SELECT DATE(timestamp) as date, COUNT(*) as count 
+                SELECT strftime('%m-%d', timestamp) as date, 
+                       AVG(confidence * 100) as confidence
                 FROM detections 
                 WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
-                GROUP BY DATE(timestamp)
-                ORDER BY date
-            """).fetchall()
-    else:
-        # Get monthly counts for all time
-        data = conn.execute("""
-            SELECT strftime('%Y-%m', timestamp) as month, COUNT(*) as count 
-            FROM detections 
-            GROUP BY strftime('%Y-%m', timestamp)
-            ORDER BY month
-        """).fetchall()
+                GROUP BY date ORDER BY date
+            """,).fetchall()
     
     conn.close()
     return [dict(row) for row in data]
@@ -1170,48 +1163,48 @@ async def get_system_status(username: str = Depends(get_current_user_from_cookie
     """Get the status of all system components."""
     system_status = {}
 
-    # Local inference workers status
+    # Local inference service status
     worker_count = len(active_inference_workers)
     running_workers = sum(1 for w in active_inference_workers.values() if w.running and not w.paused)
+    
+    model_path = Path(YOLO_MODEL_DIR) / "turtle_detector.pt"
+    model_status = 'loaded' if model_path.exists() else 'not_downloaded'
 
-    system_status['inference'] = {
+    system_status['inference_service'] = {
         'status': 'running' if running_workers > 0 else 'idle',
         'active_workers': running_workers,
         'total_workers': worker_count,
-        'max_workers': MAX_INFERENCE_WORKERS,
-        'model_dir': YOLO_MODEL_DIR,
-        'input_size': YOLO_INPUT_SIZE,
+        'model_status': model_status,
+        'model_path': str(model_path),
+        'message': f"Local PyTorch (YOLO11) - {running_workers} active workers"
     }
 
-    # Camera status
+    # Camera status & Feed processing
     try:
         conn = get_db_connection()
-        active_cameras = conn.execute("SELECT COUNT(*) as count FROM cameras WHERE active = 1").fetchone()["count"]
+        cameras = conn.execute("SELECT id, name FROM cameras WHERE active = 1").fetchall()
         conn.close()
 
+        processing_feeds = 0
+        now = time.time()
+        for cam in cameras:
+            worker = active_inference_workers.get(cam["id"])
+            if worker and worker.running and not worker.paused:
+                last_frame = worker.stats.get("last_frame_time")
+                # If frame was received in the last 10 seconds, consider the feed active
+                if last_frame and (now - last_frame < 10):
+                    processing_feeds += 1
+
         system_status['cameras'] = {
-            'status': 'running' if active_cameras > 0 else 'idle',
-            'active_cameras': active_cameras,
+            'status': 'running' if processing_feeds > 0 else 'idle',
+            'active_cameras': len(cameras),
+            'processing_feeds': processing_feeds,
+            'message': f"{processing_feeds} feeds being processed" if processing_feeds > 0 else "No active feeds"
         }
     except Exception as e:
         system_status['cameras'] = {
             'status': 'error',
-            'message': str(e),
-        }
-
-    # Model status
-    model_path = Path(YOLO_MODEL_DIR) / "turtle_detector.pt"
-    if model_path.exists():
-        size_mb = model_path.stat().st_size / (1024 * 1024)
-        system_status['model'] = {
-            'status': 'loaded',
-            'path': str(model_path),
-            'size_mb': round(size_mb, 1),
-        }
-    else:
-        system_status['model'] = {
-            'status': 'not_downloaded',
-            'message': 'Model will be downloaded on first inference.',
+            'message': f"Error: {str(e)}",
         }
 
     response = JSONResponse(system_status)
