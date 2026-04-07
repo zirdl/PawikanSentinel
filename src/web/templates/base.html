@@ -4,19 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Pawikan Sentinel{% endblock %}</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
-    <!-- Local CSS -->
     <link rel="stylesheet" href="/static/css/tailwind.css">
-    <link rel="stylesheet" href="/static/css/fontawesome.all.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
-
-    <!-- Local JS -->
     <script src="/static/js/htmx.min.js"></script>
-    </head>
-<body class="font-sans antialiased bg-gradient-to-br from-sand-light to-ocean-light">
+    <style>
+        /* System font stack (no external font dependencies) */
+        :root {
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        body { font-family: var(--font-sans); }
+    </style>
+</head>
+<body class="antialiased bg-gradient-to-br from-sand-light to-ocean-light">
     {% block header %}
     <header class="px-4 py-2 flex justify-between items-center shadow-md bg-gradient-to-r from-turtle-dark-green to-ocean-dark-blue">
         <h1 class="text-xl font-semibold">
@@ -57,19 +55,20 @@
             evt.detail.headers['X-CSRFToken'] = csrfToken;
         });
 
-        // Password peek functionality
+        // Password toggle using inline SVGs (no FontAwesome needed)
+        const eyeOpenSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        const eyeClosedSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
         function togglePasswordVisibility(fieldId, iconId) {
             const passwordField = document.getElementById(fieldId);
             const icon = document.getElementById(iconId);
 
             if (passwordField.type === "password") {
                 passwordField.type = "text";
-                icon.classList.remove("fa-eye");
-                icon.classList.add("fa-eye-slash");
+                icon.innerHTML = eyeClosedSvg;
             } else {
                 passwordField.type = "password";
-                icon.classList.remove("fa-eye-slash");
-                icon.classList.add("fa-eye");
+                icon.innerHTML = eyeOpenSvg;
             }
         }
     </script>
