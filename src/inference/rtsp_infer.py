@@ -1,71 +1,102 @@
+"""
+Standalone RTSP inference script for quick testing.
+Uses local YOLO11 model (no Docker/Roboflow needed).
+
+Usage:
+    python rtsp_infer.py --rtsp-url rtsp://your-camera/stream [--input-size 320]
+"""
+
 import cv2
 import time
 import os
-from inference_sdk import InferenceHTTPClient
+import argparse
+from pathlib import Path
+import sys
 
-# Local inference server (running in Docker)
-client = InferenceHTTPClient(
-    api_url="http://localhost:9001",  # change if running remotely
-    api_key=os.environ.get("ROBOFLOW_API_KEY")  # optional if model is public
-)
+# Add parent directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-# Your model ID (from Roboflow dashboard, e.g., "turtledetector/vichai/3")
-MODEL_ID = "pawikansentinel-era7l/2"
+from yolo_detector import load_model, download_model, YOLOModel
 
-# RTSP stream (replace with your camera details)
-RTSP_URL = "rtsp://localhost:8554/test"
+def main():
+    parser = argparse.ArgumentParser(description="RTSP inference with local YOLO11 model")
+    parser.add_argument("--rtsp-url", default="rtsp://localhost:8554/test", help="RTSP stream URL")
+    parser.add_argument("--input-size", type=int, default=320, help="Model input size (default: 320)")
+    parser.add_argument("--model-dir", default="models", help="Directory for model files")
+    args = parser.parse_args()
 
-# Open RTSP stream
-cap = cv2.VideoCapture(RTSP_URL)
-if not cap.isOpened():
-    raise RuntimeError("❌ Cannot open RTSP stream")
+    # Load model
+    model_dir = Path(args.model_dir)
+    model_path = model_dir / "turtle_detector.pt"
+    if not model_path.exists():
+        print("Model not found locally, downloading from HuggingFace...")
+        model_path = download_model(args.model_dir)
 
-print("✅ Connected to RTSP stream. Press Ctrl+C to stop.")
+    model = load_model(str(model_path))
+    print(f"Model loaded: {model.class_names}")
 
-frame_skip = 5  # process 1 out of every 5 frames
+    # Open RTSP stream
+    cap = cv2.VideoCapture(args.rtsp_url)
+    if not cap.isOpened():
+        raise RuntimeError(f"Cannot open RTSP stream: {args.rtsp_url}")
 
-try:
-    count = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("⚠️ Failed to grab frame, retrying...")
-            time.sleep(1)
-            continue
+    print(f"Connected to RTSP stream. Press Ctrl+C to stop.")
 
-        count += 1
-        if count % frame_skip != 0:
-            continue
+    frame_skip = 5
+    try:
+        count = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to grab frame, retrying...")
+                time.sleep(1)
+                continue
 
-        # Resize for faster inference
-        resized = cv2.resize(frame, (640, 480))
+            count += 1
+            if count % frame_skip != 0:
+                continue
 
-        # Run inference
-        results = client.infer(resized, model_id=MODEL_ID)
-        print("Detections:", results)
+            # Resize for faster inference
+            resized = cv2.resize(frame, (args.input_size, args.input_size))
 
-        # OPTIONAL: draw bounding boxes and save annotated frame
-        if "predictions" in results:
-            for pred in results["predictions"]:
-                x, y = int(pred["x"]), int(pred["y"])
-                w, h = int(pred["width"]), int(pred["height"])
-                label = pred["class"]
-                conf = pred["confidence"]
+            # Run inference
+            results = model.infer(resized)
 
-                # Draw box
-                cv2.rectangle(resized, (x - w//2, y - h//2), (x + w//2, y + h//2), (0, 255, 0), 2)
-                cv2.putText(resized, f"{label} {conf:.2f}",
-                            (x - w//2, y - h//2 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # Draw bounding boxes
+            if "predictions" in results and results["predictions"]:
+                for pred in results["predictions"]:
+                    x, y = int(pred["x"]), int(pred["y"])
+                    w, h = int(pred["width"]), int(pred["height"])
+                    label = pred["class"]
+                    conf = pred["confidence"]
 
-            # Save annotated frame (optional)
-            cv2.imwrite("last_detection.jpg", resized)
+                    # Scale coordinates back to original frame size
+                    orig_h, orig_w = frame.shape[:2]
+                    scale_x = orig_w / args.input_size
+                    scale_y = orig_h / args.input_size
 
-        # Sleep to avoid hammering the server
-        time.sleep(0.5)
+                    x_orig = int(x * scale_x)
+                    y_orig = int(y * scale_y)
+                    w_orig = int(w * scale_x)
+                    h_orig = int(h * scale_y)
 
-except KeyboardInterrupt:
-    print("🛑 Stopping...")
-finally:
-    cap.release()
+                    # Draw box on original frame
+                    cv2.rectangle(frame, (x_orig - w_orig//2, y_orig - h_orig//2),
+                                  (x_orig + w_orig//2, y_orig + h_orig//2), (0, 255, 0), 2)
+                    cv2.putText(frame, f"{label} {conf:.2f}",
+                                (x_orig - w_orig//2, y_orig - h_orig//2 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+                # Save annotated frame
+                cv2.imwrite("last_detection.jpg", frame)
+                print(f"Saved annotated frame: last_detection.jpg")
+
+            time.sleep(0.2)
+
+    except KeyboardInterrupt:
+        print("Stopping...")
+    finally:
+        cap.release()
+
+if __name__ == "__main__":
+    main()

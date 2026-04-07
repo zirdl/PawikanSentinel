@@ -20,3 +20,13 @@ GEMINI.md
 node_modules/
 tailwindcss-cli
 logs/*.log
+
+# Models
+models/*.pt
+!models/.gitkeep
+
+# Images
+*.jpg
+*.png
+*.mp4
+*.mkv

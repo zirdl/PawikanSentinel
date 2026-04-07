@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import threading
 from typing import Dict, Optional, List, Tuple
+from pathlib import Path
 import logging
 from dataclasses import dataclass
 from contextlib import contextmanager
@@ -12,23 +13,25 @@ import json
 
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
-from inference_sdk import InferenceHTTPClient
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import functools
+import psutil
 
 # Import WebSocket manager for real-time updates from dedicated module (will be imported locally when needed)
 
 from ..inference.sms_sender import IprogSMSSender
+from ..inference.yolo_detector import load_model, download_model, YOLOModel
 
 from ..core.database import get_db_connection
 
 # Load environment variables from .env file
 load_dotenv()
 
-ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
-ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
-ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2") # Default model ID
+# YOLO11 model configuration
+YOLO_MODEL_DIR = os.getenv("YOLO_MODEL_DIR", "models")
+YOLO_INPUT_SIZE = int(os.getenv("YOLO_INPUT_SIZE", "320"))
+
 DETECTIONS_DIR = os.getenv("DETECTIONS_DIR", "detections")
 
 # iprog configuration for SMS notifications (replaces Semaphore)
@@ -37,8 +40,12 @@ IPROG_SENDER_NAME = os.getenv("IPROG_SENDER_NAME", "PawikanSentinel")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
 
 # Detection configuration
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))/100.0  # Default 80% confidence threshold
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))  # Default 80% confidence threshold
 FRAME_SKIP = int(os.getenv("FRAME_SKIP", "5"))  # Default frame skip of 5
+
+# System health configuration
+CPU_THRESHOLD = float(os.getenv("CPU_THRESHOLD", "80.0"))
+TEMP_THRESHOLD = float(os.getenv("TEMP_THRESHOLD", "80.0"))
 
 # Ensure the detections directory exists
 os.makedirs(DETECTIONS_DIR, exist_ok=True)
@@ -52,8 +59,30 @@ logger = logging.getLogger(__name__)
 # Initialize iprog SMS sender
 sms_sender = IprogSMSSender()
 
-if not ROBOFLOW_API_KEY:
-    logger.warning("ROBOFLOW_API_KEY not set in .env. Inference will not work.")
+# Global YOLO model instance (lazy-loaded on first worker start)
+_yolo_model: Optional[YOLOModel] = None
+_model_lock = threading.Lock()
+
+
+def get_yolo_model() -> YOLOModel:
+    """Thread-safe lazy loading of the YOLO11 model."""
+    global _yolo_model
+    if _yolo_model is not None:
+        return _yolo_model
+
+    with _model_lock:
+        if _yolo_model is not None:
+            return _yolo_model
+
+        model_dir = Path(YOLO_MODEL_DIR)
+        model_path = model_dir / "turtle_detector.pt"
+
+        if not model_path.exists():
+            logger.info("Model not found locally, downloading from HuggingFace...")
+            model_path = download_model(YOLO_MODEL_DIR)
+
+        _yolo_model = load_model(str(model_path))
+        return _yolo_model
 
 @dataclass
 class DetectionResult:
@@ -98,23 +127,21 @@ class CircuitBreaker:
             self.state = "OPEN"
 
 class RTSPInferenceWorker(threading.Thread):
-    def __init__(self, camera_id: int, rtsp_url: str, model_id: str, api_url: str, api_key: str, 
+    def __init__(self, camera_id: int, rtsp_url: str, model_id: str = None, api_url: str = None, api_key: str = None,
                  frame_skip: int = FRAME_SKIP, batch_size: int = 10, max_retries: int = 3):
         super().__init__(name=f"CameraWorker-{camera_id}")
         self.camera_id = camera_id
         self.rtsp_url = rtsp_url
+        # model_id, api_url, api_key kept for backward compatibility but not used with YOLO11
         self.model_id = model_id
         self.api_url = api_url
         self.api_key = api_key
         self.frame_skip = frame_skip
         self.batch_size = batch_size
         self.max_retries = max_retries
-        
-        # Initialize inference client with circuit breaker
-        self.client = InferenceHTTPClient(
-            api_url=self.api_url,
-            api_key=self.api_key
-        )
+
+        # YOLO11 model (lazy-loaded)
+        self.model: Optional[YOLOModel] = None
         self.circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
         
         # Threading and state management
@@ -309,10 +336,14 @@ class RTSPInferenceWorker(threading.Thread):
             return None
 
     def _perform_inference(self, frame) -> Optional[Dict]:
-        """Perform inference with circuit breaker and retry logic"""
+        """Perform inference using local YOLO11 model with circuit breaker and retry logic"""
+        # Lazy-load model on first use
+        if self.model is None:
+            self.model = get_yolo_model()
+
         def inference_call():
-            return self.client.infer(frame, model_id=self.model_id)
-        
+            return self.model.infer(frame)
+
         try:
             results = self.circuit_breaker.call(inference_call)
             self.stats["last_success"] = datetime.now().isoformat()
@@ -330,11 +361,19 @@ class RTSPInferenceWorker(threading.Thread):
         
         logger.info(f"Camera {self.camera_id}: Starting inference worker")
         
+        # Throttling state
+        self.throttled = False
+        
         while self.running:
             try:
                 # Handle pause state
                 if self.paused:
                     time.sleep(1)
+                    continue
+
+                # Handle Thermal/CPU Throttling
+                if self._check_throttle():
+                    time.sleep(2)  # Wait longer when throttled
                     continue
                 
                 # Setup capture if not already done
@@ -362,8 +401,8 @@ class RTSPInferenceWorker(threading.Thread):
                 if frame_count % self.frame_skip != 0:
                     continue
                 
-                # Resize for faster inference
-                resized = cv2.resize(frame, (640, 480))
+                # Resize for faster inference (use YOLO_INPUT_SIZE for square input)
+                resized = cv2.resize(frame, (YOLO_INPUT_SIZE, YOLO_INPUT_SIZE))
                 
                 # Perform inference with retry logic
                 results = None
@@ -448,6 +487,38 @@ class RTSPInferenceWorker(threading.Thread):
         """Resume the worker"""
         self.paused = False
         logger.info(f"Camera {self.camera_id}: Resumed inference worker")
+
+    def _check_throttle(self) -> bool:
+        """Check if the system should be throttled based on CPU or Temperature"""
+        try:
+            # Check CPU usage
+            cpu_percent = psutil.cpu_percent(interval=None)
+            if cpu_percent > CPU_THRESHOLD:
+                if not self.throttled:
+                    logger.warning(f"Camera {self.camera_id}: CPU usage at {cpu_percent}%, throttling inference...")
+                    self.throttled = True
+                return True
+
+            # Check Temperature (Pi specific)
+            temp = None
+            if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
+                with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+                    temp = float(f.read().strip()) / 1000.0
+            
+            if temp and temp > TEMP_THRESHOLD:
+                if not self.throttled:
+                    logger.warning(f"Camera {self.camera_id}: CPU temperature at {temp}C, throttling inference...")
+                    self.throttled = True
+                return True
+
+            if self.throttled:
+                logger.info(f"Camera {self.camera_id}: System recovered (CPU: {cpu_percent}%, Temp: {temp if temp else 'N/A'}C), resuming normal operation.")
+                self.throttled = False
+            
+            return False
+        except Exception as e:
+            logger.error(f"Error checking system throttle: {e}")
+            return False
 
     def get_stats(self) -> Dict:
         """Get worker statistics"""

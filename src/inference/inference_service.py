@@ -16,9 +16,9 @@ from .inference import RTSPInferenceWorker, DetectionResult
 # Load environment variables from .env file
 load_dotenv()
 
-ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
-ROBOFLOW_API_URL = os.getenv("ROBOFLOW_API_URL", "http://localhost:9001")
-ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "pawikansentinel-era7l/2")
+# YOLO11 model configuration
+YOLO_MODEL_DIR = os.getenv("YOLO_MODEL_DIR", "models")
+YOLO_INPUT_SIZE = int(os.getenv("YOLO_INPUT_SIZE", "320"))
 MAX_WORKERS = int(os.getenv("MAX_INFERENCE_WORKERS", "10"))
 
 # --- Logging Setup ---
@@ -32,9 +32,6 @@ logger = logging.getLogger(__name__)
 from ..logging import setup_sensitive_data_logging
 setup_sensitive_data_logging()
 # --- End Logging Setup ---
-
-if not ROBOFLOW_API_KEY:
-    logger.warning("ROBOFLOW_API_KEY not set in .env. Inference will not work.")
 
 # Pydantic models for API responses
 class WorkerStats(BaseModel):
@@ -145,13 +142,10 @@ async def start_inference_for_camera_internal(camera_id: int) -> bool:
         if camera_id in worker_futures:
             worker_futures[camera_id].cancel()
     
-    # Create new worker
+    # Create new worker (model_id, api_url, api_key not needed with YOLO11)
     worker = RTSPInferenceWorker(
         camera_id=camera["id"],
         rtsp_url=camera["rtsp_url"],
-        model_id=ROBOFLOW_MODEL_ID,
-        api_url=ROBOFLOW_API_URL,
-        api_key=ROBOFLOW_API_KEY
     )
     
     # Start worker in thread pool

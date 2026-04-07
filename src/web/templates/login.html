@@ -31,7 +31,7 @@
 
             {% if error %}
                 <div class="p-3 rounded-lg font-medium flex items-center gap-2 mb-4 bg-red-100 border border-red-200 text-red-700" role="alert">
-                    <i class="fas fa-exclamation-circle"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <div>
                         <strong class="font-bold">Error!</strong>
                         <span class="block sm:inline">{{ error }}</span>
@@ -53,14 +53,15 @@
                     <div class="relative">
                         <input type="password" id="password" name="password" required autocomplete="current-password"
                                class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-white bg-opacity-80 text-base transition-all duration-300 ease-in-out focus:outline-none focus:border-turtle-green focus:ring-4 focus:ring-turtle-green focus:ring-opacity-20">
-                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green text-base p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 text-center leading-none z-10" onclick="togglePasswordVisibility('password', 'password-icon')">
-                            <i id="password-icon" class="fas fa-eye"></i>
+                        <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 border-none cursor-pointer text-turtle-dark-green p-0 rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-6 h-6 z-10" onclick="togglePasswordVisibility('password', 'password-icon')">
+                            <span id="password-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
                         </button>
                     </div>
                 </div>
                 <button type="submit"
                         class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-turtle-green to-ocean-blue hover:from-turtle-dark-green hover:to-ocean-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turtle-green transition-transform duration-300 ease-in-out hover:-translate-y-0.5">
-                    <i class="fas fa-sign-in-alt mr-2"></i> Login
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Login
                 </button>
             </form>
             <!-- Only admin account is available -->

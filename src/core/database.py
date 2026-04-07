@@ -7,6 +7,9 @@ DB_FILE = os.getenv("DATABASE_PATH", "pawikan.db")
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
+    # Enable WAL mode for better concurrent write performance
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA wal_autocheckpoint=100")
     return conn
 
 def create_tables():
@@ -58,6 +61,9 @@ def create_tables():
 
     # Indexes
     c.execute("CREATE INDEX IF NOT EXISTS idx_detections_timestamp ON detections (timestamp)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_detections_camera_id ON detections (camera_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_detections_camera_timestamp ON detections (camera_id, timestamp)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_cameras_active ON cameras (active)")
     conn.commit()
     conn.close()
 
