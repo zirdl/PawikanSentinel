@@ -6,91 +6,135 @@ module.exports = {
   ],
   theme: {
     extend: {
+      /* =========================================================
+         TYPOGRAPHY — Digital Naturalist System
+         Headlines: Manrope (bold, authoritative)
+         Body: Inter (legible, neutral)
+         ========================================================= */
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        headline: ['Manrope', 'system-ui', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+        label: ['Inter', 'system-ui', 'sans-serif'],
       },
 
       /* =========================================================
-         DESIGN TOKENS — Pawikan Sentinel
+         DESIGN TOKENS — Pawikan Sentinel (Stitch Design System)
+         Theme: "The Digital Naturalist"
+         Palette: Deep-Sea Ecology (mangroves + tropical shallows)
          ========================================================= */
 
       colors: {
-        /* --- Turtle Green (brand primary) --- */
+        /* --- Primary Brand (Deep Forest Green) --- */
+        primary: {
+          DEFAULT: '#134231',
+          container: '#2d5a47',
+          fixed: '#bcedd4',
+          fixedDim: '#a1d1b9',
+          on: '#ffffff',
+          onContainer: '#9fcfb7',
+          onFixed: '#002115',
+          onFixedVariant: '#214f3d',
+        },
+
+        /* --- Secondary (Deep Teal) --- */
+        secondary: {
+          DEFAULT: '#276868',
+          container: '#acebeb',
+          fixed: '#afeeed',
+          fixedDim: '#93d2d1',
+          on: '#ffffff',
+          onContainer: '#2c6c6c',
+          onFixed: '#002020',
+          onFixedVariant: '#004f50',
+        },
+
+        /* --- Tertiary (Dark Sea Green) --- */
+        tertiary: {
+          DEFAULT: '#194135',
+          container: '#31594b',
+          fixed: '#c0ecda',
+          fixedDim: '#a5d0be',
+          on: '#ffffff',
+          onContainer: '#a3cebc',
+          onFixed: '#002117',
+          onFixedVariant: '#264e41',
+        },
+
+        /* --- Surface Hierarchy (Tonal Layering) --- */
+        surface: {
+          DEFAULT: '#f8faf9',
+          bright: '#f8faf9',
+          dim: '#d8dad9',
+          container: {
+            DEFAULT: '#eceeed',
+            low: '#f2f4f3',
+            lowest: '#ffffff',
+            high: '#e6e9e8',
+            highest: '#e1e3e2',
+          },
+          tint: '#3a6753',
+          variant: '#e1e3e2',
+        },
+
+        /* --- Text Colors --- */
+        'on-surface': {
+          DEFAULT: '#191c1c',
+          variant: '#414944',
+        },
+        'on-background': '#191c1c',
+
+        /* --- Outline & Borders --- */
+        outline: {
+          DEFAULT: '#717974',
+          variant: '#c0c8c2',
+        },
+
+        /* --- Inverse Colors --- */
+        'inverse-surface': '#2e3131',
+        'inverse-on-surface': '#eff1f0',
+        'inverse-primary': '#a1d1b9',
+
+        /* --- Background --- */
+        background: '#f8faf9',
+
+        /* --- Error States --- */
+        error: {
+          DEFAULT: '#ba1a1a',
+          container: '#ffdad6',
+          on: '#ffffff',
+          onContainer: '#93000a',
+        },
+
+        /* --- Legacy Aliases (for backward compatibility) --- */
         turtle: {
           50:  '#f0f7f2',
           100: '#dcf0e1',
           200: '#bce1c7',
           300: '#8ecba2',
           400: '#5eae78',
-          500: '#4a7c59',  // original turtle-green
+          500: '#4a7c59',  // Legacy: mapped to primary.container
           600: '#3a6448',
-          700: '#3a5f42',  // original turtle-dark-green
+          700: '#3a5f42',
           800: '#2d4a35',
           900: '#1f3326',
           950: '#0f1d15',
         },
-
-        /* --- Ocean Blue (secondary) --- */
         ocean: {
           50:  '#eff6fc',
           100: '#dcecf8',
           200: '#c1ddf2',
           300: '#95c5e7',
-          400: '#6b9ac4',  // original ocean-blue
+          400: '#6b9ac4',
           500: '#5a8bb8',
-          600: '#4a7b9d',  // original ocean-dark-blue
+          600: '#4a7b9d',
           700: '#3d6685',
           800: '#2f4f68',
           900: '#1e3447',
           950: '#101e2c',
         },
 
-        /* --- Sand (warm neutral) --- */
-        sand: {
-          50:  '#fdf9f3',
-          100: '#f5e7d3',  // original sand-light
-          200: '#edd9be',
-          300: '#e7d4b5',  // original sand-medium
-          400: '#d9c297',  // original sand-dark
-          500: '#c4a974',
-          600: '#a88854',
-          700: '#8c6d42',
-          800: '#6e5435',
-          900: '#4a3825',
-          950: '#2c2015',
-        },
-
-        /* --- Shell / Earth accent --- */
-        shell: {
-          50:  '#f5f7ef',
-          100: '#e9edd9',
-          200: '#d4dbb5',
-          300: '#b7c586',
-          400: '#8b9c6d',  // original turtle-shell
-          500: '#6f8153',
-          600: '#56653e',
-          700: '#424e31',
-          800: '#333c28',
-          900: '#232a1c',
-          950: '#12160e',
-        },
-
-        /* --- Coral / Sunset (warning / accent) --- */
-        coral: {
-          50:  '#fef3ee',
-          100: '#fde4d7',
-          200: '#fac7ab',
-          300: '#f4a261',  // original sunset-orange
-          400: '#ee8342',
-          500: '#e76f51',  // original coral
-          600: '#d4543a',
-          700: '#b04330',
-          800: '#8e372b',
-          900: '#602420',
-          950: '#34110e',
-        },
-
-        /* --- Semantic / state colors --- */
+        /* --- Semantic / State Colors --- */
         success: {
           50:  '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0',
           300: '#86efac', 400: '#4ade80', 500: '#22c55e',
@@ -124,7 +168,7 @@ module.exports = {
         '88':  '22rem',
       },
 
-      /* --- Typography scale --- */
+      /* --- Typography Scale — Editorial System --- */
       fontSize: {
         'caption':  ['0.75rem',  { lineHeight: '1rem',    fontWeight: '500' }],
         'body-sm':  ['0.8125rem', { lineHeight: '1.25rem', fontWeight: '400' }],
@@ -141,7 +185,7 @@ module.exports = {
         'display':  ['3.75rem',   { lineHeight: '1',      fontWeight: '800' }],
       },
 
-      /* --- Border radius --- */
+      /* --- Border Radius (Soft, Natural) --- */
       borderRadius: {
         'sm':   '0.25rem',
         'md':   '0.375rem',
@@ -152,13 +196,13 @@ module.exports = {
         'full': '9999px',
       },
 
-      /* --- Shadows --- */
+      /* --- Shadows (Ambient, Ultra-Diffused) --- */
       boxShadow: {
-        'card':   '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-        'card-hover': '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
-        'elevated': '0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04)',
-        'overlay':  '0 20px 40px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.08)',
-        'inset':    'inset 0 1px 2px rgba(0,0,0,0.05)',
+        'card':   '0px 12px 32px rgba(25, 28, 28, 0.06)',
+        'card-hover': '0px 16px 40px rgba(25, 28, 28, 0.10)',
+        'elevated': '0px 20px 48px rgba(25, 28, 28, 0.08)',
+        'overlay':  '0px 24px 56px rgba(25, 28, 28, 0.12)',
+        'inset':    'inset 0 1px 2px rgba(25, 28, 28, 0.05)',
       },
 
       /* --- Transition durations --- */

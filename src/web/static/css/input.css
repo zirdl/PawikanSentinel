@@ -3,20 +3,54 @@
 @tailwind utilities;
 
 /* ============================================================
-   BASE STYLES — Pawikan Sentinel
+   BASE STYLES — Pawikan Sentinel (Stitch Design System)
+   Theme: "The Digital Naturalist"
    ============================================================ */
 
 /* Alpine.js: hide elements before they're hydrated */
 [x-cloak] { display: none !important; }
 
-/* Custom range slider styling */
+/* ============================================================
+   GLASSMORPHISM UTILITIES
+   ============================================================ */
+.glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-nav {
+  @apply bg-white/80 backdrop-blur-lg;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ============================================================
+   SURFACE LAYERING UTILITIES (No-Line Rule)
+   Use color shifts instead of borders for structure
+   ============================================================ */
+.surface-elevated {
+  @apply bg-surface-container-lowest shadow-card;
+}
+
+.surface-card {
+  @apply bg-surface-container-lowest rounded-xl overflow-hidden;
+}
+
+.surface-group {
+  @apply bg-surface-container-low rounded-xl;
+}
+
+/* ============================================================
+   CUSTOM RANGE SLIDER (Tonal Theme-Aware)
+   ============================================================ */
 input[type="range"] {
     height: 8px;
     -webkit-appearance: none;
     appearance: none;
-    background: #e5e7eb;
+    background: #e6e9e8; /* surface-container-high */
     border-radius: 9999px;
     outline: none;
+    transition: all 0.2s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -25,31 +59,60 @@ input[type="range"]::-webkit-slider-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #4a7c59;
+    background: #134231; /* primary */
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 2px solid white;
+    box-shadow: 0px 12px 32px rgba(25, 28, 28, 0.08);
+    border: 2px solid #ffffff;
+    transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 16px 40px rgba(25, 28, 28, 0.12);
 }
 
 input[type="range"]::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #4a7c59;
+    background: #134231; /* primary */
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 2px solid white;
+    box-shadow: 0px 12px 32px rgba(25, 28, 28, 0.08);
+    border: 2px solid #ffffff;
+    transition: all 0.2s ease;
 }
 
-/* Smooth scroll for anchor links */
+/* Accent color variants for sliders */
+input[type="range"].accent-secondary::-webkit-slider-thumb {
+    background: #276868; /* secondary */
+}
+
+input[type="range"].accent-tertiary::-webkit-slider-thumb {
+    background: #194135; /* tertiary */
+}
+
+/* ============================================================
+   BASE TYPOGRAPHY
+   ============================================================ */
 html {
     scroll-behavior: smooth;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+h1, h2, h3, h4, h5, h6,
+.font-headline {
+    font-family: 'Manrope', system-ui, sans-serif;
+}
+
+/* ============================================================
+   ACCESSIBILITY & UX
+   ============================================================ */
 
 /* Improve focus ring visibility */
 :focus-visible {
-    outline: 2px solid #4a7c59;
+    outline: 2px solid #134231; /* primary */
     outline-offset: 2px;
+    border-radius: 4px;
 }
 
 /* Reduce motion for users who prefer it */
@@ -61,14 +124,21 @@ html {
     }
 }
 
-/* Custom component classes using Tailwind utilities */
+/* ============================================================
+   COMPONENT CLASSES
+   ============================================================ */
 @layer components {
-    /* Camera card */
+    /* Camera card with tonal layering */
     .camera-card {
-        @apply bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-card-hover transition-shadow duration-200;
+        @apply bg-surface-container-lowest rounded-xl shadow-card overflow-hidden hover:-translate-y-1 transition-all duration-300;
     }
 
-    /* Status dot */
+    /* Dashboard stat card with bottom accent */
+    .stat-card {
+        @apply bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-primary hover:-translate-y-1 transition-transform duration-300;
+    }
+
+    /* Status dot with pulse animation */
     .status-dot {
         @apply w-2.5 h-2.5 rounded-full;
     }
@@ -76,7 +146,7 @@ html {
         @apply bg-success-500 animate-pulse;
     }
     .status-dot.inactive {
-        @apply bg-gray-300;
+        @apply bg-surface-dim;
     }
     .status-dot.error {
         @apply bg-danger-500;
@@ -84,16 +154,79 @@ html {
 
     /* Loading spinner */
     .spinner {
-        @apply inline-block w-8 h-8 border-4 border-turtle-500/20 border-t-turtle-500 rounded-full animate-spin;
+        @apply inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin;
     }
 
-    /* Gradient button base (legacy compatibility) */
+    /* Gradient button (Primary CTA with "lit from within" polish) */
     .btn-gradient-primary {
-        @apply bg-gradient-to-r from-turtle-500 to-ocean-400 hover:from-turtle-600 hover:to-ocean-500 text-white transition-all duration-200;
+        @apply bg-gradient-to-r from-primary to-primary-container hover:from-primary-container hover:to-primary text-on-primary font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-card;
     }
 
-    /* Page content wrapper — consistent spacing */
+    /* Secondary button (recessed look) */
+    .btn-secondary {
+        @apply bg-surface-container-highest text-on-surface font-semibold rounded-xl hover:bg-surface-dim transition-colors duration-200;
+    }
+
+    /* Ghost button (minimal) */
+    .btn-ghost {
+        @apply bg-transparent text-primary font-semibold rounded-xl hover:bg-primary/5 transition-colors duration-200;
+    }
+
+    /* Badge / Chip (tonal, rounded-full) */
+    .badge-primary {
+        @apply bg-primary-fixed text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter;
+    }
+
+    .badge-secondary {
+        @apply bg-secondary-fixed text-secondary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter;
+    }
+
+    .badge-success {
+        @apply bg-primary-fixed text-primary px-3 py-1 rounded-full text-xs font-bold uppercase;
+    }
+
+    .badge-warning {
+        @apply bg-surface-dim text-on-surface-variant px-3 py-1 rounded-full text-xs font-bold uppercase;
+    }
+
+    /* Input field (surface-driven, no full box borders) */
+    .input-surface {
+        @apply bg-surface-container-low border-none rounded-lg px-4 py-3 text-body
+               focus:bg-surface-container-lowest focus:ring-0 focus:border-b-2 focus:border-primary
+               transition-all duration-200;
+    }
+
+    /* Card with tonal layering (no borders) */
+    .card-tonal {
+        @apply bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden;
+    }
+
+    /* Card header (no bottom border, use spacing instead) */
+    .card-header {
+        @apply px-6 py-4 flex items-center justify-between;
+    }
+
+    /* Table row with hover state (no dividers, use background shift) */
+    .table-row-hover {
+        @apply hover:bg-surface-container-low/50 transition-colors duration-200 cursor-pointer;
+    }
+
+    /* Page content wrapper — generous white space */
     .page-content {
-        @apply space-y-8;
+        @apply space-y-8 p-8;
+    }
+
+    /* Section spacing */
+    .section {
+        @apply mb-8;
+    }
+
+    .section-title {
+        @apply text-2xl font-extrabold text-primary font-headline mb-6;
+    }
+
+    /* Bento grid layout utility */
+    .bento-grid {
+        @apply grid grid-cols-1 lg:grid-cols-12 gap-6;
     }
 }

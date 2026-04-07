@@ -5,89 +5,151 @@
 {% block content %}
 <div x-data="camerasPage" x-init="load()">
     <!-- Page Header -->
-    <div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-            <h1 class="text-h1 text-gray-900 tracking-tight">Camera Feeds</h1>
-            <p class="text-body text-gray-500 mt-1">View live RTSP streams from your cameras</p>
+            <span class="text-secondary font-label text-xs font-semibold uppercase tracking-widest mb-2 block">Surveillance Network</span>
+            <h1 class="text-3xl font-extrabold text-on-surface tracking-tight font-headline">Active Live Streams</h1>
+            <p class="text-on-surface-variant mt-2 max-w-xl">Real-time monitoring of critical nesting sites. AI detection active on all channels.</p>
         </div>
         <button @click="load()"
-                class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl
-                       text-body-sm font-semibold text-gray-700 shadow-card hover:shadow-card-hover
-                       hover:bg-gray-50 transition-all duration-200">
-            <span class="material-icons text-ocean-500 text-base" :class="{ 'animate-spin': loading }">refresh</span>
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-surface-container-highest text-on-surface font-semibold rounded-xl
+                       hover:bg-surface-dim transition-all duration-200">
+            <span class="material-symbols-outlined text-base" :class="{ 'animate-spin': loading }">refresh</span>
             Refresh
         </button>
     </div>
 
     <!-- Loading skeleton -->
-    <div x-show="loading && cameras.length === 0" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <template x-for="i in 4" :key="i">
-            <div class="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-full bg-gray-200"></div>
-                    <div class="flex-1">
-                        <div class="h-4 w-32 bg-gray-200 rounded mb-2"></div>
-                        <div class="h-3 w-48 bg-gray-200 rounded"></div>
+    <div x-show="loading && cameras.length === 0" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+        <template x-for="i in 3" :key="i">
+            <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm animate-pulse">
+                <div class="aspect-video bg-surface-container-high"></div>
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-surface-container-high"></div>
+                        <div class="flex-1">
+                            <div class="h-4 w-32 bg-surface-container-high rounded mb-2"></div>
+                            <div class="h-3 w-48 bg-surface-container-high rounded"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="flex gap-2">
-                    <div class="flex-1 h-9 bg-gray-200 rounded"></div>
-                    <div class="flex-1 h-9 bg-gray-200 rounded"></div>
+                    <div class="flex gap-2">
+                        <div class="flex-1 h-9 bg-surface-container-high rounded-lg"></div>
+                        <div class="flex-1 h-9 bg-surface-container-high rounded-lg"></div>
+                    </div>
                 </div>
             </div>
         </template>
     </div>
 
     <!-- Empty state -->
-    <div x-show="!loading && cameras.length === 0" x-cloak class="bg-white rounded-xl shadow-card border border-gray-100 p-12 text-center">
-        <span class="material-icons text-5xl text-gray-300 mb-4">videocam_off</span>
-        <h3 class="text-title text-gray-900">No cameras configured</h3>
-        <p class="text-body text-gray-500 mt-1 mb-6">Get started by adding a camera in Settings.</p>
+    <div x-show="!loading && cameras.length === 0" x-cloak class="bg-surface-container-lowest rounded-xl shadow-sm p-12 text-center">
+        <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">videocam_off</span>
+        <h3 class="text-xl font-bold text-on-surface font-headline">No cameras configured</h3>
+        <p class="text-on-surface-variant mt-1 mb-6">Get started by adding a camera in Settings.</p>
         <a href="/settings"
-           class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600 text-white
-                  font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-turtle-500 focus:ring-offset-2
-                  transition-colors duration-200 shadow-card">
-            <span class="material-icons text-base">settings</span> Go to Settings
+           class="inline-flex items-center gap-1.5 px-6 py-3 bg-primary hover:opacity-90 text-on-primary
+                  font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+                  transition-all duration-200 shadow-sm">
+            <span class="material-symbols-outlined text-base">settings</span> Go to Settings
         </a>
     </div>
 
-    <!-- Camera cards -->
-    <div x-show="cameras.length > 0" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Camera Grid (Stitch Design — Video Cards) -->
+    <div x-show="cameras.length > 0" x-cloak class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         <template x-for="camera in cameras" :key="camera.id">
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-card-hover transition-shadow duration-200">
-                <div class="p-5">
-                    <div class="flex items-start justify-between gap-3 mb-4">
-                        <div class="flex items-center min-w-0 flex-1">
-                            <div class="w-10 h-10 rounded-full bg-turtle-50 flex items-center justify-center mr-3 flex-shrink-0">
-                                <span class="material-icons text-turtle-600">videocam</span>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <h3 class="text-body-lg font-semibold text-gray-900 truncate" x-text="camera.name"></h3>
-                                <p class="text-caption text-gray-500 truncate" :title="camera.rtsp_url" x-text="camera.rtsp_url"></p>
-                            </div>
-                        </div>
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium flex-shrink-0"
-                              :class="camera.active ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'">
-                            <span class="status-dot" :class="camera.active ? 'active' : 'inactive'"></span>
-                            <span x-text="camera.active ? 'Active' : 'Inactive'"></span>
+            <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:-translate-y-1 transition-transform duration-300">
+                <!-- Video Preview Area -->
+                <div class="relative aspect-video bg-black group">
+                    <!-- Placeholder/Thumbnail -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-surface-container-high to-surface-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-5xl text-on-surface-variant/30">videocam</span>
+                    </div>
+                    
+                    <!-- Gradient Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-on-surface/60 to-transparent"></div>
+                    
+                    <!-- Status Badges -->
+                    <div class="absolute top-4 left-4 flex gap-2">
+                        <span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase rounded-full flex items-center gap-1.5"
+                              x-show="camera.active">
+                            <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                            Active
+                        </span>
+                        <span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase rounded-full flex items-center gap-1.5"
+                              x-show="!camera.active">
+                            <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                            Inactive
                         </span>
                     </div>
-
-                    <div class="flex gap-2">
+                    
+                    <!-- IP Address -->
+                    <div class="absolute bottom-4 right-4 text-white/70 font-label text-[10px]" 
+                         x-text="camera.rtsp_url?.split('@')[1]?.split('/')[0] || 'Unknown IP'"
+                         x-show="camera.active"></div>
+                    
+                    <!-- Hover Play Button -->
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                         x-show="camera.active">
+                        <button @click="openModal(camera)"
+                                class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-colors">
+                            <span class="material-symbols-outlined filled">play_arrow</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Card Content -->
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-headline font-bold text-lg text-on-surface" x-text="camera.name"></h3>
+                            <p class="text-on-surface-variant text-sm font-body truncate max-w-[200px]" x-text="camera.rtsp_url" :title="camera.rtsp_url"></p>
+                        </div>
+                        <div class="bg-tertiary-fixed text-on-tertiary-fixed px-2 py-1 rounded-lg text-xs font-bold"
+                             x-show="camera.active">
+                            98% Confidence
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-3">
                         <a :href="camera.rtsp_url"
-                           class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-body-sm font-medium
-                                  text-white bg-turtle-500 hover:bg-turtle-600 rounded-lg transition-colors duration-200">
-                            <span class="material-icons text-sm">open_in_new</span> VLC
+                           class="flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface font-semibold py-2.5 rounded-lg hover:bg-surface-dim transition-colors text-sm"
+                           x-show="camera.active">
+                            <span class="material-symbols-outlined text-lg">settings_input_component</span>
+                            VLC
                         </a>
                         <button @click="openModal(camera)"
-                                class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-body-sm font-medium
-                                       text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors duration-200">
-                            <span class="material-icons text-sm">fullscreen</span> View
+                                class="flex items-center justify-center gap-2 bg-primary text-on-primary font-bold py-2.5 rounded-lg hover:opacity-90 transition-all text-sm"
+                                x-show="camera.active">
+                            <span class="material-symbols-outlined text-lg">visibility</span>
+                            View
+                        </button>
+                        
+                        <!-- Disabled state for inactive cameras -->
+                        <button class="flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface-variant/50 font-semibold py-2.5 rounded-lg text-sm cursor-not-allowed"
+                                x-show="!camera.active" disabled>
+                            <span class="material-symbols-outlined text-lg">settings_input_component</span>
+                            VLC
+                        </button>
+                        <button @click="openModal(camera)"
+                                class="flex items-center justify-center gap-2 bg-primary/50 text-on-primary/50 font-bold py-2.5 rounded-lg text-sm cursor-not-allowed"
+                                x-show="!camera.active" disabled>
+                            <span class="material-symbols-outlined text-lg">visibility</span>
+                            View
                         </button>
                     </div>
                 </div>
             </div>
         </template>
+        
+        <!-- Add New Feed Card -->
+        <button class="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-8 group hover:border-primary transition-colors min-h-[340px]">
+            <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary-fixed group-hover:text-primary transition-all mb-4">
+                <span class="material-symbols-outlined text-3xl">add</span>
+            </div>
+            <span class="font-headline font-bold text-lg text-on-surface">Add Camera Feed</span>
+            <span class="font-body text-sm text-on-surface-variant mt-1">Connect new RTSP/ONVIF stream</span>
+        </button>
     </div>
 
     <!-- Camera detail modal -->
@@ -103,7 +165,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
+             class="fixed inset-0 bg-on-surface/60 backdrop-blur-sm"
              @click="closeModal()"></div>
 
         <!-- Panel -->
@@ -115,39 +177,40 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95"
-                 class="relative bg-white rounded-xl shadow-overlay w-full max-w-md overflow-hidden"
+                 class="relative bg-surface-container-lowest rounded-xl shadow-elevated w-full max-w-md overflow-hidden"
             >
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h3 class="text-title text-gray-900" x-text="selectedCamera?.name || ''"></h3>
-                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
-                        <span class="material-icons">close</span>
+                <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10">
+                    <h3 class="text-xl font-bold text-on-surface font-headline" x-text="selectedCamera?.name || ''"></h3>
+                    <button @click="closeModal()" class="text-on-surface-variant hover:text-on-surface transition-colors" aria-label="Close">
+                        <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
                 <div class="px-6 py-6 space-y-4">
                     <div>
-                        <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">RTSP URL</label>
-                        <p class="mt-1 text-body-sm text-gray-900 break-all" x-text="selectedCamera?.rtsp_url || ''"></p>
+                        <label class="block text-caption font-bold text-on-surface-variant uppercase tracking-wider">RTSP URL</label>
+                        <p class="mt-1 text-body-sm text-on-surface break-all" x-text="selectedCamera?.rtsp_url || ''"></p>
                     </div>
                     <div>
-                        <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Status</label>
+                        <label class="block text-caption font-bold text-on-surface-variant uppercase tracking-wider">Status</label>
                         <div class="mt-1">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-medium"
-                                  :class="selectedCamera?.active ? 'bg-success-100 text-success-800' : 'bg-danger-100 text-danger-800'">
-                                <span class="status-dot" :class="selectedCamera?.active ? 'active' : 'inactive'"></span>
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase"
+                                  :class="selectedCamera?.active ? 'bg-primary-fixed text-primary' : 'bg-surface-dim text-on-surface-variant'">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="selectedCamera?.active ? 'bg-primary animate-pulse' : 'bg-outline'"></span>
                                 <span x-text="selectedCamera?.active ? 'Active' : 'Inactive'"></span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-2">
+                <div class="px-6 py-4 bg-surface-container-low flex gap-2">
                     <a :href="selectedCamera?.rtsp_url"
-                       class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-body-sm font-semibold
-                              text-white bg-turtle-500 hover:bg-turtle-600 rounded-lg transition-colors duration-200">
-                        <span class="material-icons text-base">play_circle</span> Launch in VLC
+                       class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-body-sm font-semibold
+                              text-white bg-primary hover:opacity-90 rounded-lg transition-all duration-200"
+                       x-show="selectedCamera?.active">
+                        <span class="material-symbols-outlined text-base">play_circle</span> Launch in VLC
                     </a>
                     <button @click="closeModal()"
-                            class="flex-1 inline-flex items-center justify-center px-4 py-2 text-body-sm font-medium
-                                   text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            class="flex-1 inline-flex items-center justify-center px-4 py-2.5 text-body-sm font-medium
+                                   text-on-surface bg-surface-container-highest hover:bg-surface-dim rounded-lg transition-all duration-200">
                         Close
                     </button>
                 </div>

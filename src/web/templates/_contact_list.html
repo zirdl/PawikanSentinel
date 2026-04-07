@@ -1,6 +1,6 @@
 {% if message %}
 <div class="flex items-start gap-2 px-4 py-3 mb-4 bg-success-50 border border-success-200 rounded-xl text-success-800 text-body-sm" role="alert">
-    <span class="material-icons text-base flex-shrink-0 mt-0.5">check_circle</span>
+    <span class="material-symbols-outlined text-base flex-shrink-0 mt-0.5">check_circle</span>
     <span>{{ message }}</span>
 </div>
 {% endif %}
@@ -8,25 +8,27 @@
 {% if contacts %}
 <div class="space-y-3">
     {% for contact in contacts %}
-    <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-        <div class="flex-shrink-0 h-9 w-9 rounded-full bg-ocean-100 flex items-center justify-center">
-            <span class="material-icons text-ocean-600 text-base">person</span>
+    <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl group">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary font-bold text-sm">
+                {{ contact.name|split(' ')|map(attribute='0')|join|upper }}
+            </div>
+            <div>
+                <p class="text-body-sm font-semibold text-on-surface">{{ contact.name }}</p>
+                <p class="text-caption text-on-surface-variant">{{ contact.phone }}</p>
+            </div>
         </div>
-        <div class="ml-3 flex-grow min-w-0">
-            <h3 class="text-body-sm font-medium text-gray-900 truncate">{{ contact.name }}</h3>
-            <p class="text-caption text-gray-500 truncate">{{ contact.phone }}</p>
-        </div>
-        <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button hx-get="/contacts/edit-form/{{ contact.id }}" hx-target="#modal-content" hx-swap="innerHTML"
-                    class="p-1.5 rounded-lg text-white bg-turtle-500 hover:bg-turtle-600 transition-colors"
+                    class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-colors"
                     aria-label="Edit contact">
-                <span class="material-icons text-sm">edit</span>
+                <span class="material-symbols-outlined text-base">edit</span>
             </button>
             <button hx-delete="/contacts/{{ contact.id }}" hx-target="#contacts-container" hx-swap="innerHTML"
                     hx-confirm="Are you sure you want to delete this contact?"
-                    class="p-1.5 rounded-lg text-white bg-danger-500 hover:bg-danger-600 transition-colors"
+                    class="p-2 rounded-lg text-on-surface-variant hover:text-danger hover:bg-danger/5 transition-colors"
                     aria-label="Delete contact">
-                <span class="material-icons text-sm">delete</span>
+                <span class="material-symbols-outlined text-base">delete</span>
             </button>
         </div>
     </div>
@@ -34,8 +36,8 @@
 </div>
 {% else %}
 <div class="text-center py-8">
-    <span class="material-icons text-4xl text-gray-300 mb-2">person_off</span>
-    <h3 class="text-body-sm font-medium text-gray-900">No contacts added</h3>
-    <p class="text-caption text-gray-500 mt-1">Get started by adding an emergency contact.</p>
+    <span class="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-2">person_off</span>
+    <h3 class="text-body-sm font-medium text-on-surface">No contacts added</h3>
+    <p class="text-caption text-on-surface-variant mt-1">Get started by adding an emergency contact.</p>
 </div>
 {% endif %}

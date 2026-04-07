@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cameras - Pawikan Sentinel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#194135",
+                    "surface-dim": "#d8dad9",
+                    "on-tertiary-fixed": "#002117",
+                    "tertiary-fixed": "#c0ecda",
+                    "inverse-primary": "#a1d1b9",
+                    "secondary": "#276868",
+                    "primary-fixed": "#bcedd4",
+                    "surface-container": "#eceeed",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#93d2d1",
+                    "inverse-on-surface": "#eff1f0",
+                    "tertiary-container": "#31594b",
+                    "on-secondary-container": "#2c6c6c",
+                    "secondary-fixed": "#afeeed",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#2e3131",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#414944",
+                    "on-primary-fixed-variant": "#214f3d",
+                    "surface": "#f8faf9",
+                    "surface-container-highest": "#e1e3e2",
+                    "primary-container": "#2d5a47",
+                    "on-secondary-fixed-variant": "#004f50",
+                    "on-surface": "#191c1c",
+                    "on-secondary-fixed": "#002020",
+                    "primary-fixed-dim": "#a1d1b9",
+                    "surface-tint": "#3a6753",
+                    "background": "#f8faf9",
+                    "error": "#ba1a1a",
+                    "primary": "#134231",
+                    "outline": "#717974",
+                    "surface-variant": "#e1e3e2",
+                    "secondary-container": "#acebeb",
+                    "on-background": "#191c1c",
+                    "on-tertiary-container": "#a3cebc",
+                    "on-primary-container": "#9fcfb7",
+                    "surface-container-low": "#f2f4f3",
+                    "on-tertiary-fixed-variant": "#264e41",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c0c8c2",
+                    "surface-bright": "#f8faf9",
+                    "tertiary-fixed-dim": "#a5d0be",
+                    "surface-container-high": "#e6e9e8",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#002115"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-white/80 dark:bg-emerald-950/80 backdrop-blur-lg docked full-width top-0 z-40 shadow-sm dark:shadow-none flex justify-between items-center w-full px-8 py-4 sticky">
+<div class="text-2xl font-extrabold text-emerald-900 dark:text-emerald-50 tracking-tight">Pawikan Sentinel</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-emerald-900 dark:text-emerald-100 cursor-pointer active:scale-95 duration-200">notifications</span>
+<span class="material-symbols-outlined text-emerald-900 dark:text-emerald-100 cursor-pointer active:scale-95 duration-200">settings</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User profile" data-alt="close-up portrait of a marine biologist in field gear, soft natural lighting, professional scientific headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBinHxA_I_FMN4YJUAFlCIZ03iIBGM_H4bXDQiEdqeiuVbTfMd_fhl-mvrzQiJTuU4Z2UAyQmBaBspJ0VexgEbPP6EOTZckKqi9hlIouK7VtLRYpcivXzwxv_3bxT715-oXtRzFwpMO89YWmixvihMsaPDK36ggZ3c206FOKlpCuUFxt3culO-K1e6_k1VgJITnuDw5RbGJFinI0iP8M_-KH4oMPuVH9Hs6qcVho3TeGYiXDJNNfc_mLqq84QeGUSo9AJTiWsy01IPp"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1">
+<!-- SideNavBar -->
+<aside class="bg-slate-50 dark:bg-emerald-950/40 h-[calc(100vh-72px)] w-64 sticky top-[72px] hidden md:flex flex-col py-6">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">biotech</span>
+</div>
+<div>
+<p class="font-headline font-bold text-sm text-emerald-800 dark:text-emerald-200">Project Manager</p>
+<p class="font-body text-[10px] text-slate-500 uppercase tracking-widest">Palawan Sector</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 p-3 my-1 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-200 mx-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 p-3 my-1 rounded-xl transition-all bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-50 mx-2 font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+<span class="font-body text-sm">Cameras</span>
+</a>
+<a class="flex items-center gap-3 p-3 my-1 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-200 mx-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body text-sm">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-2">
+<a class="flex items-center gap-3 p-3 my-1 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-error dark:hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body text-sm">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-8 lg:p-12 overflow-y-auto">
+<header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="text-secondary font-label text-xs font-semibold uppercase tracking-widest mb-2 block">Surveillance Network</span>
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tight">Active Live Streams</h1>
+<p class="text-on-surface-variant mt-2 max-w-xl">Real-time monitoring of critical nesting sites across the Palawan archipelago. AI detection active on all channels.</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add_a_photo</span>
+                    Configure Stream
+                </button>
+</header>
+<!-- Camera Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+<!-- Camera Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1">
+<div class="relative aspect-video bg-black group">
+<img class="w-full h-full object-cover opacity-80" data-alt="aerial drone footage of a turquoise tropical coastline with limestone cliffs and clear water, cinematic low light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjPNRPR4MCdwJYFvQRUvYuHJ0kRNKjBdyrsaZhdmEMNpCtxwQWkiYpb4odTnNWlYfp82hd31qPiOl1H4ix5nvsat4Q-28rE2vHB28WDY1UthAmgCk7cfHtwM8dsu44I96g16-TiO3fhhuxpMVdSGpULB7RS5aQxce9ToxJ0QVdxtQ3MeG0StUSIpFxGR6_P3P-tHSQHO5TDwDTtvN4EJ9_--g0X9HcvPN7kgHiKn5eg3Hnz-AjqD1ZHq0bRG7zEM9ELhWVMt6TsEjV"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                Active
+                            </span>
+<span class="px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-full">4K RTSP</span>
+</div>
+<div class="absolute bottom-4 right-4 text-white/70 font-label text-[10px]">192.168.1.104</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">Main Nesting Beach</h3>
+<p class="text-on-surface-variant text-sm font-body">Sector: El Nido North</p>
+</div>
+<div class="bg-tertiary-fixed text-on-tertiary-fixed px-2 py-1 rounded-lg text-xs font-bold">
+                                98% Confidence
+                            </div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface font-semibold py-2.5 rounded-lg hover:bg-surface-dim transition-colors text-sm">
+<span class="material-symbols-outlined text-lg">settings_input_component</span>
+                                VLC
+                            </button>
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary font-bold py-2.5 rounded-lg hover:opacity-90 transition-all text-sm">
+<span class="material-symbols-outlined text-lg">visibility</span>
+                                View
+                            </button>
+</div>
+</div>
+</div>
+<!-- Camera Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1">
+<div class="relative aspect-video bg-black group">
+<img class="w-full h-full object-cover opacity-80" data-alt="underwater camera view of a coral reef with vibrant marine life and clear blue water, soft dappled sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaS5FPIOeEryk7e62itPMpFKAUrK_5xWKz2EbeDyP9Xf00troJqY1R9bTtd_v2U7DHMKDd6hk6QwFUnT51cx3yc-ljWu-cnjF5aHB9dZYOSUt9789ew_mylVigsHk9SnEH9Gzxp4VFggyaxMLpn5TzNhG9M6kwOjeMITFgLMT7EwlzSW_BxeX9uISjL9h-jippsQA6sHASb6HzmN9Z5UAQ4JfgHRbSZeMm1G40_F1cH1yfL66hD2VpLfBGGP_0RsPy4yGF69VvEqdG"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                Active
+                            </span>
+<span class="px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-full">1080P</span>
+</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">Coral Hatchery B</h3>
+<p class="text-on-surface-variant text-sm font-body">Sector: Taytay Inlet</p>
+</div>
+<div class="bg-tertiary-fixed text-on-tertiary-fixed px-2 py-1 rounded-lg text-xs font-bold">
+                                84% Confidence
+                            </div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface font-semibold py-2.5 rounded-lg hover:bg-surface-dim transition-colors text-sm">
+<span class="material-symbols-outlined text-lg">settings_input_component</span>
+                                VLC
+                            </button>
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary font-bold py-2.5 rounded-lg hover:opacity-90 transition-all text-sm">
+<span class="material-symbols-outlined text-lg">visibility</span>
+                                View
+                            </button>
+</div>
+</div>
+</div>
+<!-- Camera Card 3 (Inactive) -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1">
+<div class="relative aspect-video bg-surface-dim group">
+<div class="absolute inset-0 flex flex-col items-center justify-center text-on-surface-variant/40">
+<span class="material-symbols-outlined text-5xl mb-2">videocam_off</span>
+<span class="font-label text-xs font-bold uppercase tracking-widest">Signal Lost</span>
+</div>
+<div class="absolute top-4 left-4">
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                Inactive
+                            </span>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">South Point Monitor</h3>
+<p class="text-on-surface-variant text-sm font-body">Sector: Balabac Straits</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3 opacity-50">
+<button class="flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface font-semibold py-2.5 rounded-lg text-sm cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-lg">settings_input_component</span>
+                                VLC
+                            </button>
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary font-bold py-2.5 rounded-lg text-sm cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-lg">visibility</span>
+                                View
+                            </button>
+</div>
+</div>
+</div>
+<!-- Camera Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1">
+<div class="relative aspect-video bg-black group">
+<img class="w-full h-full object-cover opacity-80" data-alt="close-up of sand texture with sea turtle tracks leading to the ocean, golden hour lighting, high detail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4978VLbBZU4FtG3XfscyPz3aUODSnBcqOgR7gvnaYjuctJEi_d4M-xd4ezlHOi5zi1AS2EBL1ev1S_rjthtEMeFno9ACYpQLzfkQYFHHSD6QgXYMd0Ernbjysy8VgpE926l8grzWXOcgXajJ_gxkXgYHH7JVXdd4Zx15P5sEiFkN9pZMrNtLgF-tTvWkSfpvUtnjDanjuSoLF1wnfLD9ykwgABVya3r_ABY4HZhd83hxjuDvl6fZUHwBDO-3uExx39Ey01GftPpBi"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                Active
+                            </span>
+<span class="px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-full">RTSP TEST</span>
+</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">test stream</h3>
+<p class="text-on-surface-variant text-sm font-body">Sector: Sandbox Lab</p>
+</div>
+<div class="bg-tertiary-fixed text-on-tertiary-fixed px-2 py-1 rounded-lg text-xs font-bold">
+                                100% Signal
+                            </div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface font-semibold py-2.5 rounded-lg hover:bg-surface-dim transition-colors text-sm">
+<span class="material-symbols-outlined text-lg">settings_input_component</span>
+                                VLC
+                            </button>
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary font-bold py-2.5 rounded-lg hover:opacity-90 transition-all text-sm">
+<span class="material-symbols-outlined text-lg">visibility</span>
+                                View
+                            </button>
+</div>
+</div>
+</div>
+<!-- Add New Feed Card -->
+<button class="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-8 group hover:border-primary transition-colors min-h-[340px]">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary-fixed group-hover:text-primary transition-all mb-4">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<span class="font-headline font-bold text-lg text-on-surface">Add Camera Feed</span>
+<span class="font-body text-sm text-on-surface-variant mt-1">Connect new RTSP/ONVIF stream</span>
+</button>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation Shell -->
+<nav class="md:hidden bg-white/80 dark:bg-emerald-950/80 backdrop-blur-lg fixed bottom-0 w-full flex justify-around items-center py-3 border-t border-slate-100 dark:border-emerald-900/20 z-50">
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-emerald-700 font-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">videocam</span>
+<span class="text-[10px] font-bold uppercase">Cameras</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold uppercase">Settings</span>
+</a>
+</nav>
+<!-- Footer -->
+<footer class="bg-white dark:bg-emerald-950 w-full py-4 mt-auto flex justify-between items-center px-8 border-t border-slate-100 dark:border-emerald-900/20">
+<div class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-700">© 2024 Pawikan Sentinel v1.0.2</div>
+<div class="flex gap-6">
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-800 hover:text-emerald-500 transition-colors underline-offset-4 hover:underline" href="#">Project Credits</a>
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-800 hover:text-emerald-500 transition-colors underline-offset-4 hover:underline" href="#">Documentation</a>
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-800 hover:text-emerald-500 transition-colors underline-offset-4 hover:underline" href="#">Privacy</a>
+</div>
+</footer>
+</body></html>

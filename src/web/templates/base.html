@@ -5,17 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Pawikan Sentinel{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/tailwind.css">
+    
+    <!-- Google Fonts: Manrope (headlines) + Inter (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
     <script src="/static/js/htmx.min.js" defer></script>
     <script src="/static/js/alpine.min.js" defer></script>
     <style>
         [x-cloak] { display: none !important; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline { font-family: 'Manrope', sans-serif; }
     </style>
 </head>
-<body class="h-full antialiased bg-gray-50 font-sans"
+<body class="h-full antialiased bg-surface text-on-surface font-body selection:bg-primary-fixed"
       x-data="{ sidebarOpen: false, toast() { window.dispatchEvent(new CustomEvent('toast', { detail: arguments[0] })) } }"
       @htmx:afterRequest.window="
           const msg = $event.detail.xhr.getResponseHeader('X-Message');
@@ -26,22 +39,22 @@
 >
     {% block header %}
     <!-- ============================================================
-         TOP NAVIGATION BAR
+         TOP NAVIGATION BAR (Glassmorphism — Stitch Design)
          ============================================================ -->
-    <header class="fixed top-0 left-0 right-0 z-70 bg-white border-b border-gray-200 shadow-sm">
-        <div class="flex items-center justify-between h-16 px-4 lg:px-6">
+    <header class="fixed top-0 left-0 right-0 z-70 bg-white/80 backdrop-blur-lg border-b border-outline-variant/15 shadow-sm">
+        <div class="flex items-center justify-between h-16 px-4 lg:px-8">
             <!-- Left: logo + menu toggle -->
             <div class="flex items-center gap-3">
                 <button @click="sidebarOpen = !sidebarOpen"
-                        class="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                        class="lg:hidden p-2 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors"
                         aria-label="Toggle sidebar">
-                    <span class="material-icons">menu</span>
+                    <span class="material-symbols-outlined">menu</span>
                 </button>
                 <a href="/" class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-turtle-500 to-ocean-400 flex items-center justify-center">
-                        <span class="material-icons text-white text-base">eco</span>
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shadow-sm">
+                        <span class="material-symbols-outlined text-on-primary text-base">eco</span>
                     </div>
-                    <span class="text-title text-gray-900 hidden sm:inline">Pawikan Sentinel</span>
+                    <span class="text-xl font-extrabold text-on-surface tracking-tight font-headline hidden sm:inline">Pawikan Sentinel</span>
                 </a>
             </div>
 
@@ -49,13 +62,13 @@
             {% if username %}
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" @click.outside="open = false"
-                        class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-container transition-colors"
                         aria-haspopup="true" :aria-expanded="open">
-                    <div class="w-8 h-8 rounded-full bg-turtle-100 flex items-center justify-center">
-                        <span class="material-icons text-turtle-700 text-sm">person</span>
+                    <div class="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-sm">person</span>
                     </div>
-                    <span class="text-body-sm font-medium text-gray-700 hidden sm:inline">{{ username }}</span>
-                    <span class="material-icons text-gray-400 text-sm hidden sm:inline">expand_more</span>
+                    <span class="text-body-sm font-medium text-on-surface hidden sm:inline">{{ username }}</span>
+                    <span class="material-symbols-outlined text-on-surface-variant text-sm hidden sm:inline">expand_more</span>
                 </button>
 
                 <!-- Dropdown -->
@@ -66,27 +79,27 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-elevated border border-gray-100 py-1 z-80"
+                     class="absolute right-0 mt-2 w-64 bg-surface-container-lowest rounded-xl shadow-elevated border border-outline-variant/10 py-1 z-80"
                 >
-                    <div class="px-4 py-3 border-b border-gray-100">
-                        <p class="text-body-sm font-semibold text-gray-900">{{ username }}</p>
-                        <p class="text-caption text-gray-500">Admin</p>
+                    <div class="px-4 py-3 border-b border-outline-variant/10">
+                        <p class="text-body-sm font-semibold text-on-surface font-headline">{{ username }}</p>
+                        <p class="text-caption text-on-surface-variant">Admin</p>
                     </div>
                     <div class="py-1">
-                        <a href="/settings" class="flex items-center gap-2 px-4 py-2 text-body-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                            <span class="material-icons text-base text-gray-400">settings</span> Settings
+                        <a href="/settings" class="flex items-center gap-3 px-4 py-2.5 text-body-sm text-on-surface hover:bg-surface-container transition-colors">
+                            <span class="material-symbols-outlined text-lg text-on-surface-variant">settings</span> Settings
                         </a>
                         <form method="post" action="/logout">
-                            <button type="submit" class="flex items-center gap-2 w-full px-4 py-2 text-body-sm text-danger-600 hover:bg-danger-50 transition-colors">
-                                <span class="material-icons text-base">logout</span> Logout
+                            <button type="submit" class="flex items-center gap-3 w-full px-4 py-2.5 text-body-sm text-error hover:bg-error/5 transition-colors">
+                                <span class="material-symbols-outlined text-lg">logout</span> Logout
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
             {% else %}
-            <a href="/login" class="flex items-center gap-1.5 px-3 py-2 text-body-sm font-medium text-turtle-600 hover:bg-turtle-50 rounded-lg transition-colors">
-                <span class="material-icons text-base">login</span> Login
+            <a href="/login" class="flex items-center gap-1.5 px-4 py-2 text-body-sm font-semibold text-primary hover:bg-primary/5 rounded-xl transition-colors">
+                <span class="material-symbols-outlined text-base">login</span> Login
             </a>
             {% endif %}
         </div>
@@ -96,6 +109,7 @@
     {% if username %}
     <!-- ============================================================
          SIDEBAR NAVIGATION (desktop + mobile overlay)
+         Tonal layering — Stitch Design System
          ============================================================ -->
     <!-- Mobile overlay backdrop -->
     <div x-show="sidebarOpen" x-cloak
@@ -106,14 +120,14 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click="sidebarOpen = false"
-         class="fixed inset-0 z-75 bg-gray-900/50 backdrop-blur-sm lg:hidden">
+         class="fixed inset-0 z-75 bg-on-surface/50 backdrop-blur-sm lg:hidden">
     </div>
 
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-           class="fixed top-16 left-0 bottom-0 z-80 w-64 bg-white border-r border-gray-200 overflow-y-auto
+           class="fixed top-16 left-0 bottom-0 z-80 w-64 bg-surface-container-high/50 border-r border-outline-variant/10 overflow-y-auto
                   lg:translate-x-0 lg:static lg:top-0 lg:z-auto transition-transform duration-200 ease-in-out">
-        <nav class="p-4 space-y-1">
+        <nav class="p-3 space-y-1">
             {% set nav_items = [
                 ('/dashboard', 'dashboard', 'Dashboard'),
                 ('/cameras', 'videocam', 'Cameras'),
@@ -121,23 +135,23 @@
             ] %}
             {% for path, icon, label in nav_items %}
             <a href="{{ path }}"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-body-sm font-medium transition-colors
-                      {% if request.url.path == path %}bg-turtle-50 text-turtle-700{% else %}text-gray-600 hover:bg-gray-100 hover:text-gray-900{% endif %}">
-                <span class="material-icons text-lg">{{ icon }}</span>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium transition-all duration-200
+                      {% if request.url.path == path %}bg-primary-fixed text-primary{% else %}text-on-surface-variant hover:bg-surface-container hover:text-on-surface{% endif %}">
+                <span class="material-symbols-outlined text-lg{% if request.url.path == path %} filled{% endif %}">{{ icon }}</span>
                 {{ label }}
             </a>
             {% endfor %}
         </nav>
 
         <!-- Sidebar footer -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-outline-variant/10">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-turtle-100 flex items-center justify-center">
-                    <span class="material-icons text-turtle-700 text-sm">eco</span>
+                <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary text-sm">eco</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-body-sm font-medium text-gray-900 truncate">Pawikan Sentinel</p>
-                    <p class="text-caption text-gray-500">Conservation Tech</p>
+                    <p class="text-body-sm font-medium text-on-surface truncate font-headline">Pawikan Sentinel</p>
+                    <p class="text-caption text-on-surface-variant">Conservation Tech</p>
                 </div>
             </div>
         </div>
@@ -150,16 +164,16 @@
     <div class="lg:pl-64">
         <!-- Push content below fixed header -->
         <div class="h-16"></div>
-        <main class="p-4 lg:p-6 max-w-7xl mx-auto">
+        <main class="p-4 lg:p-8 max-w-7xl mx-auto">
             {% block content %}{% endblock %}
         </main>
     </div>
 
     <!-- ============================================================
-         FOOTER
+         FOOTER (Stitch Design System)
          ============================================================ -->
-    <footer class="lg:pl-64 p-6 mt-8 border-t border-gray-200">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-caption text-gray-500">
+    <footer class="lg:pl-64 p-6 mt-8 border-t border-outline-variant/10 bg-surface-container-lowest/50">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-caption text-on-surface-variant/60">
             <span>&copy; 2026 Pawikan Sentinel</span>
             <span>Real-time Conservation Technology</span>
         </div>

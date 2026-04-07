@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pawikan Sentinel | Sea Turtle Monitoring Dashboard</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#194135",
+                    "surface-dim": "#d8dad9",
+                    "on-tertiary-fixed": "#002117",
+                    "tertiary-fixed": "#c0ecda",
+                    "inverse-primary": "#a1d1b9",
+                    "secondary": "#276868",
+                    "primary-fixed": "#bcedd4",
+                    "surface-container": "#eceeed",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#93d2d1",
+                    "inverse-on-surface": "#eff1f0",
+                    "tertiary-container": "#31594b",
+                    "on-secondary-container": "#2c6c6c",
+                    "secondary-fixed": "#afeeed",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#2e3131",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#414944",
+                    "on-primary-fixed-variant": "#214f3d",
+                    "surface": "#f8faf9",
+                    "surface-container-highest": "#e1e3e2",
+                    "primary-container": "#2d5a47",
+                    "on-secondary-fixed-variant": "#004f50",
+                    "on-surface": "#191c1c",
+                    "on-secondary-fixed": "#002020",
+                    "primary-fixed-dim": "#a1d1b9",
+                    "surface-tint": "#3a6753",
+                    "background": "#f8faf9",
+                    "error": "#ba1a1a",
+                    "primary": "#134231",
+                    "outline": "#717974",
+                    "surface-variant": "#e1e3e2",
+                    "secondary-container": "#acebeb",
+                    "on-background": "#191c1c",
+                    "on-tertiary-container": "#a3cebc",
+                    "on-primary-container": "#9fcfb7",
+                    "surface-container-low": "#f2f4f3",
+                    "on-tertiary-fixed-variant": "#264e41",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c0c8c2",
+                    "surface-bright": "#f8faf9",
+                    "tertiary-fixed-dim": "#a5d0be",
+                    "surface-container-high": "#e6e9e8",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#002115"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-fixed">
+<!-- Sidebar Navigation -->
+<aside class="bg-slate-50 dark:bg-emerald-950/40 h-screen w-64 fixed left-0 top-0 flex flex-col py-6 hidden md:flex z-50">
+<div class="px-6 mb-10">
+<h2 class="text-2xl font-extrabold text-emerald-900 tracking-tight">Pawikan Sentinel</h2>
+<div class="mt-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">person</span>
+</div>
+<div>
+<p class="font-['Inter'] text-sm font-semibold text-emerald-800">Project Manager</p>
+<p class="font-['Inter'] text-[10px] text-slate-500 uppercase tracking-widest">Palawan Sector</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-50 rounded-xl mx-2 font-semibold flex items-center gap-3 p-3 my-1 transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-200 mx-2 flex items-center gap-3 p-3 my-1 rounded-xl transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30" href="#">
+<span class="material-symbols-outlined">videocam</span>
+<span class="font-['Inter'] text-sm tracking-wide">Cameras</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-200 mx-2 flex items-center gap-3 p-3 my-1 rounded-xl transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Inter'] text-sm tracking-wide">Settings</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-slate-100 px-2 pt-4">
+<a class="text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-200 flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-['Inter'] text-sm tracking-wide">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="bg-white/80 dark:bg-emerald-950/80 backdrop-blur-lg text-emerald-900 dark:text-emerald-100 docked full-width top-0 z-40 shadow-sm flex justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-4">
+<h1 class="text-emerald-900 dark:text-emerald-50 text-xl font-bold font-headline tracking-tight">Monitoring Dashboard</h1>
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">Live Feed Active</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-emerald-50/50 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-emerald-50/50 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-emerald-100">
+<img class="w-full h-full object-cover" data-alt="Portrait of a marine biologist in professional field gear with a neutral outdoor background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdryhtPQVz-4X-gL8yXLTx5AqJWVqxBzylxDQVti1MSntQQF7NV8miUgiYh6otzAU0VjXTeTTXcpxtoCI81V1vBkCieMTSXx6czsL4KhcwaiJBm8AwBiOF-9rxC7-7a_rep1q-URGrTmiMYfp15GYbXAvsjZY-Nr2bVdLE4yibBYm8TelxmXd-BKv-CAfh28p9tB9pk3Otg_gzej_a6EVky1cuKD1qw7OZH_c1ebmLXZxttj1e2DJgwSM_yA7PmSOH6gNeuhhgjj68"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-8 space-y-8">
+<!-- Section: Detection Analytics -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-extrabold text-primary font-headline">Detection Analytics</h2>
+<span class="text-on-surface-variant font-label text-sm">Last updated: 2 mins ago</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-primary hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+<span class="text-label-md text-emerald-600 bg-emerald-50 px-2 py-1 rounded font-semibold">+12% vs last week</span>
+</div>
+<p class="text-on-surface-variant font-label text-xs uppercase tracking-widest">Total Detections</p>
+<h3 class="text-4xl font-extrabold text-on-surface font-headline mt-1">1,482</h3>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-secondary hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-secondary text-3xl">today</span>
+<span class="text-label-md text-emerald-600 bg-emerald-50 px-2 py-1 rounded font-semibold">Peak: 14:00</span>
+</div>
+<p class="text-on-surface-variant font-label text-xs uppercase tracking-widest">Detections Today</p>
+<h3 class="text-4xl font-extrabold text-on-surface font-headline mt-1">42</h3>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-tertiary hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-tertiary text-3xl">calendar_month</span>
+<span class="text-label-md text-on-surface-variant bg-surface-container-high px-2 py-1 rounded font-semibold">Sept 2024</span>
+</div>
+<p class="text-on-surface-variant font-label text-xs uppercase tracking-widest">This Month</p>
+<h3 class="text-4xl font-extrabold text-on-surface font-headline mt-1">318</h3>
+</div>
+</div>
+</section>
+<!-- Section: Confidence History & Bento-style layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Large Chart Card -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-xl font-bold text-primary font-headline">Confidence History</h2>
+<p class="text-on-surface-variant text-sm">AI prediction accuracy over the last 24 hours</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-semibold">24h</button>
+<button class="px-4 py-1.5 bg-surface-container-high text-on-surface-variant rounded-full text-xs font-semibold">7d</button>
+</div>
+</div>
+<!-- Simulated Chart Visualization -->
+<div class="flex-1 min-h-[300px] w-full relative flex items-end gap-1">
+<!-- Chart Bars for visual flair since JS is not allowed -->
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[60%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[75%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[85%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[70%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-primary h-[95%] rounded-t-lg relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-surface text-surface text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">98% Accuracy</div>
+</div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[80%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[65%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[50%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[75%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[90%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[85%] hover:bg-primary-fixed transition-colors"></div>
+<div class="flex-1 bg-emerald-100 rounded-t-lg h-[70%] hover:bg-primary-fixed transition-colors"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] text-on-surface-variant font-label uppercase tracking-tighter">
+<span>00:00</span>
+<span>06:00</span>
+<span>12:00</span>
+<span>18:00</span>
+<span>Now</span>
+</div>
+</div>
+<!-- Detection Gallery Column -->
+<div class="bg-surface-container-high/50 p-6 rounded-xl border border-outline-variant/10">
+<h2 class="text-xl font-bold text-primary font-headline mb-4">Detection Gallery</h2>
+<div class="grid grid-cols-2 gap-3">
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Underwater shot of a green sea turtle swimming near coral reef with dappled sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBl8Lwi4esbgysDfQ4OIk7G4M44lM8TmdYeDIOdBvIWqrzKo7aFhXeJam3Ea2chz3NQ7W7xxMD1K4EctZQcxULyPg0KPEW2AUAzs9zUAR3JIpICJsJXhiichYDVKTT7l1ManHSdfTf2xBFzSkYU4pymGw2W-359UXykO3yCe5nDl6TmHfJndrsYlDmM2mJ9CH-KMxPIdVwft-j2EGKScSL6jp0tYMucFqRrBWgm86wzckfYlZRpXXdLRSWw3j_C7CHPVF04Ox0AFPR"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute bottom-1 right-1 bg-white/90 px-1.5 py-0.5 rounded text-[8px] font-bold">08:12</div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Close up of a baby sea turtle crawling across dark sand towards the ocean at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOq4Y96FtH6RvT4wF0TifZ84AcM3z2SyKn_Y-7QfdG9AfoW9pYn3TYf_VmwTRH-uNIlQLVXEXm6ny0NHT2M4UxYDl86o_WI7zs-6oFueFQe4w9uRwN0X1CbKqBhzZMqqbUug8RCyVncx_7NFMhbRUSYTELNPL5pNDufKaK60sYO2ofL9IvAq6fXg8lxbKHXS8drS50MR5L2NGU3ocTARF9E8d_qkllRv_WG5LXgaIgR5w5gukwLkdwdwVj_wiv06P1CDs-PYkkfVzf"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute bottom-1 right-1 bg-white/90 px-1.5 py-0.5 rounded text-[8px] font-bold">09:45</div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Loggerhead turtle floating in crystal clear turquoise water with shallow sandy bottom" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc9FqtbqxwHBHS3luW8Jt1yRrFTEuHV9agEwCxuf9FN9u4yyssQkN6Ild0QLVw7dhISxFrxLUocAM4TVerqZqdvbiK1zC5nkzYaKAvJqoxv6ZrqQnoQcT-CGRfMRUc23rrxtRmAS0DQa6129BCOJGHeJ3BqM6oKwNvYxxrtjcWvN2Jeg6X584OKS_ynfTWXXcs3sE4YdQV-qVU76HQOZdKTEKQS6S_mEZUDtD_OEebeJZf3_Wig2iIIBIxxJnNN0ZeeI6xFhhionTe"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute bottom-1 right-1 bg-white/90 px-1.5 py-0.5 rounded text-[8px] font-bold">10:22</div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Overhead view of a large sea turtle swimming through deep blue ocean water" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0WuSkx--20nAzzXDT7E0Tw12IhsjzXC6PMZhWCDrgtyRKY9jqr7SvuMr8moPw_hXxxmb0ia6IbL8gfdvkN2d0Z54FGWA0kh_8NGhXlzpLKmRnQIcGBdfKANmPuXe2iFliLWN80Mfu-2myaDDVD1J_LmfWsNO3sevpLywiz7lA99Qh5PeBPYeOrWkD3pMZPrmorROmvp90goR1-Kr-Bb1U_Ono_BCnYvu188spgxATHqyNc3QjK9kABs8vZqts7MSSRjMQ_7BmCtSn"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute bottom-1 right-1 bg-white/90 px-1.5 py-0.5 rounded text-[8px] font-bold">12:05</div>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border border-primary text-primary rounded-xl font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all">
+                        View Full Archive
+                    </button>
+</div>
+</div>
+<!-- Recent Detections Table -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 border-b border-surface-container-high flex items-center justify-between">
+<h2 class="text-xl font-bold text-primary font-headline">Recent Detections</h2>
+<button class="flex items-center gap-2 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filter Feed
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Time</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Camera ID</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Species (Predicted)</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Confidence</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 text-sm font-medium">14:22:05</td>
+<td class="px-6 py-4 text-sm font-label">North-Lagoon-04</td>
+<td class="px-6 py-4 text-sm font-semibold">Green Sea Turtle</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">98%</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">Verified</span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 text-sm font-medium">13:58:12</td>
+<td class="px-6 py-4 text-sm font-label">Reef-Edge-02</td>
+<td class="px-6 py-4 text-sm font-semibold">Hawksbill</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[82%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">82%</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-surface-dim text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">Review Pending</span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 text-sm font-medium">12:45:50</td>
+<td class="px-6 py-4 text-sm font-label">North-Lagoon-04</td>
+<td class="px-6 py-4 text-sm font-semibold">Green Sea Turtle</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[94%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">94%</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">Verified</span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="w-full py-4 mt-auto bg-white dark:bg-emerald-950 flex justify-between items-center px-8 border-t border-slate-100 dark:border-emerald-900/20">
+<p class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-700">© 2024 Pawikan Sentinel v1.0.2</p>
+<div class="flex gap-6">
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-800 hover:text-emerald-500 transition-colors underline-offset-4 hover:underline" href="#">Project Credits</a>
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-800 hover:text-emerald-500 transition-colors underline-offset-4 hover:underline" href="#">Documentation</a>
+<a class="font-['Inter'] text-[10px] uppercase tracking-widest text-slate-400 dark:text-emerald-800 hover:text-emerald-500 transition-colors underline-offset-4 hover:underline" href="#">Privacy</a>
+</div>
+</footer>
+</main>
+<!-- Mobile Nav Anchor (Bottom Nav for mobile view) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around py-3 px-2 z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[10px] font-bold">Dash</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">videocam</span>
+<span class="text-[10px] font-medium">Cams</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="text-[10px] font-medium">Data</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Set</span>
+</a>
+</nav>
+</body></html>

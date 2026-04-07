@@ -5,266 +5,251 @@
 {% block content %}
 <div x-data="settingsPage">
     <!-- Page Header -->
-    <div class="mb-8">
-        <h1 class="text-h1 text-gray-900 tracking-tight">Settings</h1>
-        <p class="text-body text-gray-500 mt-1">Manage your system configuration and account</p>
+    <div class="mb-10">
+        <span class="text-secondary font-label text-xs font-semibold uppercase tracking-widest mb-2 block">System Settings</span>
+        <h1 class="text-3xl font-extrabold text-on-surface tracking-tight font-headline">Settings</h1>
+        <p class="text-on-surface-variant mt-1">Manage sentinel configurations, surveillance streams, and conservationist contacts.</p>
     </div>
 
-    <div class="page-content">
-        <!-- Cameras + Contacts Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Cameras -->
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="text-title text-gray-800">Cameras</h2>
-                    <button hx-get="/cameras/form" hx-target="#modal-content" hx-swap="innerHTML"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-turtle-500 hover:bg-turtle-600
-                                   text-white text-caption font-semibold rounded-lg transition-colors duration-200">
-                        <span class="material-icons text-sm">add</span> Add
-                    </button>
-                </div>
-                <div class="p-4" id="cameras-container">
-                    <div class="animate-pulse space-y-3">
-                        <div class="h-14 bg-gray-100 rounded"></div>
-                        <div class="h-14 bg-gray-100 rounded"></div>
-                    </div>
-                </div>
+    <!-- Settings Bento Grid (12-column) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- System Configuration (8 cols) -->
+        <section class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+            <div class="flex items-center gap-2 mb-8">
+                <span class="material-symbols-outlined text-primary">settings_input_component</span>
+                <h2 class="text-xl font-bold text-on-surface font-headline">System Configuration</h2>
             </div>
-
-            <!-- Contacts -->
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="text-title text-gray-800">Contacts</h2>
-                    <button hx-get="/contacts/form" hx-target="#modal-content" hx-swap="innerHTML"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-turtle-500 hover:bg-turtle-600
-                                   text-white text-caption font-semibold rounded-lg transition-colors duration-200">
-                        <span class="material-icons text-sm">add</span> Add
-                    </button>
-                </div>
-                <div class="p-4" id="contacts-container">
-                    <div class="animate-pulse space-y-3">
-                        <div class="h-14 bg-gray-100 rounded"></div>
-                        <div class="h-14 bg-gray-100 rounded"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- Confidence Threshold -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold font-label text-on-surface">Confidence Threshold</label>
+                        <span class="bg-primary-fixed text-primary px-3 py-1 rounded-lg text-xs font-bold" 
+                              x-text="(document.getElementById('confidence_threshold')?.value || {{ config.confidence_threshold if config else 50 }}) + '%'"></span>
                     </div>
+                    <input class="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" 
+                           type="range" id="confidence_threshold" name="confidence_threshold"
+                           min="50" max="99" step="1"
+                           value="{{ config.confidence_threshold if config else 50 }}"
+                           @input="$nextTick(() => $el.previousElementSibling.querySelector('span').textContent = $el.value + '%')"/>
+                    <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Minimum detection certainty for turtle species identification.</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Account Settings + System Config Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Account Settings -->
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-title text-gray-800">Account</h2>
+                
+                <!-- Frame Skip -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold font-label text-on-surface">Frame Skip</label>
+                        <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-xs font-bold"
+                              x-text="(document.getElementById('frame_skip')?.value || {{ config.frame_skip if config else 20 }}) + ' Frames'"></span>
+                    </div>
+                    <input class="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-secondary" 
+                           type="range" id="frame_skip" name="frame_skip"
+                           min="1" max="50" step="1"
+                           value="{{ config.frame_skip if config else 20 }}"
+                           @input="$nextTick(() => $el.previousElementSibling.querySelector('span').textContent = $el.value + ' Frames')"/>
+                    <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Process every Nth frame to optimize hardware performance.</p>
                 </div>
-                <div class="p-6 space-y-8">
-                    <!-- Change Password -->
+                
+                <!-- SMS Cooldown -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold font-label text-on-surface">SMS Cooldown</label>
+                        <span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-lg text-xs font-bold"
+                              x-text="(document.getElementById('sms_cooldown')?.value || {{ config.sms_cooldown if config else 10 }}) + ' Mins'"></span>
+                    </div>
+                    <input class="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-tertiary" 
+                           type="range" id="sms_cooldown" name="sms_cooldown"
+                           min="1" max="60" step="1"
+                           value="{{ config.sms_cooldown if config else 10 }}"
+                           @input="$nextTick(() => $el.previousElementSibling.querySelector('span').textContent = $el.value + ' Mins')"/>
+                    <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label">Silence interval between alert notifications for the same event.</p>
+                </div>
+                
+                <!-- Data Export -->
+                <div class="bg-surface-container-low rounded-xl p-4 flex flex-col justify-between border-l-4 border-primary">
                     <div>
-                        <h3 class="text-h6 text-gray-900 mb-4">Change Password</h3>
-                        <form @submit.prevent="changePassword" class="space-y-4">
-                            <div x-data="{ visible: false }">
-                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">Current Password</label>
-                                <div class="relative">
-                                    <input :type="visible ? 'text' : 'password'" name="current_password"
-                                           x-model="passwordForm.current" required
-                                           class="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg text-body bg-white
-                                                  focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
-                                    <button type="button" @click="visible = !visible"
-                                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                                        <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div x-data="{ visible: false }">
-                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">New Password</label>
-                                <div class="relative">
-                                    <input :type="visible ? 'text' : 'password'" name="new_password"
-                                           x-model="passwordForm.new" required
-                                           class="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg text-body bg-white
-                                                  focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
-                                    <button type="button" @click="visible = !visible"
-                                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                                        <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <button type="submit"
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
-                                           text-white text-body-sm font-semibold rounded-lg transition-colors duration-200
-                                           disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :disabled="passwordLoading">
-                                <span class="material-icons text-base" x-show="passwordLoading" class="animate-spin">refresh</span>
-                                <span class="material-icons text-base">vpn_key</span> Change Password
+                        <h4 class="text-sm font-bold mb-1">Export Detections</h4>
+                        <p class="text-xs text-on-surface-variant mb-4">Download all logged nesting and hatching event data.</p>
+                    </div>
+                    <a href="/api/detections/export-csv"
+                       class="bg-primary text-on-primary py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+                        <span class="material-symbols-outlined text-base">download</span>
+                        Export to CSV
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Save Button -->
+            <div class="mt-8 flex gap-3">
+                <button @click="resetConfig()"
+                        class="px-4 py-2.5 text-body-sm font-medium text-on-surface bg-surface-container-highest hover:bg-surface-dim rounded-xl transition-colors duration-200 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-base">undo</span> Reset Defaults
+                </button>
+                <button @click="saveConfig()"
+                        :disabled="configLoading"
+                        class="px-6 py-2.5 text-body-sm font-semibold text-white bg-primary hover:opacity-90 rounded-xl transition-colors duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-base" x-show="configLoading" class="animate-spin">refresh</span>
+                    <span class="material-symbols-outlined text-base">save</span> Save Configuration
+                </button>
+            </div>
+            <div x-show="configMessage" x-cloak
+                 class="mt-4 p-4 rounded-xl text-body-sm border"
+                 :class="configError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-primary-fixed/30 border-primary text-primary'"
+                 x-text="configMessage"></div>
+        </section>
+        
+        <!-- Account Management (4 cols) -->
+        <section class="lg:col-span-4 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="material-symbols-outlined text-primary">account_circle</span>
+                <h2 class="text-xl font-bold text-on-surface font-headline">Account</h2>
+            </div>
+            
+            <!-- Change Password -->
+            <div class="mb-6">
+                <h3 class="text-sm font-bold text-on-surface mb-4">Change Password</h3>
+                <form @submit.prevent="changePassword" class="space-y-4">
+                    <div x-data="{ visible: false }">
+                        <label class="text-xs font-bold font-label text-on-surface-variant uppercase tracking-wider mb-1 block">Current Password</label>
+                        <div class="relative">
+                            <input :type="visible ? 'text' : 'password'" x-model="passwordForm.current" required
+                                   class="w-full bg-surface-container-low border-none rounded-lg text-sm font-body py-3 px-4 focus:bg-surface-container-lowest focus:ring-0 focus:border-b-2 focus:border-primary transition-all"/>
+                            <button type="button" @click="visible = !visible"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant hover:text-on-surface">
+                                <span class="material-symbols-outlined text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
                             </button>
-                            <div x-show="passwordMessage" x-cloak
-                                 class="p-3 rounded-lg text-body-sm border"
-                                 :class="passwordError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
-                                 x-text="passwordMessage"></div>
-                        </form>
+                        </div>
                     </div>
-
-                    <!-- Change Username -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-h6 text-gray-900 mb-4">Change Username</h3>
-                        <form @submit.prevent="changeUsername" class="space-y-4">
-                            <div x-data="{ visible: false }">
-                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">Current Password</label>
-                                <div class="relative">
-                                    <input :type="visible ? 'text' : 'password'" x-model="usernameForm.current" required
-                                           class="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg text-body bg-white
-                                                  focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
-                                    <button type="button" @click="visible = !visible"
-                                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                                        <span class="material-icons text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">New Username</label>
-                                <input type="text" x-model="usernameForm.new" required
-                                       class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-body bg-white
-                                              focus:outline-none focus:ring-2 focus:ring-turtle-500/20 focus:border-turtle-500">
-                            </div>
-                            <button type="submit"
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
-                                           text-white text-body-sm font-semibold rounded-lg transition-colors duration-200
-                                           disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :disabled="usernameLoading">
-                                <span class="material-icons text-base" x-show="usernameLoading" class="animate-spin">refresh</span>
-                                <span class="material-icons text-base">manage_accounts</span> Change Username
+                    <div x-data="{ visible: false }">
+                        <label class="text-xs font-bold font-label text-on-surface-variant uppercase tracking-wider mb-1 block">New Password</label>
+                        <div class="relative">
+                            <input :type="visible ? 'text' : 'password'" x-model="passwordForm.new" required
+                                   class="w-full bg-surface-container-low border-none rounded-lg text-sm font-body py-3 px-4 focus:bg-surface-container-lowest focus:ring-0 focus:border-b-2 focus:border-primary transition-all"/>
+                            <button type="button" @click="visible = !visible"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant hover:text-on-surface">
+                                <span class="material-symbols-outlined text-base" x-text="visible ? 'visibility_off' : 'visibility'"></span>
                             </button>
-                            <div x-show="usernameMessage" x-cloak
-                                 class="p-3 rounded-lg text-body-sm border"
-                                 :class="usernameError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
-                                 x-text="usernameMessage"></div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System Configuration -->
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-title text-gray-800">System Configuration</h2>
-                </div>
-                <div class="p-6 space-y-6">
-                    <!-- Detection Settings -->
-                    <div>
-                        <h3 class="text-h6 text-gray-900 mb-4">Detection</h3>
-                        <div class="space-y-5">
-                            <div x-data="{ val: {{ config.confidence_threshold if config else 50 }} }">
-                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">
-                                    Confidence Threshold: <span x-text="val"></span>%
-                                </label>
-                                <input type="range" x-model.number="val" min="50" max="99" step="1"
-                                       name="confidence_threshold" id="confidence_threshold"
-                                       class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-turtle-500">
-                                <p class="text-caption text-gray-500 mt-1">Minimum confidence level for valid detections.</p>
-                            </div>
-                            <div x-data="{ val: {{ config.frame_skip if config else 20 }} }">
-                                <label class="block text-body-sm font-medium text-gray-700 mb-1.5">
-                                    Frame Skip: <span x-text="val"></span> frames
-                                </label>
-                                <input type="range" x-model.number="val" min="1" max="50" step="1"
-                                       name="frame_skip" id="frame_skip"
-                                       class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-turtle-500">
-                                <p class="text-caption text-gray-500 mt-1">Frames to skip between inference runs.</p>
-                            </div>
                         </div>
                     </div>
-
-                    <!-- Notification Settings -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-h6 text-gray-900 mb-4">Notifications</h3>
-                        <div x-data="{ val: {{ config.sms_cooldown if config else 10 }} }" class="space-y-1">
-                            <label class="block text-body-sm font-medium text-gray-700 mb-1.5">
-                                SMS Cooldown: <span x-text="val"></span> minutes
-                            </label>
-                            <input type="range" x-model.number="val" min="1" max="60" step="1"
-                                   name="sms_cooldown" id="sms_cooldown"
-                                   class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-turtle-500">
-                            <p class="text-caption text-gray-500 mt-1">Minimum time between SMS notifications.</p>
-                        </div>
-                    </div>
-
-                    <!-- Action buttons -->
-                    <div class="border-t border-gray-200 pt-6 flex gap-2">
-                        <button @click="resetConfig()"
-                                class="px-4 py-2 text-body-sm font-medium text-gray-700 bg-white border border-gray-300
-                                       rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center gap-1.5">
-                            <span class="material-icons text-base">undo</span> Reset Defaults
-                        </button>
-                        <button @click="saveConfig()"
-                                :disabled="configLoading"
-                                class="px-4 py-2 text-body-sm font-semibold text-white bg-turtle-500 hover:bg-turtle-600
-                                       rounded-lg transition-colors duration-200 flex items-center gap-1.5
-                                       disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span class="material-icons text-base" x-show="configLoading" class="animate-spin">refresh</span>
-                            <span class="material-icons text-base">save</span> Save Configuration
-                        </button>
-                    </div>
-                    <div x-show="configMessage" x-cloak
-                         class="p-3 rounded-lg text-body-sm border"
-                         :class="configError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
-                         x-text="configMessage"></div>
-                </div>
+                    <button type="submit"
+                            class="w-full bg-surface-container-highest text-on-surface py-3 rounded-xl text-sm font-bold transition-all hover:bg-surface-dim active:scale-95 mt-4 disabled:opacity-50"
+                            :disabled="passwordLoading">
+                        <span class="material-symbols-outlined text-base inline align-middle mr-1">vpn_key</span> Change Password
+                    </button>
+                    <div x-show="passwordMessage" x-cloak
+                         class="p-3 rounded-xl text-body-sm border"
+                         :class="passwordError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-primary-fixed/30 border-primary text-primary'"
+                         x-text="passwordMessage"></div>
+                </form>
             </div>
-        </div>
-
-        <!-- Backup + Export Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Backup -->
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-title text-gray-800">System Backup</h2>
-                </div>
-                <div class="p-6 space-y-6">
+            
+            <!-- Change Username -->
+            <div class="border-t border-outline-variant/10 pt-6">
+                <h3 class="text-sm font-bold text-on-surface mb-4">Change Username</h3>
+                <form @submit.prevent="changeUsername" class="space-y-4">
                     <div>
-                        <h3 class="text-h6 text-gray-900 mb-2">Create Backup</h3>
-                        <p class="text-body text-gray-500 mb-4">Backup your database and configuration files.</p>
-                        <button @click="createBackup()"
-                                :disabled="backupLoading"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
-                                       text-white text-body-sm font-semibold rounded-lg transition-colors duration-200
-                                       disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span class="material-icons text-base" x-show="backupLoading" class="animate-spin">refresh</span>
-                            <span class="material-icons text-base">cloud_download</span> Create Backup
-                        </button>
-                        <div x-show="backupMessage" x-cloak
-                             class="mt-3 p-3 rounded-lg text-body-sm border"
-                             :class="backupError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-success-50 border-success-200 text-success-800'"
-                             x-text="backupMessage"></div>
+                        <label class="text-xs font-bold font-label text-on-surface-variant uppercase tracking-wider mb-1 block">New Username</label>
+                        <input type="text" x-model="usernameForm.new" required
+                               class="w-full bg-surface-container-low border-none rounded-lg text-sm font-body py-3 px-4 focus:bg-surface-container-lowest focus:ring-0 focus:border-b-2 focus:border-primary transition-all"/>
                     </div>
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-h6 text-gray-900 mb-2">Backup History</h3>
-                        <div id="backup-history">
-                            <div class="animate-pulse space-y-2">
-                                <div class="h-10 bg-gray-100 rounded"></div>
-                                <div class="h-10 bg-gray-100 rounded"></div>
-                            </div>
-                        </div>
-                    </div>
+                    <button type="submit"
+                            class="w-full bg-surface-container-highest text-on-surface py-3 rounded-xl text-sm font-bold transition-all hover:bg-surface-dim active:scale-95 disabled:opacity-50"
+                            :disabled="usernameLoading">
+                        <span class="material-symbols-outlined text-base inline align-middle mr-1">manage_accounts</span> Change Username
+                    </button>
+                    <div x-show="usernameMessage" x-cloak
+                         class="p-3 rounded-xl text-body-sm border"
+                         :class="usernameError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-primary-fixed/30 border-primary text-primary'"
+                         x-text="usernameMessage"></div>
+                </form>
+            </div>
+        </section>
+        
+        <!-- Cameras (full width) -->
+        <section class="lg:col-span-12 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">videocam</span>
+                    <h2 class="text-xl font-bold text-on-surface font-headline">Cameras</h2>
+                </div>
+                <button hx-get="/cameras/form" hx-target="#modal-content" hx-swap="innerHTML"
+                        class="text-primary font-bold text-sm flex items-center gap-1 hover:underline underline-offset-4">
+                    <span class="material-symbols-outlined text-sm">add_circle</span>
+                    Add New Stream
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="cameras-container">
+                <div class="animate-pulse space-y-3">
+                    <div class="h-20 bg-surface-container-high rounded-xl"></div>
+                    <div class="h-20 bg-surface-container-high rounded-xl"></div>
                 </div>
             </div>
-
-            <!-- Export -->
-            <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-title text-gray-800">Export Data</h2>
+        </section>
+        
+        <!-- Contacts (6 cols) -->
+        <section class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">contact_mail</span>
+                    <h2 class="text-xl font-bold text-on-surface font-headline">Contacts</h2>
                 </div>
-                <div class="p-6 space-y-6">
-                    <div>
-                        <h3 class="text-h6 text-gray-900 mb-2">Export Detection Data</h3>
-                        <p class="text-body text-gray-500 mb-4">Export all detection records to a CSV file.</p>
-                        <a href="/api/detections/export-csv"
-                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-turtle-500 hover:bg-turtle-600
-                                  text-white text-body-sm font-semibold rounded-lg transition-colors duration-200">
-                            <span class="material-icons text-base">file_download</span> Export to CSV
-                        </a>
-                    </div>
+                <button hx-get="/contacts/form" hx-target="#modal-content" hx-swap="innerHTML"
+                        class="bg-surface-container-low p-2 rounded-lg hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined text-lg text-on-surface-variant">person_add</span>
+                </button>
+            </div>
+            
+            <div class="space-y-3" id="contacts-container">
+                <div class="animate-pulse space-y-3">
+                    <div class="h-16 bg-surface-container-high rounded-xl"></div>
+                    <div class="h-16 bg-surface-container-high rounded-xl"></div>
                 </div>
             </div>
-        </div>
+        </section>
+        
+        <!-- System Backup (6 cols) -->
+        <section class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">backup</span>
+                    <h2 class="text-xl font-bold text-on-surface font-headline">System Backup</h2>
+                </div>
+                <button @click="createBackup()"
+                        class="bg-primary text-on-primary px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                        :disabled="backupLoading">
+                    <span class="material-symbols-outlined text-sm inline align-middle mr-1" x-show="backupLoading" class="animate-spin">refresh</span>
+                    Create Backup
+                </button>
+            </div>
+            
+            <div x-show="backupMessage" x-cloak
+                 class="mb-4 p-3 rounded-xl text-body-sm border"
+                 :class="backupError ? 'bg-danger-50 border-danger-200 text-danger-800' : 'bg-primary-fixed/30 border-primary text-primary'"
+                 x-text="backupMessage"></div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b border-outline-variant/10">
+                        <tr>
+                            <th class="py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Date</th>
+                            <th class="py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Size</th>
+                            <th class="py-3 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+                            <th class="py-3 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant/10" id="backup-history">
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-on-surface-variant">
+                                <div class="animate-pulse h-10 bg-surface-container-high rounded"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
     <!-- HTMX Modal -->
@@ -280,7 +265,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
+             class="fixed inset-0 bg-on-surface/60 backdrop-blur-sm"
              @click="open = false"></div>
         <div class="flex min-h-full items-center justify-center p-4">
             <div x-show="open"
@@ -290,7 +275,7 @@
                  x-transition:leave="transition ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95"
-                 class="relative bg-white rounded-xl shadow-overlay w-full max-w-lg overflow-hidden">
+                 class="relative bg-surface-container-lowest rounded-xl shadow-elevated w-full max-w-lg overflow-hidden">
                 <div id="modal-content"></div>
             </div>
         </div>
@@ -365,17 +350,10 @@ document.addEventListener('alpine:init', () => {
             try {
                 const csrf = document.querySelector('input[name="csrf_token"]')?.value;
                 const body = {
-                    confidence_threshold: document.getElementById('confidence_threshold')?._x_model || this.configDefaults.confidence_threshold,
-                    frame_skip: document.getElementById('frame_skip')?._x_model || this.configDefaults.frame_skip,
-                    sms_cooldown: document.getElementById('sms_cooldown')?._x_model || this.configDefaults.sms_cooldown,
+                    confidence_threshold: parseInt(document.getElementById('confidence_threshold').value),
+                    frame_skip: parseInt(document.getElementById('frame_skip').value),
+                    sms_cooldown: parseInt(document.getElementById('sms_cooldown').value),
                 };
-                // Use x-data values directly
-                const scopes = document.querySelectorAll('[x-model]');
-                // Grab from Alpine via the DOM input values
-                body.confidence_threshold = parseInt(document.getElementById('confidence_threshold').value);
-                body.frame_skip = parseInt(document.getElementById('frame_skip').value);
-                body.sms_cooldown = parseInt(document.getElementById('sms_cooldown').value);
-
                 const r = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
@@ -395,7 +373,6 @@ document.addEventListener('alpine:init', () => {
             document.getElementById('confidence_threshold').value = d.confidence_threshold;
             document.getElementById('frame_skip').value = d.frame_skip;
             document.getElementById('sms_cooldown').value = d.sms_cooldown;
-            // Dispatch input so Alpine x-model updates
             ['confidence_threshold', 'frame_skip', 'sms_cooldown'].forEach(id => {
                 document.getElementById(id).dispatchEvent(new Event('input'));
             });
@@ -423,64 +400,27 @@ document.addEventListener('alpine:init', () => {
         },
 
         async loadBackupHistory() {
-            const el = document.getElementById('backup-history');
             try {
-                const csrf = document.querySelector('input[name="csrf_token"]')?.value;
-                const r = await fetch('/api/backup/history', { headers: { 'X-CSRFToken': csrf } });
-                const data = await r.json();
-                if (data.backups && data.backups.length > 0) {
-                    el.innerHTML = '<div class="space-y-2">' + data.backups.slice(0, 10).map(b => `
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <div class="text-body-sm font-medium text-gray-900">${b.filename}</div>
-                                <div class="text-caption text-gray-500">${b.timestamp}</div>
-                            </div>
-                            <div class="text-caption text-gray-500">${b.size}</div>
-                        </div>
-                    `).join('') + '</div>';
-                } else {
-                    el.innerHTML = '<div class="text-center py-6 text-caption text-gray-500">No backups found</div>';
+                const r = await fetch('/api/backup/history');
+                const history = await r.json();
+                const container = document.getElementById('backup-history');
+                if (history.length === 0) {
+                    container.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-on-surface-variant">No backups yet</td></tr>';
+                    return;
                 }
-            } catch (e) {
-                el.innerHTML = '<div class="text-center py-6 text-caption text-danger-600">Error loading backups</div>';
-            }
+                container.innerHTML = history.map(b => `
+                    <tr>
+                        <td class="py-3 text-xs font-medium">${new Date(b.created_at).toLocaleDateString()}</td>
+                        <td class="py-3 text-xs text-on-surface-variant">${b.size}</td>
+                        <td class="py-3"><span class="text-[10px] text-success-600 font-bold px-2 py-0.5 bg-success-50 rounded">Success</span></td>
+                        <td class="py-3 text-right"><button class="text-primary"><span class="material-symbols-outlined text-sm">restore</span></button></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error('Backup history error:', e); }
         },
     }));
 });
-
-// HTMX modal integration
-document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-    if (evt.detail.target.id === 'modal-content') {
-        const modalScope = Alpine.$data(document.getElementById('modal'));
-        if (modalScope) { modalScope.open = true; }
-    }
-});
-document.body.addEventListener('close-modal', function() {
-    const modalScope = Alpine.$data(document.getElementById('modal'));
-    if (modalScope) { modalScope.open = false; }
-});
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const modalScope = Alpine.$data(document.getElementById('modal'));
-        if (modalScope) { modalScope.open = false; }
-    }
-});
-// Close on backdrop click
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('modal');
-    if (modal && e.target === modal) {
-        const modalScope = Alpine.$data(modal);
-        if (modalScope) { modalScope.open = false; }
-    }
-});
-
-// Load cameras, contacts, backups on page load
-document.addEventListener('DOMContentLoaded', function() {
-    htmx.ajax('GET', '/cameras/list', '#cameras-container');
-    htmx.ajax('GET', '/contacts/list', '#contacts-container');
-    const scope = Alpine.$data(document.querySelector('[x-data="settingsPage"]'));
-    if (scope) { scope.loadBackupHistory(); }
-});
 </script>
+
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 {% endblock %}

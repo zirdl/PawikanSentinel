@@ -7,164 +7,185 @@
     <!-- Page Header -->
     <div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-            <h1 class="text-h1 text-gray-900 tracking-tight">Detection Analytics</h1>
-            <p class="text-body text-gray-500 mt-1">Real-time sea turtle monitoring data</p>
+            <span class="text-secondary font-label text-xs font-semibold uppercase tracking-widest mb-2 block">Monitoring Dashboard</span>
+            <h1 class="text-3xl font-extrabold text-on-surface tracking-tight font-headline">Detection Analytics</h1>
+            <p class="text-on-surface-variant mt-1 text-body">Real-time sea turtle monitoring data</p>
         </div>
         <button @click="refreshAll()"
-                class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl
-                       text-body-sm font-semibold text-gray-700 shadow-card hover:shadow-card-hover
-                       hover:bg-gray-50 transition-all duration-200"
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-surface-container-highest text-on-surface font-semibold rounded-xl
+                       hover:bg-surface-dim transition-all duration-200"
                 :disabled="loading">
-            <span class="material-icons text-ocean-500 text-base" :class="{ 'animate-spin': loading }">refresh</span>
+            <span class="material-symbols-outlined text-base" :class="{ 'animate-spin': loading }">refresh</span>
             Refresh
         </button>
     </div>
 
     <!-- Loading indicator -->
     <div x-show="loading && stats.total === 0" x-cloak class="mb-8">
-        <div class="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <template x-for="i in 4" :key="i">
-                <div class="bg-white rounded-xl p-5 border border-gray-100">
-                    <div class="h-10 w-10 bg-gray-200 rounded-lg mb-3"></div>
-                    <div class="h-4 w-24 bg-gray-200 rounded mb-2"></div>
-                    <div class="h-8 w-16 bg-gray-200 rounded"></div>
+        <div class="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="i in 3" :key="i">
+                <div class="bg-surface-container-lowest rounded-xl p-6 border-b-4 border-primary">
+                    <div class="h-8 w-8 bg-surface-container-high rounded-lg mb-4"></div>
+                    <div class="h-4 w-24 bg-surface-container-high rounded mb-2"></div>
+                    <div class="h-10 w-20 bg-surface-container-high rounded"></div>
                 </div>
             </template>
         </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" x-show="!loading || stats.total > 0" x-cloak>
+    <!-- Stats Grid (3 columns — Stitch Design) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" x-show="!loading || stats.total > 0" x-cloak>
         <!-- Total Detections -->
-        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-lg bg-info-50 flex items-center justify-center">
-                    <span class="material-icons text-info-600">analytics</span>
-                </div>
-                <div class="status-dot" :class="camerasStatus === 'running' ? 'active' : camerasStatus === 'error' ? 'error' : 'inactive'"></div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-primary hover:-translate-y-1 transition-transform duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+                <span class="badge-success" x-show="stats.today > 0">
+                    <span x-text="'+' + stats.today + ' today'"></span>
+                </span>
             </div>
-            <p class="text-3xl font-bold text-gray-900" x-text="stats.total">0</p>
-            <p class="text-body-sm text-gray-500 mt-1">Total Detections</p>
+            <p class="text-on-surface-variant font-label text-xs uppercase tracking-widest">Total Detections</p>
+            <h3 class="text-4xl font-extrabold text-on-surface font-headline mt-1" x-text="stats.total">0</h3>
         </div>
 
         <!-- Today -->
-        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-lg bg-success-50 flex items-center justify-center">
-                    <span class="material-icons text-success-600">today</span>
-                </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-secondary hover:-translate-y-1 transition-transform duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <span class="material-symbols-outlined text-secondary text-3xl">today</span>
+                <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold" x-show="stats.today > 0">
+                    Peak Activity
+                </span>
             </div>
-            <p class="text-3xl font-bold text-gray-900" x-text="stats.today">0</p>
-            <p class="text-body-sm text-gray-500 mt-1">Today</p>
+            <p class="text-on-surface-variant font-label text-xs uppercase tracking-widest">Detections Today</p>
+            <h3 class="text-4xl font-extrabold text-on-surface font-headline mt-1" x-text="stats.today">0</h3>
         </div>
 
         <!-- This Month -->
-        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-10 h-10 rounded-lg bg-turtle-50 flex items-center justify-center">
-                    <span class="material-icons text-turtle-600">calendar_month</span>
-                </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-4 border-tertiary hover:-translate-y-1 transition-transform duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <span class="material-symbols-outlined text-tertiary text-3xl">calendar_month</span>
+                <span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold">
+                    <span x-text="new Date().toLocaleString('default', { month: 'short', year: 'numeric' })"></span>
+                </span>
             </div>
-            <p class="text-3xl font-bold text-gray-900" x-text="stats.month">0</p>
-            <p class="text-body-sm text-gray-500 mt-1">This Month</p>
-        </div>
-
-        <!-- System Status -->
-        <div class="bg-white rounded-xl shadow-card p-5 border border-gray-100 hover:shadow-card-hover transition-shadow duration-200">
-            <p class="text-caption font-bold text-gray-400 uppercase tracking-widest mb-3">System Status</p>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-body-sm text-gray-600">Cameras</span>
-                    <span class="text-caption font-bold"
-                          :class="camerasStatus === 'running' ? 'text-success-600' : 'text-danger-600'"
-                          x-text="camerasStatusText">Checking...</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-body-sm text-gray-600">Inference</span>
-                    <span class="text-caption font-bold"
-                          :class="inferenceStatus === 'running' ? 'text-success-600' : 'text-danger-600'"
-                          x-text="inferenceStatusText">Checking...</span>
-                </div>
-            </div>
+            <p class="text-on-surface-variant font-label text-xs uppercase tracking-widest">This Month</p>
+            <h3 class="text-4xl font-extrabold text-on-surface font-headline mt-1" x-text="stats.month">0</h3>
         </div>
     </div>
 
-    <!-- Chart -->
-    <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden mb-8">
-        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 class="text-title text-gray-800 flex items-center gap-2">
-                <span class="material-icons text-ocean-500 text-sm">trending_up</span>
-                Confidence History
-            </h2>
-            <span class="text-caption font-bold text-gray-400 uppercase tracking-wider">Last 200 Logs</span>
-        </div>
-        <div class="p-4" style="height: 400px;">
-            <canvas id="detections-chart"></canvas>
-        </div>
-    </div>
-
-    <!-- Recent Detections + Gallery -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Recent Detections Table -->
-        <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-title text-gray-800">Recent Detections</h2>
+    <!-- Chart + Gallery Bento Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Large Chart Card -->
+        <div class="lg:col-span-2 bg-surface-container-lowest p-6 rounded-xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-primary font-headline">Confidence History</h2>
+                    <p class="text-on-surface-variant text-sm">AI prediction accuracy over the last 200 logs</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-semibold">24h</button>
+                    <button class="px-4 py-1.5 bg-surface-container-high text-on-surface-variant rounded-full text-xs font-semibold">7d</button>
+                </div>
             </div>
-            <div class="p-4">
-                <div x-show="recentDetections.length === 0" class="py-8 text-center">
-                    <span class="material-icons text-4xl text-gray-300 mb-2">videocam_off</span>
-                    <p class="text-body text-gray-500">No recent detections</p>
-                </div>
-                <div class="overflow-x-auto" x-show="recentDetections.length > 0">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">Time</th>
-                                <th class="px-4 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">Camera</th>
-                                <th class="px-4 py-3 text-left text-caption font-semibold text-gray-500 uppercase tracking-wider">Confidence</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
-                            <template x-for="det in recentDetections" :key="det.id">
-                                <tr class="even:bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                                    <td class="px-4 py-3 text-body-sm text-gray-600 whitespace-nowrap" x-text="formatDate(det.timestamp)"></td>
-                                    <td class="px-4 py-3 text-body-sm font-medium text-gray-900 whitespace-nowrap" x-text="det.camera_name || det.camera_location || 'Unknown'"></td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium bg-success-100 text-success-800"
-                                              x-text="(det.confidence * 100).toFixed(1) + '%'"></span>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="p-4" style="height: 300px;">
+                <canvas id="detections-chart"></canvas>
             </div>
         </div>
 
         <!-- Detection Gallery -->
-        <div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-title text-gray-800">Detection Gallery</h2>
+        <div class="bg-surface-container-high/50 p-6 rounded-xl border border-outline-variant/10">
+            <h2 class="text-xl font-bold text-primary font-headline mb-4">Detection Gallery</h2>
+            <div x-show="gallery.length === 0" class="py-8 text-center">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-2">no_photography</span>
+                <p class="text-on-surface-variant text-body">No detection images</p>
             </div>
-            <div class="p-4">
-                <div x-show="gallery.length === 0" class="py-8 text-center">
-                    <span class="material-icons text-4xl text-gray-300 mb-2">no_photography</span>
-                    <p class="text-body text-gray-500">No detection images</p>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-show="gallery.length > 0">
-                    <template x-for="(img, idx) in gallery.slice(0, 24)" :key="img.filename">
-                        <div @click="openImageModal(idx)"
-                             class="aspect-square rounded-lg overflow-hidden cursor-pointer group relative">
-                            <img :src="img.path" :alt="img.filename" loading="lazy"
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                 @error="$el.parentElement.innerHTML = '<div class=\'w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 rounded-lg\'><span class=\'material-icons text-2xl\'>image_not_supported</span></div>'">
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
-                        </div>
-                    </template>
-                </div>
+            <div class="grid grid-cols-2 gap-3" x-show="gallery.length > 0">
+                <template x-for="(img, idx) in gallery.slice(0, 4)" :key="img.filename">
+                    <div @click="openImageModal(idx)"
+                         class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer">
+                        <img :src="img.path" :alt="img.filename" loading="lazy"
+                             class="w-full h-full object-cover"
+                             @error="$el.parentElement.innerHTML = '<div class=\'w-full h-full flex items-center justify-center text-on-surface-variant/30 bg-surface-container rounded-lg\'><span class=\'material-symbols-outlined text-2xl\'>image_not_supported</span></div>'">
+                        <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="absolute bottom-1 right-1 bg-surface-container-lowest/90 px-1.5 py-0.5 rounded text-[10px] font-bold" x-text="formatTime(img.modified)"></div>
+                    </div>
+                </template>
             </div>
+            <button class="w-full mt-6 py-3 border border-primary text-primary rounded-xl font-semibold text-sm hover:bg-primary hover:text-on-primary transition-all">
+                View Full Archive
+            </button>
         </div>
     </div>
+
+    <!-- Recent Detections Table -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-8">
+        <div class="p-6 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-primary font-headline">Recent Detections</h2>
+            <button class="flex items-center gap-2 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-lg">filter_list</span>
+                Filter Feed
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <div x-show="recentDetections.length === 0" class="py-8 text-center">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-2">videocam_off</span>
+                <p class="text-on-surface-variant text-body">No recent detections</p>
+            </div>
+            <table class="w-full text-left border-collapse" x-show="recentDetections.length > 0">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Time</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Camera</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Confidence</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
+                        <th class="px-6 py-4"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                    <template x-for="det in recentDetections" :key="det.id">
+                        <tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer">
+                            <td class="px-6 py-4 text-sm font-medium" x-text="formatDate(det.timestamp)"></td>
+                            <td class="px-6 py-4 text-sm font-label" x-text="det.camera_name || det.camera_location || 'Unknown'"></td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                                        <div class="h-full bg-primary rounded-full" :style="'width: ' + (det.confidence * 100).toFixed(0) + '%'"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-primary" x-text="(det.confidence * 100).toFixed(0) + '%'"></span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">Verified</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="material-symbols-outlined text-outline">chevron_right</span>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- System Status Card -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-8">
+        <div class="p-6 border-b border-outline-variant/10">
+            <h2 class="text-xl font-bold text-primary font-headline">System Status</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="flex items-center justify-between">
+                <span class="text-body text-on-surface">Cameras</span>
+                <span class="text-caption font-bold px-3 py-1 rounded-full"
+                      :class="camerasStatus === 'running' ? 'bg-primary-fixed text-primary' : 'bg-surface-dim text-on-surface-variant'"
+                      x-text="camerasStatusText">Checking...</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-body text-on-surface">Inference</span>
+                <span class="text-caption font-bold px-3 py-1 rounded-full"
+                      :class="inferenceStatus === 'running' ? 'bg-primary-fixed text-primary' : 'bg-surface-dim text-on-surface-variant'"
+                      x-text="inferenceStatusText">Checking...</span>
+            </div>
+        </div>
+    </section>
 </div>
 
 <!-- Image Modal (Alpine-driven) -->
@@ -184,7 +205,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm"
+         class="fixed inset-0 bg-on-surface/70 backdrop-blur-sm"
          @click="close()"></div>
 
     <!-- Panel -->
@@ -196,32 +217,32 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
-             class="relative bg-white rounded-xl shadow-overlay w-full max-w-4xl overflow-hidden"
+             class="relative bg-surface-container-lowest rounded-xl shadow-elevated w-full max-w-4xl overflow-hidden"
         >
             <div class="flex flex-col md:flex-row">
                 <!-- Image -->
-                <div class="md:w-2/3 relative bg-gray-100">
+                <div class="md:w-2/3 relative bg-surface-container-low">
                     <!-- Toolbar -->
                     <div class="absolute top-3 right-3 z-10 flex gap-2">
-                        <button @click="zoomIn()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Zoom in">
-                            <span class="material-icons text-gray-600 text-base">zoom_in</span>
+                        <button @click="zoomIn()" class="bg-surface-container-lowest/90 hover:bg-surface-container-lowest rounded-full p-2 shadow-card transition-colors" aria-label="Zoom in">
+                            <span class="material-symbols-outlined text-on-surface text-base">zoom_in</span>
                         </button>
-                        <button @click="zoomOut()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Zoom out">
-                            <span class="material-icons text-gray-600 text-base">zoom_out</span>
+                        <button @click="zoomOut()" class="bg-surface-container-lowest/90 hover:bg-surface-container-lowest rounded-full p-2 shadow-card transition-colors" aria-label="Zoom out">
+                            <span class="material-symbols-outlined text-on-surface text-base">zoom_out</span>
                         </button>
-                        <button @click="resetZoom()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Reset zoom">
-                            <span class="material-icons text-gray-600 text-base">restart_alt</span>
+                        <button @click="resetZoom()" class="bg-surface-container-lowest/90 hover:bg-surface-container-lowest rounded-full p-2 shadow-card transition-colors" aria-label="Reset zoom">
+                            <span class="material-symbols-outlined text-on-surface text-base">restart_alt</span>
                         </button>
-                        <button @click="close()" class="bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Close">
-                            <span class="material-icons text-gray-600 text-base">close</span>
+                        <button @click="close()" class="bg-surface-container-lowest/90 hover:bg-surface-container-lowest rounded-full p-2 shadow-card transition-colors" aria-label="Close">
+                            <span class="material-symbols-outlined text-on-surface text-base">close</span>
                         </button>
                     </div>
                     <!-- Nav arrows -->
-                    <button @click="prev()" class="absolute top-1/2 left-3 z-10 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Previous image">
-                        <span class="material-icons text-gray-600 text-base">chevron_left</span>
+                    <button @click="prev()" class="absolute top-1/2 left-3 z-10 -translate-y-1/2 bg-surface-container-lowest/90 hover:bg-surface-container-lowest rounded-full p-2 shadow-card transition-colors" aria-label="Previous image">
+                        <span class="material-symbols-outlined text-on-surface text-base">chevron_left</span>
                     </button>
-                    <button @click="next()" class="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-card transition-colors" aria-label="Next image">
-                        <span class="material-icons text-gray-600 text-base">chevron_right</span>
+                    <button @click="next()" class="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-surface-container-lowest/90 hover:bg-surface-container-lowest rounded-full p-2 shadow-card transition-colors" aria-label="Next image">
+                        <span class="material-symbols-outlined text-on-surface text-base">chevron_right</span>
                     </button>
 
                     <div class="flex items-center justify-center p-4 overflow-hidden" style="height: 500px;">
@@ -237,30 +258,30 @@
                 </div>
 
                 <!-- Details sidebar -->
-                <div class="md:w-1/3 p-6 bg-gray-50 overflow-y-auto border-l border-gray-100">
+                <div class="md:w-1/3 p-6 bg-surface-container-low overflow-y-auto border-l border-outline-variant/10">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-title text-gray-900">Detection Details</h3>
+                        <h3 class="text-xl font-bold text-primary font-headline">Detection Details</h3>
                     </div>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Camera</label>
-                            <p class="mt-1 text-body-sm text-gray-900" x-text="currentImage?.camera_name || currentImage?.camera_location || 'Unknown'"></p>
+                            <label class="block text-caption font-bold text-on-surface-variant uppercase tracking-wider">Camera</label>
+                            <p class="mt-1 text-body-sm text-on-surface" x-text="currentImage?.camera_name || currentImage?.camera_location || 'Unknown'"></p>
                         </div>
                         <div>
-                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Filename</label>
-                            <p class="mt-1 text-body-sm text-gray-900 break-all" x-text="currentImage?.filename || '—'"></p>
+                            <label class="block text-caption font-bold text-on-surface-variant uppercase tracking-wider">Filename</label>
+                            <p class="mt-1 text-body-sm text-on-surface break-all" x-text="currentImage?.filename || '—'"></p>
                         </div>
                         <div>
-                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">File Size</label>
-                            <p class="mt-1 text-body-sm text-gray-900" x-text="currentImage ? formatSize(currentImage.size) : '—'"></p>
+                            <label class="block text-caption font-bold text-on-surface-variant uppercase tracking-wider">File Size</label>
+                            <p class="mt-1 text-body-sm text-on-surface" x-text="currentImage ? formatSize(currentImage.size) : '—'"></p>
                         </div>
                         <div>
-                            <label class="block text-caption font-semibold text-gray-500 uppercase tracking-wider">Captured</label>
-                            <p class="mt-1 text-body-sm text-gray-900" x-text="currentImage ? formatDate(currentImage.modified * 1000) : '—'"></p>
+                            <label class="block text-caption font-bold text-on-surface-variant uppercase tracking-wider">Captured</label>
+                            <p class="mt-1 text-body-sm text-on-surface" x-text="currentImage ? formatDate(currentImage.modified * 1000) : '—'"></p>
                         </div>
-                        <div class="pt-4 border-t border-gray-200">
-                            <p class="text-caption text-gray-500 flex items-center gap-1">
-                                <span class="material-icons text-sm">info</span>
+                        <div class="pt-4 border-t border-outline-variant/10">
+                            <p class="text-caption text-on-surface-variant flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">info</span>
                                 Arrow keys to navigate, scroll to zoom
                             </p>
                         </div>
@@ -357,6 +378,8 @@ document.addEventListener('alpine:init', () => {
                 if (this.chart) {
                     this.chart.data.labels = labels;
                     this.chart.data.datasets[0].data = values;
+                    this.chart.data.datasets[0].borderColor = '#134231'; // primary
+                    this.chart.data.datasets[0].backgroundColor = 'rgba(19, 66, 49, 0.06)';
                     this.chart.update('none');
                     return;
                 }
@@ -369,11 +392,11 @@ document.addEventListener('alpine:init', () => {
                         labels,
                         datasets: [{
                             data: values,
-                            borderColor: '#4a7c59',
-                            backgroundColor: 'rgba(74,124,89,0.06)',
+                            borderColor: '#134231', // primary
+                            backgroundColor: 'rgba(19, 66, 49, 0.06)',
                             borderWidth: 2, fill: true, tension: 0.15,
                             pointRadius: 2, pointHoverRadius: 5,
-                            pointBackgroundColor: '#4a7c59', pointBorderColor: '#fff',
+                            pointBackgroundColor: '#134231', pointBorderColor: '#ffffff',
                         }]
                     },
                     options: {
@@ -383,7 +406,7 @@ document.addEventListener('alpine:init', () => {
                             tooltip: { callbacks: { label: item => `Confidence: ${item.parsed.y}%` } }
                         },
                         scales: {
-                            y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { callback: v => v+'%', font: { size: 10 } } },
+                            y: { min: 0, max: 100, grid: { color: 'rgba(25, 28, 28, 0.03)' }, ticks: { callback: v => v+'%', font: { size: 10 } } },
                             x: { grid: { display: false }, ticks: { maxTicksLimit: 15, font: { size: 9 }, maxRotation: 0 } }
                         }
                     }
@@ -406,6 +429,11 @@ document.addEventListener('alpine:init', () => {
         },
 
         formatDate(ts) { return new Date(ts).toLocaleString(); },
+        formatTime(ts) { 
+            if (!ts) return '';
+            const d = new Date(ts * 1000);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        },
 
         startPolling() {
             if (this.pollInterval) clearInterval(this.pollInterval);
