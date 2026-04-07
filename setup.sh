@@ -306,7 +306,7 @@ EOF
         fi
     else
         print_warn "No sudo access — cannot install systemd service."
-        print_warn "You can still run the app manually with: bash run-web.sh"
+        print_warn "You can still run the app in dev mode with: ./scripts/manage.sh dev"
         USE_SYSTEMD=false
     fi
 
@@ -333,14 +333,12 @@ EOF
             fi
         fi
     else
-        if ask_yes_no "  Start manually now?" "y"; then
+        if ask_yes_no "  Start manually in development mode?" "y"; then
             echo ""
-            echo "  Running: uvicorn src.core.main:app --host 0.0.0.0 --port 8000"
+            echo "  Running: ./scripts/manage.sh dev"
             echo "  Press Ctrl+C to stop."
             echo ""
-            cd "$INSTALL_DIR"
-            source .venv/bin/activate
-            uvicorn src.core.main:app --host 0.0.0.0 --port 8000
+            ./scripts/manage.sh dev
         fi
     fi
 
@@ -373,8 +371,8 @@ EOF
         echo "  restart:  sudo systemctl restart pawikan-sentinel.service"
         echo "  logs:     journalctl -u pawikan-sentinel.service -f"
     else
-        echo "Run the app:"
-        echo "  cd $INSTALL_DIR && bash run-web.sh"
+        echo "Run the app in development mode:"
+        echo "  cd $INSTALL_DIR && ./scripts/manage.sh dev"
     fi
 
     echo ""
