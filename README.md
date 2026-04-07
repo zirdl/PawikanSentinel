@@ -66,3 +66,9 @@ For development, you can watch for changes and automatically rebuild the CSS:
 - `docs/` - Documentation
 - `deployments/` - Deployment scripts and configs
 - `tests/` - Test files
+
+## Local Development & Testing
+
+You can develop and test this application on a standard Linux/macOS machine without a Raspberry Pi or a real RTSP camera. Using **VLC Media Player**, you can simulate a live camera feed from any video file.
+
+For detailed instructions on setup, simulation, and testing workflows, see [DEVELOPMENT.md](file:///home/gio/Desktop/PawikanSentinel/docs/DEVELOPMENT.md).

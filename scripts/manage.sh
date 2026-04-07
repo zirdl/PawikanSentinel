@@ -24,6 +24,7 @@ print_usage() {
     echo "  stop        Stop the systemd service"
     echo "  restart     Restart the systemd service"
     echo "  status      Check the status of the service"
+    echo "  dev         Run the web app locally with auto-reload (no sudo)"
     echo "  logs        View recent service logs via journalctl"
     echo "  follow      Follow service logs live"
     echo "  update      Pull latest code and restart service"
@@ -91,6 +92,16 @@ case "${1:-}" in
             echo -e "${RED}Error: scripts/backup.sh not found.${NC}"
             exit 1
         fi
+        ;;
+    dev)
+        echo -e "${CYAN}Starting Pawikan Sentinel in DEV mode (auto-reload)...${NC}"
+        cd "$PROJECT_ROOT"
+        if [ ! -d ".venv" ]; then
+            echo -e "${YELLOW}Warning: .venv not found. Creating it...${NC}"
+            uv venv
+            uv sync --extra inference
+        fi
+        uv run uvicorn src.core.main:app --host 0.0.0.0 --port 8000 --reload
         ;;
     *)
         print_usage
