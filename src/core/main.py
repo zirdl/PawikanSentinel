@@ -1,6 +1,8 @@
 import os
 import secrets
 import logging
+import io
+import csv
 from contextlib import asynccontextmanager
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Optional
@@ -17,7 +19,7 @@ import random
 import time
 
 from fastapi import FastAPI, HTTPException, Request, Depends, Form, Cookie, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -426,46 +428,110 @@ def get_detection_stats():
     # Today's detections
     today = conn.execute("""
         SELECT COUNT(*) as count FROM detections 
-        WHERE DATE(timestamp) = DATE('now')
+        WHERE DATE(timestamp) = DATE('now', 'localtime')
     """).fetchone()["count"]
     
     # This month's detections
     this_month = conn.execute("""
         SELECT COUNT(*) as count FROM detections 
-        WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+        WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now', 'localtime')
     """).fetchone()["count"]
     
+    # Calculate Week over Week increase
+    this_week = conn.execute("""
+        SELECT COUNT(*) as count FROM detections 
+        WHERE strftime('%W', timestamp) = strftime('%W', 'now', 'localtime')
+    """).fetchone()["count"]
+
+    last_week = conn.execute("""
+        SELECT COUNT(*) as count FROM detections 
+        WHERE strftime('%W', timestamp) = strftime('%W', 'now', '-7 days', 'localtime')
+    """).fetchone()["count"]
+
+    week_increase = 0
+    if last_week > 0:
+        week_increase = round(((this_week - last_week) / last_week) * 100)
+    elif this_week > 0:
+        week_increase = 100
+        
+    # Find Peak Time Today
+    peak = conn.execute("""
+        SELECT strftime('%H:00', timestamp) as hour, COUNT(*) as count
+        FROM detections
+        WHERE DATE(timestamp) = DATE('now', 'localtime')
+        GROUP BY hour
+        ORDER BY count DESC
+        LIMIT 1
+    """).fetchone()
+    
+    peak_time_today = peak["hour"] if peak else "N/A"
+    
     conn.close()
-    return {"total": total, "today": today, "this_month": this_month}
+    return {
+        "total": total, 
+        "today": today, 
+        "this_month": this_month,
+        "week_increase": week_increase,
+        "peak_time": peak_time_today
+    }
 
 def get_detection_chart_data(period="month", month=None):
     """Get detection confidence data for chart visualization"""
     conn = get_db_connection()
+    data = []
     
-    if period == "month":
-        if month:
-            # Get daily average confidence for that month
+    try:
+        if period == "day":
+            # Hourly average confidence for the current day
             data = conn.execute("""
-                SELECT strftime('%Y-%m-%d', timestamp) as date, 
+                SELECT strftime('%H:00', timestamp) as date, 
                        AVG(confidence * 100) as confidence
                 FROM detections 
-                WHERE strftime('%Y-%m', timestamp) = ?
+                WHERE date(timestamp) = date('now')
                 GROUP BY date ORDER BY date
-            """, (month,)).fetchall()
-        else:
-            # Default: Current month's daily average
+            """).fetchall()
+        elif period == "month":
+            if month:
+                # Get daily average confidence for a specific month
+                data = conn.execute("""
+                    SELECT strftime('%Y-%m-%d', timestamp) as date, 
+                           AVG(confidence * 100) as confidence
+                    FROM detections 
+                    WHERE strftime('%Y-%m', timestamp) = ?
+                    GROUP BY date ORDER BY date
+                """, (month,)).fetchall()
+            else:
+                # Default: Current month's daily average
+                data = conn.execute("""
+                    SELECT strftime('%m-%d', timestamp) as date, 
+                           AVG(confidence * 100) as confidence
+                    FROM detections 
+                    WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+                    GROUP BY date ORDER BY date
+                """).fetchall()
+        elif period == "year":
+            # Monthly average confidence for the current year
             data = conn.execute("""
-                SELECT strftime('%m-%d', timestamp) as date, 
+                SELECT strftime('%m', timestamp) as date, 
                        AVG(confidence * 100) as confidence
                 FROM detections 
-                WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+                WHERE strftime('%Y', timestamp) = strftime('%Y', 'now')
                 GROUP BY date ORDER BY date
-            """,).fetchall()
+            """).fetchall()
+        elif period == "all":
+            # Yearly average confidence for all time
+            data = conn.execute("""
+                SELECT strftime('%Y', timestamp) as date, 
+                       AVG(confidence * 100) as confidence
+                FROM detections 
+                GROUP BY date ORDER BY date
+            """).fetchall()
+    finally:
+        conn.close()
     
-    conn.close()
     return [dict(row) for row in data]
 
-def get_recent_detections(limit=10):
+def get_recent_detections(limit=100):
     """Get recent detections with camera locations"""
     conn = get_db_connection()
     detections = conn.execute("""
@@ -533,6 +599,50 @@ async def get_recent_detections_api(username: str = Depends(get_current_user_fro
     response.headers["Expires"] = "0"
     return response
 
+@app.get("/api/detections/export")
+async def export_detections_csv(user: dict = Depends(get_current_user_from_cookie)):
+    """Export all detections to a CSV file."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Efficiently join with cameras to get camera names
+    cursor.execute("""
+        SELECT d.id, c.name as camera_name, d.timestamp, d.class, d.confidence, d.image_path 
+        FROM detections d
+        JOIN cameras c ON d.camera_id = c.id
+        ORDER BY d.timestamp DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow(["ID", "Camera", "Timestamp", "Species", "Confidence (%)", "Image Path"])
+    
+    for row in rows:
+        writer.writerow([
+            row["id"], 
+            row["camera_name"], 
+            row["timestamp"], 
+            row["class"], 
+            f"{row['confidence'] * 100:.2f}", 
+            row["image_path"]
+        ])
+    
+    output.seek(0)
+    
+    # Format current time for filename
+    from datetime import datetime
+    filename = f"pawikan_detections_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @app.get("/api/detections/gallery")
 async def get_detection_gallery_api(username: str = Depends(get_current_user_from_cookie)):
     # Get detection images from the specified directory
@@ -563,8 +673,8 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
         # Sort by modification time (newest first)
         image_files.sort(key=os.path.getmtime, reverse=True)
         
-        # Get the 24 most recent images for 6x4 grid
-        for image_file in image_files[:24]:
+        # Get the 100 most recent images for pagination across grid
+        for image_file in image_files[:100]:
             # Get file info
             stat = os.stat(image_file)
             

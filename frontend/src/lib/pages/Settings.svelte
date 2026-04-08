@@ -19,6 +19,8 @@
   let oldPassword = '';
   let newPassword = '';
   let passwordStatus = '';
+  let showOldPassword = false;
+  let showNewPassword = false;
 
   onMount(() => {
     fetchSettings();
@@ -39,6 +41,10 @@
     }
   }
 
+  async function handleExportCSV() {
+    window.open('/api/detections/export', '_blank');
+  }
+
   // Camera Handlers
   function openCameraModal(cam = null) {
     if (cam) {
@@ -50,7 +56,6 @@
     }
     isCameraModalOpen = true;
   }
-
 
   async function removeCamera(id) {
     if (confirm("Are you sure you want to delete this camera?")) {
@@ -109,15 +114,15 @@
     <p class="text-on-surface-variant font-body">Manage sentinel configurations, surveillance streams, and conservationist contacts.</p>
   </header>
 
-  <div class="bento-grid">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     <!-- System Configuration -->
-    <section class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/15 flex flex-col gap-8">
+    <section class="lg:col-span-12 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-outline-variant/15 flex flex-col gap-8">
       <div class="flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-primary">settings_input_component</span>
         <h3 class="text-xl font-bold font-headline">System Configuration</h3>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
         <!-- Confidence Threshold -->
         <div class="space-y-4">
           <div class="flex justify-between items-center">
@@ -125,7 +130,7 @@
             <Badge text="{$config.confidence_threshold}%" variant="primary" />
           </div>
           <input id="conf-threshold" type="range" class="w-full accent-primary" min="50" max="100" bind:value={$config.confidence_threshold} on:change={handleConfigUpdate} />
-          <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Minimum detection certainty for species identification.</p>
+          <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Minimum certainty for Species Identification.</p>
         </div>
 
         <!-- Frame Skip -->
@@ -147,83 +152,19 @@
           <input id="sms-cooldown" type="range" class="w-full accent-tertiary" min="1" max="120" bind:value={$config.sms_cooldown} on:change={handleConfigUpdate} />
           <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Silence interval between alert notifications.</p>
         </div>
-
-        <div class="bg-surface-container-low rounded-xl p-4 flex flex-col justify-between border-l-4 border-primary">
-          <div>
-            <h4 class="text-sm font-bold mb-1">Export Detections</h4>
-            <p class="text-xs text-on-surface-variant mb-4">Download all logged nesting and hatching data.</p>
-          </div>
-          <button class="btn-gradient-primary text-xs w-full">Export to CSV</button>
+      </div>
+      <!-- Export button full width row underneath the 3 columns -->
+      <div class="bg-surface-container-low rounded-xl p-4 flex flex-col md:flex-row justify-between items-center border-l-4 border-primary">
+        <div>
+          <h4 class="text-sm font-bold mb-1">Export Detections</h4>
+          <p class="text-xs text-on-surface-variant md:mb-0 mb-4">Download all logged nesting and hatching data.</p>
         </div>
+        <button class="btn-gradient-primary text-xs" on:click={handleExportCSV}>Export to CSV</button>
       </div>
     </section>
 
-    <!-- Account -->
-    <section class="lg:col-span-4 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/15">
-      <div class="flex items-center gap-2 mb-6">
-        <span class="material-symbols-outlined text-primary">account_circle</span>
-        <h3 class="text-xl font-bold font-headline">Account</h3>
-      </div>
-      <form class="space-y-5" on:submit|preventDefault={handlePasswordChange}>
-        <div class="space-y-1">
-          <label for="current-username" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Username</label>
-          <input id="current-username" type="text" class="input-surface w-full" value={$user?.username || 'admin'} readonly />
-        </div>
-        <div class="space-y-1">
-          <label for="old-password" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Current Password</label>
-          <input id="old-password" type="password" class="input-surface w-full" placeholder="••••••••••••" bind:value={oldPassword} />
-        </div>
-        <div class="space-y-1">
-          <label for="new-password" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">New Password</label>
-          <input id="new-password" type="password" class="input-surface w-full" placeholder="••••••••••••" bind:value={newPassword} />
-        </div>
-        {#if passwordStatus}
-          <p class="text-[10px] font-bold {passwordStatus.includes('successfully') ? 'text-green-500' : 'text-red-500'}">{passwordStatus}</p>
-        {/if}
-        <button class="btn-secondary w-full text-xs" type="submit">Update Credentials</button>
-      </form>
-    </section>
-
-    <!-- Cameras -->
-    <section class="lg:col-span-12 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/15">
-      <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary">videocam</span>
-          <h3 class="text-xl font-bold font-headline">Cameras</h3>
-        </div>
-        <button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline underline-offset-4" on:click={() => openCameraModal()}>
-          <span class="material-symbols-outlined text-sm">add_circle</span>
-          Add New Stream
-        </button>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {#each $cameras as cam}
-          <div class="bg-surface-container-low p-4 rounded-xl flex flex-col gap-3 group">
-            <div class="flex justify-between items-start">
-              <div class="max-w-[70%]">
-                <h4 class="font-bold text-sm truncate">{cam.name}</h4>
-                <p class="text-[10px] text-on-surface-variant font-mono truncate">{cam.rtsp_url}</p>
-              </div>
-              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button class="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-container-high transition-all" on:click={() => openCameraModal(cam)}>
-                  <span class="material-symbols-outlined text-lg">edit</span>
-                </button>
-                <button class="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-surface-container-high transition-all" on:click={() => removeCamera(cam.id)}>
-                  <span class="material-symbols-outlined text-lg">delete</span>
-                </button>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge text={cam.active ? "Active" : "Offline"} variant={cam.active ? "success" : "warning"} />
-              <span class="text-[10px] text-on-surface-variant italic">ID: #{cam.id}</span>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </section>
-
-    <!-- Contacts -->
-    <section class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/15">
+    <!-- Contacts (Left) -->
+    <section class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-outline-variant/15">
       <div class="flex justify-between items-center mb-6">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined text-primary">contact_mail</span>
@@ -261,8 +202,68 @@
       </div>
     </section>
 
+    <!-- Account (Right) -->
+    <section class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-outline-variant/15">
+      <div class="flex items-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-primary">account_circle</span>
+        <h3 class="text-xl font-bold font-headline">Account</h3>
+      </div>
+      <form class="space-y-5" on:submit|preventDefault={handlePasswordChange}>
+        <div class="space-y-1">
+          <label for="current-username" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Username</label>
+          <input id="current-username" type="text" class="input-surface w-full" value={$user?.username || 'admin'} readonly />
+        </div>
+        <div class="space-y-1">
+          <label for="old-password" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Current Password</label>
+          <div class="relative">
+            <input 
+              id="old-password" 
+              type={showOldPassword ? "text" : "password"} 
+              class="input-surface w-full pr-12" 
+              placeholder="••••••••••••" 
+              bind:value={oldPassword} 
+            />
+            <button 
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none"
+              on:click={() => showOldPassword = !showOldPassword}
+            >
+              <span class="material-symbols-outlined text-lg">
+                {showOldPassword ? 'visibility_off' : 'visibility'}
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <label for="new-password" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">New Password</label>
+          <div class="relative">
+            <input 
+              id="new-password" 
+              type={showNewPassword ? "text" : "password"} 
+              class="input-surface w-full pr-12" 
+              placeholder="••••••••••••" 
+              bind:value={newPassword} 
+            />
+            <button 
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-on-surface-variant hover:text-primary transition-colors focus:outline-none"
+              on:click={() => showNewPassword = !showNewPassword}
+            >
+              <span class="material-symbols-outlined text-lg">
+                {showNewPassword ? 'visibility_off' : 'visibility'}
+              </span>
+            </button>
+          </div>
+        </div>
+        {#if passwordStatus}
+          <p class="text-[10px] font-bold {passwordStatus.includes('successfully') ? 'text-green-500' : 'text-red-500'}">{passwordStatus}</p>
+        {/if}
+        <button class="btn-secondary w-full text-xs" type="submit">Update Credentials</button>
+      </form>
+    </section>
+
     <!-- System Backup -->
-    <section class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/15">
+    <section class="lg:col-span-12 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-outline-variant/15">
       <div class="flex justify-between items-start mb-6">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined text-primary">backup</span>

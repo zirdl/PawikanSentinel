@@ -7,17 +7,24 @@
   export let cameraId = null;
   export let onSave = () => {};
 
+  let isSaving = false;
+
   async function handleSave() {
-    let success;
-    if (cameraId) {
-      success = await updateCamera(cameraId, camera);
-    } else {
-      success = await addCamera(camera);
-    }
-    
-    if (success) {
-      isOpen = false;
-      onSave();
+    isSaving = true;
+    try {
+      let success;
+      if (cameraId) {
+        success = await updateCamera(cameraId, camera);
+      } else {
+        success = await addCamera(camera);
+      }
+      
+      if (success) {
+        isOpen = false;
+        onSave();
+      }
+    } finally {
+      isSaving = false;
     }
   }
 </script>
@@ -34,11 +41,18 @@
     </div>
     <div class="flex items-center gap-2 py-2">
       <input type="checkbox" id="cam-active" class="w-4 h-4 rounded accent-primary" bind:checked={camera.active} />
-      <label for="cam-active" class="text-sm font-medium">Auto-start inference network</label>
+      <label for="cam-active" class="text-sm font-medium">Currently Active</label>
     </div>
   </div>
   <div slot="footer" class="flex gap-3">
-    <button class="btn-secondary text-xs" on:click={() => isOpen = false}>Discard</button>
-    <button class="btn-gradient-primary text-xs px-6" on:click={handleSave}>Initialize Feed</button>
+    <button class="btn-secondary text-xs" on:click={() => isOpen = false} disabled={isSaving}>Discard</button>
+    <button class="btn-gradient-primary text-xs px-6 flex items-center gap-2" on:click={handleSave} disabled={isSaving}>
+      {#if isSaving}
+        <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+        Saving...
+      {:else}
+        {cameraId ? "Update Feed" : "Initialize Feed"}
+      {/if}
+    </button>
   </div>
 </Modal>

@@ -24,6 +24,8 @@
     Filler
   );
 
+  export let period = 'month';
+
   let chartData = {
     labels: [],
     datasets: [
@@ -56,7 +58,10 @@
         min: 0,
         max: 100,
         grid: { display: false },
-        ticks: { color: '#414944' } // on-surface-variant
+        ticks: { 
+          color: '#414944',
+          callback: function(value) { return value + '%'; }
+        } // on-surface-variant
       },
       x: {
         grid: { display: false },
@@ -67,11 +72,19 @@
 
   async function fetchChartData() {
     try {
-      const res = await fetch('/api/detections/chart?period=month', { credentials: 'include' });
+      const res = await fetch(`/api/detections/chart?period=${period}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
+        
+        // Map data based on labels if it's months or hours
+        let labels = data.map(d => d.date);
+        if (period === 'year') {
+          const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          labels = data.map(d => monthNames[parseInt(d.date) - 1]);
+        }
+
         chartData = {
-          labels: data.map(d => d.date),
+          labels: labels,
           datasets: [{
             ...chartData.datasets[0],
             data: data.map(d => d.confidence)
@@ -82,6 +95,8 @@
       console.error('Error fetching chart data:', error);
     }
   }
+
+  $: period && fetchChartData();
 
   onMount(fetchChartData);
 </script>

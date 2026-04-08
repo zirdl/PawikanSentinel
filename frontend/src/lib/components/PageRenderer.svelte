@@ -3,6 +3,7 @@
   import Dashboard from "../pages/Dashboard.svelte";
   import Cameras from "../pages/Cameras.svelte";
   import Settings from "../pages/Settings.svelte";
+  import Archive from "../pages/Archive.svelte";
 
   const location = useLocation();
 </script>
@@ -12,6 +13,8 @@
     <Cameras />
   {:else if $location.pathname === "/settings"}
     <Settings />
+  {:else if $location.pathname === "/archive"}
+    <Archive />
   {:else if $location.pathname === "/login"}
     <Dashboard />
   {:else}

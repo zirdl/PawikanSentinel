@@ -313,9 +313,17 @@ class RTSPInferenceWorker(threading.Thread):
                 logger.warning("SMS sender not enabled - skipping SMS notifications")
                 return
             
-            # Create message with detection details
             confidence_percent = self.detection_buffer[-1].confidence * 100
-            message_body = f"Pawikan Sentinel Alert: {len(self.detection_buffer)} detections of {self.detection_buffer[-1].class_name} on {camera_name}. Last detection at {self.detection_buffer[-1].timestamp} with {confidence_percent:.1f}% confidence."
+            
+            # Format timestamp nicely (e.g., "April 08, 2026 at 02:14 PM")
+            try:
+                raw_time = datetime.strptime(self.detection_buffer[-1].timestamp, "%Y-%m-%d %H:%M:%S")
+                formatted_time = raw_time.strftime("%B %d, %Y at %I:%M %p")
+            except ValueError:
+                # Fallback if timestamp format is unexpected
+                formatted_time = self.detection_buffer[-1].timestamp
+
+            message_body = f"Pawikan Sentinel Alert: {len(self.detection_buffer)} detections of {self.detection_buffer[-1].class_name} on {camera_name}. Last detection on {formatted_time} with {confidence_percent:.1f}% confidence."
             
             # Send SMS notifications using Semaphore
             results = self.sms_sender.send_sms_notification(
@@ -333,38 +341,58 @@ class RTSPInferenceWorker(threading.Thread):
         except Exception as e:
             logger.error(f"Error sending SMS notifications: {e}", exc_info=True)
 
-    def _save_annotated_frame(self, frame, detections: List[Dict], timestamp: str) -> Optional[str]:
-        """Save annotated frame with bounding boxes"""
+    def _save_annotated_frame(self, frame, detections: List[Dict], timestamp: str, input_size: int = YOLO_INPUT_SIZE) -> Optional[str]:
+        """Save annotated high-resolution frame with scaled bounding boxes and enhanced labels"""
         try:
             # Create a copy for annotation
             annotated_frame = frame.copy()
+            orig_h, orig_w = frame.shape[:2]
+            
+            # Scaler factors
+            scale_x = orig_w / input_size
+            scale_y = orig_h / input_size
+            
+            # Adjust line thickness based on resolution (at least 2, up to 6 on 4K)
+            thickness = max(2, int(orig_w / 640))
+            font_scale = max(0.5, orig_w / 1280)
             
             # Draw bounding boxes for each detection
             for pred in detections:
                 if "x" in pred and "y" in pred and "width" in pred and "height" in pred:
-                    x, y = int(pred["x"]), int(pred["y"])
-                    w, h = int(pred["width"]), int(pred["height"])
-                    class_name = pred.get("class", "unknown")
+                    # Scale coordinates back to original frame size
+                    x, y = pred["x"] * scale_x, pred["y"] * scale_y
+                    w, h = pred["width"] * scale_x, pred["height"] * scale_y
+                    
+                    class_name = pred.get("class", "turtle")
                     confidence = pred.get("confidence", 0.0)
                     
-                    # Draw rectangle
-                    cv2.rectangle(annotated_frame, (x - w//2, y - h//2), (x + w//2, y + h//2), (0, 255, 0), 2)
+                    # Convert to corners for cv2.rectangle
+                    x1, y1 = int(x - w/2), int(y - h/2)
+                    x2, y2 = int(x + w/2), int(y + h/2)
                     
-                    # Draw label
-                    label = f"{class_name} {confidence:.2f}"
-                    cv2.putText(annotated_frame, label, (x - w//2, y - h//2 - 10),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    # Draw shadowed box for better readability
+                    cv2.rectangle(annotated_frame, (x1+2, y1+2), (x2+2, y2+2), (0, 0, 0), thickness)
+                    cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 127), thickness)
+                    
+                    # Draw label with background plate
+                    label = f"{class_name.upper()} {confidence*100:.1f}%"
+                    (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
+                    
+                    cv2.rectangle(annotated_frame, (x1, y1 - th - 15), (x1 + tw + 10, y1), (0, 255, 127), -1)
+                    cv2.putText(annotated_frame, label, (x1 + 5, y1 - 10),
+                               cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), thickness)
             
             # Generate filename and save
             image_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{self.camera_id}.jpg"
             image_path = os.path.join(DETECTIONS_DIR, image_filename)
             
-            success = cv2.imwrite(image_path, annotated_frame)
+            # High-quality JPEG save
+            success = cv2.imwrite(image_path, annotated_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
             if success:
-                logger.debug(f"Camera {self.camera_id}: Saved annotated image to {image_path}")
+                logger.debug(f"Camera {self.camera_id}: Saved high-res annotated image to {image_path}")
                 return image_path
             else:
-                logger.warning(f"Camera {self.camera_id}: Failed to save annotated image")
+                logger.warning(f"Camera {self.camera_id}: Failed to save high-res annotated image")
                 return None
                 
         except Exception as e:
@@ -395,7 +423,10 @@ class RTSPInferenceWorker(threading.Thread):
         self.running = True
         frame_count = 0
         
-        logger.info(f"Camera {self.camera_id}: Starting inference worker")
+        # Use a dynamic variable for frame skip that we can adjust
+        self.current_frame_skip = self.frame_skip
+        
+        logger.info(f"Camera {self.camera_id}: Starting inference worker (Initial Frame Skip: {self.frame_skip})")
         
         # Throttling state
         self.throttled = False
@@ -407,9 +438,15 @@ class RTSPInferenceWorker(threading.Thread):
                     time.sleep(1)
                     continue
 
-                # Handle Thermal/CPU Throttling
-                if self._check_throttle():
-                    time.sleep(2)  # Wait longer when throttled
+                # Dynamically check and adjust throttle based on system health
+                # Returns True if system is overloaded and should wait
+                is_overloaded, dynamic_skip = self._check_dynamic_throttle()
+                
+                # Apply dynamic frame skip (between original setting and a maximum of 60)
+                self.current_frame_skip = max(self.frame_skip, dynamic_skip)
+                
+                if is_overloaded:
+                    time.sleep(1)  # Brief pause during extreme overload
                     continue
                 
                 # Setup capture if not already done
@@ -436,8 +473,8 @@ class RTSPInferenceWorker(threading.Thread):
                 frame_count += 1
                 self.stats["frames_processed"] += 1
                 
-                # Skip frames based on frame_skip setting
-                if frame_count % self.frame_skip != 0:
+                # Skip frames based on dynamic frame_skip setting
+                if frame_count % self.current_frame_skip != 0:
                     continue
                 
                 # Resize for faster inference (use YOLO_INPUT_SIZE for square input)
@@ -472,8 +509,8 @@ class RTSPInferenceWorker(threading.Thread):
                             logger.debug(f"Camera {self.camera_id}: Detection below confidence threshold ({confidence:.2f} < {CONFIDENCE_THRESHOLD})")
                             continue
                         
-                        # Save annotated frame
-                        image_path = self._save_annotated_frame(resized, [pred], timestamp)
+                        # Save annotated frame (passing original high-res frame)
+                        image_path = self._save_annotated_frame(frame, [pred], timestamp)
                         
                         if image_path:
                             # Create DetectionResult object
@@ -528,53 +565,63 @@ class RTSPInferenceWorker(threading.Thread):
         self.paused = False
         logger.info(f"Camera {self.camera_id}: Resumed inference worker")
 
-    def _check_throttle(self) -> bool:
-        """Check if the system should be throttled based on CPU or Temperature (using cached values)."""
+    def _check_dynamic_throttle(self) -> Tuple[bool, int]:
+        """
+        Smoothly throttles the system by adjusting frame skip instead of binary stopping.
+        Returns (is_overloaded, suggested_frame_skip).
+        """
         global _health_cache
         
         now = time.time()
         
-        # Update cache if it's older than 2 seconds
-        if now - _health_cache["last_check"] > 2.0:
+        # Update cache more frequently (every 1s) for dynamic throttle response
+        if now - _health_cache["last_check"] > 1.0:
             with _health_cache["lock"]:
-                # Re-check inside lock
-                if now - _health_cache["last_check"] > 2.0:
+                if now - _health_cache["last_check"] > 1.0:
                     try:
-                        _health_cache["cpu"] = psutil.cpu_percent(interval=0.1)
+                        # Non-blocking CPU check
+                        _health_cache["cpu"] = psutil.cpu_percent()
                         
-                        _health_cache["temp"] = 0.0
                         if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
-                            try:
-                                with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-                                    _health_cache["temp"] = float(f.read().strip()) / 1000.0
-                            except:
-                                pass
+                            with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+                                _health_cache["temp"] = float(f.read().strip()) / 1000.0
                         
                         _health_cache["last_check"] = time.time()
-                    except Exception as e:
-                        logger.error(f"Error updating health cache: {e}")
+                    except:
+                        pass
 
         # Evaluate against the cached values
-        cpu_percent = _health_cache["cpu"]
+        cpu = _health_cache["cpu"]
         temp = _health_cache["temp"]
         
-        if cpu_percent > CPU_THRESHOLD:
-            if not self.throttled:
-                logger.warning(f"Camera {self.camera_id}: CPU usage high ({cpu_percent}%), entering throttle...")
-                self.throttled = True
-            return True
-
-        if temp and temp > TEMP_THRESHOLD:
-            if not self.throttled:
-                logger.warning(f"Camera {self.camera_id}: CPU temperature high ({temp}C), entering throttle...")
-                self.throttled = True
-            return True
-
-        if self.throttled:
-            logger.info(f"Camera {self.camera_id}: System recovered, resuming normal operation.")
-            self.throttled = False
+        # Calculate dynamic skip multiplier linearly between 80% and 100% CPU
+        # Or based on temperature
+        suggested_skip = self.frame_skip
+        is_overloaded = False
         
-        return False
+        # Overload scenario: Critical temp or 95%+ CPU
+        if (temp and temp > TEMP_THRESHOLD + 5) or cpu > 98:
+            is_overloaded = True
+            suggested_skip = 60
+            if not self.throttled:
+                logger.warning(f"System Overload: CPU {cpu}%, Temp {temp}C. Critical throttle active.")
+                self.throttled = True
+        
+        # High load: Adjust frame skip dynamically
+        elif cpu > CPU_THRESHOLD:
+            # Linear scaling of frame skip: at CPU_THRESHOLD+20, match max skip
+            # Example: 80% to 100% CPU maps to skip multiplier 1x to 4x
+            multiplier = 1.0 + (max(0, cpu - CPU_THRESHOLD) / 10.0) # 80->90 = 2x, 80->100=3x
+            suggested_skip = int(self.frame_skip * multiplier)
+            if not self.throttled:
+                logger.info(f"High load detected ({cpu}%). Dynamically adjusting frame skip to {suggested_skip}...")
+                self.throttled = True
+        
+        elif self.throttled:
+            logger.info(f"System load stabilized. Resuming baseline operations (Skip: {self.frame_skip}).")
+            self.throttled = False
+            
+        return is_overloaded, suggested_skip
 
     def get_stats(self) -> Dict:
         """Get worker statistics"""

@@ -48,7 +48,9 @@ async def update_camera(camera_id: int, camera: CameraBase):
               (camera.name, camera.rtsp_url, camera.active, camera_id))
     conn.commit()
     conn.close()
-    return {**camera.dict(), "id": camera_id}@router.delete("/api/cameras/{camera_id}")
+    return {**camera.dict(), "id": camera_id}
+
+@router.delete("/api/cameras/{camera_id}")
 async def delete_camera(camera_id: int):
     conn = get_db_connection()
     c = conn.cursor()

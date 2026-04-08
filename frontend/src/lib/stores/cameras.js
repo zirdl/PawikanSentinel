@@ -54,13 +54,24 @@ export async function addCamera(camera) {
 
 export async function updateCamera(id, camera) {
   try {
+    // Check if activity state is changing to trigger inference workers
+    const currentList = [];
+    cameras.subscribe(val => currentList.push(...val))();
+    const existing = currentList.find(c => c.id === id);
+    const activeStateChanged = existing && existing.active !== camera.active;
+
     const res = await fetch(`/api/cameras/${id}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(camera)
     });
+    
     if (res.ok) {
+      if (activeStateChanged) {
+        const endpoint = camera.active ? `/api/inference/start/${id}` : `/api/inference/stop/${id}`;
+        await fetch(endpoint, { method: 'POST', credentials: 'include' });
+      }
       await fetchCameras();
       return true;
     }
