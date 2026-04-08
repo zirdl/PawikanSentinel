@@ -48,7 +48,8 @@ Each camera runs in its own thread (`RTSPInferenceWorker`) inside a `ThreadPoolE
 ### 1. Install dependencies
 
 ```bash
-uv sync --extra inference
+# Optimized for CPU (Integrated GPU / Raspberry Pi)
+uv sync
 npm install
 ```
 
@@ -181,6 +182,15 @@ When a turtle is detected, an SMS alert is sent via the **iprog** API. A configu
 ## Backups
 
 Database backups are stored in `backups/` with configurable retention (`PAWIKAN_BACKUP_RETENTION` in days, default: 7).
+
+## GPU Support (NVIDIA CUDA)
+
+By default, this project is optimized for **CPU-only inference** (using `+cpu` wheels) to keep the installation lean (~500MB vs 5GB+). This is ideal for integrated GPUs and Raspberry Pi deployment.
+
+If you have a dedicated NVIDIA GPU and wish to use CUDA:
+1. Remove the `[[tool.uv.index]]` and `[tool.uv.sources]` sections from `pyproject.toml`.
+2. Update the `torch` and `torchvision` versions in `dependencies` to standard versions (e.g., `"torch>=2.2.0"`).
+3. Run `uv sync` again.
 
 ## Detailed Documentation
 

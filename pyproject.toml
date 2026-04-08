@@ -23,14 +23,22 @@ dependencies = [
     "requests>=2.31.0",
     # Data models
     "pydantic>=2.0",
-]
-
-[project.optional-dependencies]
-# Inference — YOLO11 turtle detection + camera capture
-inference = [
+    # Inference — YOLO11 turtle detection + camera capture
     "ultralytics>=8.3.0,<8.4.0",
     "opencv-python-headless>=4.8.0",
     "numpy<2",
     "huggingface_hub>=0.20.0",
     "psutil>=5.9.0",
+    # Explicitly managed torch dependencies (pinned to CPU index)
+    "torch",
+    "torchvision",
 ]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
