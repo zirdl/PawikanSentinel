@@ -101,7 +101,30 @@ case "${1:-}" in
             uv venv
             uv sync --extra inference
         fi
-        uv run uvicorn src.core.main:app --host 0.0.0.0 --port 8000 --reload
+        
+        echo -e "${CYAN}Starting backend FastAPI server (port 8000)...${NC}"
+        uv run uvicorn src.core.main:app --host 0.0.0.0 --port 8000 --reload &
+        BACKEND_PID=$!
+        
+        echo -e "${CYAN}Starting frontend Vite server (port 5173)...${NC}"
+        cd "$PROJECT_ROOT/frontend"
+        if [ ! -d "node_modules" ]; then
+            echo -e "${YELLOW}Warning: node_modules not found. Running npm install...${NC}"
+            npm install
+        fi
+        npm run dev &
+        FRONTEND_PID=$!
+        
+        # Cleanup trap to kill background processes on exit
+        trap "echo -e '\n${YELLOW}Stopping development servers...${NC}'; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" INT TERM EXIT
+        
+        echo -e "${GREEN}Development servers are running!${NC}"
+        echo -e "Backend:  http://localhost:8000"
+        echo -e "Frontend: http://localhost:5173"
+        echo -e "Press Ctrl+C to stop both servers."
+        
+        # Wait indefinitely for processes to finish
+        wait
         ;;
     *)
         print_usage
