@@ -75,19 +75,39 @@ Key configuration in `.env`:
 
 ### 3. Run the apps
 
-**Web dashboard** (camera management, detections, auth):
+The project includes a central management CLI to handle both the backend and frontend simultaneously.
+
+**Development Mode** (auto-reload for both backend & frontend):
 ```bash
-./run-web.sh
-# → http://localhost:8000
+./scripts/manage.sh dev
+# Backend:  http://localhost:8000
+# Frontend: http://localhost:5173
 ```
 
-**Inference service** (RTSP workers, YOLO detection):
+**Production Mode** (systemd service):
 ```bash
-./run-inference.sh
-# → http://localhost:8001
+# Start the service
+sudo ./scripts/manage.sh start
+
+# Check status
+./scripts/manage.sh status
 ```
 
 Both apps share the same SQLite database (`pawikan.db`).
+
+## Management CLI
+
+The `scripts/manage.sh` utility is the primary way to interact with the system:
+
+| Command | Description |
+|---|---|
+| `./scripts/manage.sh dev` | Runs development servers for both apps (FastAPI + Vite) |
+| `./scripts/manage.sh start` | Starts the systemd production service |
+| `./scripts/manage.sh stop` | Stops the systemd production service |
+| `./scripts/manage.sh status` | Checks the health of the systemd service |
+| `./scripts/manage.sh logs` | View recent system logs |
+| `./scripts/manage.sh update` | Pulls latest code and restarts services |
+| `./scripts/manage.sh backup` | Triggers a manual database & detection backup |
 
 ## Adding a Camera
 
