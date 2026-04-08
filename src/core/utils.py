@@ -32,6 +32,42 @@ elif SECRET_KEY == "0_y-2-1-3-5-7-9-b-d-f-h-j-l-n-p-r-t-v-x-z-A-C-E-G-I-K-M-O-Q-
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120  # Extended from 30 minutes to 2 hours
 
+# Session and CSRF keys
+SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
+if not SESSION_SECRET_KEY:
+    SESSION_SECRET_KEY = secrets.token_hex(32)
+
+CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY")
+if not CSRF_SECRET_KEY:
+    CSRF_SECRET_KEY = secrets.token_hex(16)
+
+from fastapi import Request, HTTPException, Cookie, status
+
+async def get_current_user_from_cookie(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    payload = decode_access_token(access_token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    username: str = payload.get("sub")
+    if username is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    return username
+
+async def get_current_user_for_pages(access_token: str = Cookie(None)):
+    if not access_token:
+        return None
+    
+    payload = decode_access_token(access_token)
+    if payload is None:
+        return None
+    
+    username: str = payload.get("sub")
+    return username
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:

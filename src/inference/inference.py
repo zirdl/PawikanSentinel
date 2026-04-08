@@ -238,6 +238,30 @@ class RTSPInferenceWorker(threading.Thread):
             if self.sms_sender.is_enabled():
                 self._send_sms_notifications()
             
+            # Broadcast to WebSocket
+            try:
+                from ..core.websocket_manager import detection_broadcast_queue
+                # Get camera name for the broadcast message
+                c.execute("SELECT name FROM cameras WHERE id = ?", (self.camera_id,))
+                camera_row = c.fetchone()
+                camera_name = camera_row["name"] if camera_row else f"Camera {self.camera_id}"
+                
+                for det in self.detection_buffer:
+                    broadcast_msg = {
+                        "type": "new_detection",
+                        "detection": {
+                            "camera_id": det.camera_id,
+                            "camera_name": camera_name,
+                            "timestamp": det.timestamp,
+                            "class": det.class_name,
+                            "confidence": det.confidence,
+                            "image_path": det.image_path
+                        }
+                    }
+                    detection_broadcast_queue.put(broadcast_msg)
+            except Exception as e:
+                logger.warning(f"Failed to queue websocket broadcast: {e}")
+
             # Clear buffer after successful flush
             self.detection_buffer.clear()
             

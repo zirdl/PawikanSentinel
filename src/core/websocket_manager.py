@@ -44,16 +44,13 @@ class ConnectionManager:
         # Prepare the full message with all necessary data
         full_message = {"type": message.get("type"), "data": message.get("detection"), "toast_html": ""}
 
-        # Render the toast HTML if it's a new detection message
+        # Render the toast HTML if it's a new detection message AND templates are available
         if message.get("type") == "new_detection" and "detection" in message and self.templates:
             detection_data = message["detection"]
             # Create a dummy request object for Jinja2 rendering
-            # This is a workaround as Jinja2Templates.TemplateResponse expects a request
-            # For simple rendering without request-specific context, a minimal object suffices
             class DummyRequest:
                 def __init__(self):
                     self.scope = {"type": "http"}
-                
                 async def form(self):
                     return {}
 
@@ -62,9 +59,7 @@ class ConnectionManager:
                 toast_html = self.templates.get_template("_new_detection_toast.html").render(template_context)
                 full_message["toast_html"] = toast_html
             except Exception as e:
-                logger.error(f"Error rendering toast template: {e}")  # Only log errors, not normal operations
-                import traceback
-                traceback.print_exc()
+                logger.error(f"Error rendering toast template: {e}")
 
         # Create a copy of the connections list to avoid modification during iteration
         active_connections_copy = self.active_connections.copy()
@@ -73,19 +68,14 @@ class ConnectionManager:
             try:
                 await connection.send_json(full_message)
             except Exception as e:
-                # Only log connection errors, not successful operations
                 logger.error(f"WebSocket error sending to connection: {e}")
-                import traceback
-                traceback.print_exc()
-                # Safely remove the disconnected connection
                 try:
                     if connection in self.active_connections:
                         self.active_connections.remove(connection)
                 except ValueError:
-                    # Connection already removed, ignore
                     pass
 
-# Global manager instance - will be initialized in main.py after templates are created
+# Global manager instance
 manager = None
 
 # Initialize the queue and async queue at module level

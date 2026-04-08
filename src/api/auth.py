@@ -68,7 +68,16 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         data={"sub": user["username"]},
         expires_delta=access_token_expires
     )
+    
     response = JSONResponse({"access_token": access_token, "token_type": "bearer"})
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
+        secure=False, # Set to True in production
+        path="/"
+    )
     # Add cache control headers to prevent caching of authentication responses
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
     response.headers["Pragma"] = "no-cache"
@@ -142,3 +151,21 @@ async def change_username(new_username: str, current_password: str, current_user
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
+
+
+@router.get("/api/auth/me")
+async def get_me(request: Request):
+    # Try to get from cookie (used by frontend)
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    payload = decode_access_token(access_token)
+    if payload is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid token")
+        
+    return {"username": username, "role": "admin"}
