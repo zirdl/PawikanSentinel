@@ -58,3 +58,55 @@ export async function createBackup() {
     }
     return false;
 }
+
+export async function addContact(contact) {
+    try {
+        const res = await fetch('/api/contacts', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(contact)
+        });
+        if (res.ok) {
+            await fetchSettings();
+            return true;
+        }
+    } catch (error) {
+        console.error('Error adding contact:', error);
+    }
+    return false;
+}
+
+export async function updateContact(id, contact) {
+    try {
+        const res = await fetch(`/api/contacts/${id}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(contact)
+        });
+        if (res.ok) {
+            await fetchSettings();
+            return true;
+        }
+    } catch (error) {
+        console.error('Error updating contact:', error);
+    }
+    return false;
+}
+
+export async function deleteContact(id) {
+    try {
+        const res = await fetch(`/api/contacts/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (res.ok) {
+            await fetchSettings();
+            return true;
+        }
+    } catch (error) {
+        console.error('Error deleting contact:', error);
+    }
+    return false;
+}

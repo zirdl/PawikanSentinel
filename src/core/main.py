@@ -304,9 +304,6 @@ if not os.path.isabs(detections_dir):
     detections_dir = os.path.abspath(detections_dir)
 
 app.mount("/detections", StaticFiles(directory=detections_dir), name="detections")
-app.mount("/static", StaticFiles(directory="src/web/static"), name="static")
-app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
-templates = Jinja2Templates(directory="src/web/templates")
 
 # Include API routers
 from ..api import auth, cameras, contacts, detections, analytics, system
@@ -323,8 +320,8 @@ app.include_router(system.router)
 from . import websocket_manager
 from .websocket_manager import ConnectionManager, detection_broadcast_queue
 
-# Initialize the global manager with templates (for potential toast rendering)
-websocket_manager.manager = ConnectionManager(templates=templates)
+# Initialize the global manager
+websocket_manager.manager = ConnectionManager()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, access_token: Optional[str] = Cookie(None)):
@@ -506,63 +503,7 @@ async def verify_csrf_token(request: Request):
     except Exception as e:
         raise HTTPException(status_code=403, detail="CSRF verification failed")
 
-# Routes
-
-
-# @app.get("/", response_class=HTMLResponse)
-# async def read_root(request: Request):
-#     return RedirectResponse(url="/dashboard")
-
-# @app.get("/cameras", response_class=HTMLResponse)
-# async def cameras_page(request: Request, username: str = Depends(get_current_user_for_pages)):
-#     if not username:
-#         return RedirectResponse(url="/login?next=/cameras")
-    
-#     csrf_token = generate_csrf_token(request)
-#     response = templates.TemplateResponse("cameras.html", {
-#         "request": request, 
-#         "csrf_token": csrf_token, 
-#         "username": username
-#     })
-#     # Add cache control headers to prevent caching of authenticated pages
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.get("/dashboard", response_class=HTMLResponse)
-# async def dashboard_page(request: Request, username: str = Depends(get_current_user_for_pages)):
-#     if not username:
-#         return RedirectResponse(url="/login?next=/dashboard")
-    
-#     csrf_token = generate_csrf_token(request)
-#     response = templates.TemplateResponse("dashboard.html", {
-#         "request": request, 
-#         "csrf_token": csrf_token, 
-#         "username": username
-#     })
-#     # Add cache control headers to prevent caching of authenticated pages
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.get("/settings", response_class=HTMLResponse)
-# async def settings_page(request: Request, username: str = Depends(get_current_user_for_pages)):
-#     if not username:
-#         return RedirectResponse(url="/login?next=/settings")
-    
-#     csrf_token = generate_csrf_token(request)
-#     response = templates.TemplateResponse("settings.html", {
-#         "request": request, 
-#         "csrf_token": csrf_token, 
-#         "username": username
-#     })
-#     # Add cache control headers to prevent caching of authenticated pages
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
+# API Routes
 
 # Detection API endpoints
 @app.get("/api/detections/stats")
@@ -664,155 +605,10 @@ async def get_detection_gallery_api(username: str = Depends(get_current_user_fro
     response.headers["Expires"] = "0"
     return response
 
-# @app.get("/login", response_class=HTMLResponse)
-# async def login_page(request: Request, username: str = Depends(get_current_user_for_pages)):
-#     # If user is already authenticated, redirect to dashboard or next URL
-#     if username:
-#         next_url = request.query_params.get("next", "/dashboard")
-#         return RedirectResponse(url=next_url)
-#
-#     csrf_token = generate_csrf_token(request)
-#     registered = request.query_params.get("registered") == "true"
-#     next_url = request.query_params.get("next", "/dashboard")
-#     return templates.TemplateResponse("login.html", {
-#         "request": request,
-#         "csrf_token": csrf_token,
-#         "registered": registered,
-#         "next_url": next_url
-#     })
-
-# @app.post("/login")
-# @limiter.limit("5/15minutes")
-# async def login_user(request: Request):
-#     form = await request.form()
-#     username = form.get("username")
-#     password = form.get("password")
-#     csrf_token = form.get("csrf_token")
-#     next_url = request.query_params.get("next", "/dashboard")
-#     
-#     # Verify CSRF token
-#     try:
-#         await verify_csrf_token(request)
-#     except HTTPException:
-#         return templates.TemplateResponse("login.html", {
-#             "request": request, 
-#             "error": "Invalid CSRF token", 
-#             "csrf_token": generate_csrf_token(request),
-#             "next_url": next_url
-#         })
-#     
-#     # Authenticate user
-#     conn = get_db_connection()
-#     user = conn.execute("SELECT id, username, hashed_password FROM users WHERE username = ?", (username,)).fetchone()
-#     conn.close()
-#     
-#     if not user or not verify_password(password, user["hashed_password"]):
-#         return templates.TemplateResponse("login.html", {
-#             "request": request, 
-#             "error": "Invalid username or password", 
-#             "csrf_token": generate_csrf_token(request),
-#             "next_url": next_url
-#         })
-#     
-#     # Create access token
-#     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     access_token = create_access_token(
-#         data={"sub": user["username"]}, 
-#         expires_delta=access_token_expires
-#     )
-#     
-#     # Redirect with token cookie
-#     response = RedirectResponse(url=next_url, status_code=302)
-#     response.set_cookie(
-#         key="access_token", 
-#         value=access_token, 
-#         httponly=True, 
-#         samesite="lax", 
-#         secure=False  # Set to True in production with HTTPS
-#     )
-#     return response
 
 # REMOVED: Registration routes to prevent creation of new accounts
 # Only the admin account should exist
 
-@app.post("/change-password")
-async def change_password(request: Request, username: str = Depends(get_current_user_from_cookie)):
-    form = await request.form()
-    current_password = form.get("current_password")
-    new_password = form.get("new_password")
-    confirm_new_password = form.get("confirm_new_password")
-    
-    # Verify current password
-    conn = get_db_connection()
-    user = conn.execute("SELECT id, hashed_password FROM users WHERE username = ?", (username,)).fetchone()
-    conn.close()
-    
-    if not user or not verify_password(current_password, user["hashed_password"]):
-        return JSONResponse({"error": "Current password is incorrect"}, status_code=400)
-    
-    # Validate new password
-    if not new_password or len(new_password) < 8:
-        return JSONResponse({"error": "New password must be at least 8 characters long"}, status_code=400)
-    
-    if new_password != confirm_new_password:
-        return JSONResponse({"error": "New passwords do not match"}, status_code=400)
-    
-    # Update password
-    hashed_password = get_password_hash(new_password)
-    conn = get_db_connection()
-    conn.execute("UPDATE users SET hashed_password = ? WHERE id = ?", (hashed_password, user["id"]))
-    conn.commit()
-    conn.close()
-    
-    return JSONResponse({"message": "Password changed successfully"})
-
-@app.post("/change-username")
-async def change_username(request: Request, current_username: str = Depends(get_current_user_from_cookie)):
-    form = await request.form()
-    current_password = form.get("current_password")
-    new_username = form.get("new_username")
-    
-    # Verify current password
-    conn = get_db_connection()
-    user = conn.execute("SELECT id, hashed_password FROM users WHERE username = ?", (current_username,)).fetchone()
-    
-    if not user or not verify_password(current_password, user["hashed_password"]):
-        conn.close()
-        return JSONResponse({"error": "Current password is incorrect"}, status_code=400)
-    
-    # Validate new username
-    if not new_username or len(new_username) < 3 or len(new_username) > 30:
-        conn.close()
-        return JSONResponse({"error": "Username must be between 3 and 30 characters"}, status_code=400)
-    
-    # Check if username is already taken (should not happen with single account but let's be safe)
-    existing_user = conn.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user["id"])).fetchone()
-    if existing_user:
-        conn.close()
-        return JSONResponse({"error": "Username is already taken"}, status_code=400)
-    
-    # Update username
-    conn.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, user["id"]))
-    conn.commit()
-    conn.close()
-    
-    # Create new access token with new username
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": new_username}, 
-        expires_delta=access_token_expires
-    )
-    
-    response = JSONResponse({"message": "Username changed successfully"})
-    response.set_cookie(
-        key="access_token", 
-        value=access_token, 
-        httponly=True, 
-        samesite="lax", 
-        secure=False,
-        path="/"
-    )
-    return response
 
 @app.post("/logout")
 async def logout_user(request: Request):
@@ -827,250 +623,7 @@ async def logout_user(request: Request):
     response.headers["Expires"] = "0"
     return response
 
-# Routes for camera management UI (commented out as they are handled by SPA)
-# @app.get("/cameras/list", response_class=HTMLResponse)
-# async def get_camera_list(request: Request, username: str = Depends(get_current_user_from_cookie)):
-#     conn = get_db_connection()
-#     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
-#     conn.close()
-#     response = templates.TemplateResponse("_camera_list.html", {
-#         "request": request, 
-#         "cameras": [dict(camera) for camera in cameras]
-#     })
-#     # ... (rest of the method)
 
-# @app.get("/cameras/form", response_class=HTMLResponse)
-# async def get_camera_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
-#     csrf_token = generate_csrf_token(request)
-#     response = templates.TemplateResponse("_camera_form.html", {
-#         "request": request, 
-#         "csrf_token": csrf_token
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.get("/cameras/edit-form/{camera_id}", response_class=HTMLResponse)
-# async def get_edit_camera_form(request: Request, camera_id: int, username: str = Depends(get_current_user_from_cookie)):
-#     conn = get_db_connection()
-#     camera = conn.execute("SELECT id, name, rtsp_url, active FROM cameras WHERE id = ?", (camera_id,)).fetchone()
-#     conn.close()
-#     
-#     if camera is None:
-#         raise HTTPException(status_code=404, detail="Camera not found")
-#     
-#     response = templates.TemplateResponse("_camera_form.html", {
-#         "request": request, 
-#         "camera": dict(camera), 
-#         "csrf_token": generate_csrf_token(request)
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.post("/cameras/add-or-update", response_class=HTMLResponse)
-# async def add_or_update_camera(
-#     request: Request,
-#     username: str = Depends(get_current_user_from_cookie),
-#     csrf_token: str = Depends(verify_csrf_token)
-# ):
-#     form = await request.form()
-#     camera_id = form.get("camera_id")
-#     name = form.get("name")
-#     rtsp_url = form.get("rtsp_url")
-#     active = form.get("active") == "on"
-#     
-#     conn = get_db_connection()
-#     if camera_id:
-#         # Update existing camera
-#         conn.execute(
-#             "UPDATE cameras SET name = ?, rtsp_url = ?, active = ? WHERE id = ?",
-#             (name, rtsp_url, active, camera_id)
-#         )
-#         message = f"Camera '{name}' updated successfully!"
-#     else:
-#         # Add new camera
-#         conn.execute(
-#             "INSERT INTO cameras (name, rtsp_url, active) VALUES (?, ?, ?)",
-#             (name, rtsp_url, active)
-#         )
-#         message = f"Camera '{name}' added successfully!"
-#     
-#     conn.commit()
-#     conn.close()
-#     
-#     # Return updated camera list
-#     conn = get_db_connection()
-#     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
-#     conn.close()
-#     
-#     response = templates.TemplateResponse("_camera_list.html", {
-#         "request": request, 
-#         "cameras": [dict(camera) for camera in cameras],
-#         "message": message
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     response.headers["HX-Trigger"] = "close-modal"
-#     return response
-
-# @app.delete("/api/cameras/{camera_id}", response_class=HTMLResponse)
-# async def delete_camera_htmx(
-#     request: Request,
-#     camera_id: int,
-#     username: str = Depends(get_current_user_from_cookie),
-#     csrf_token: str = Depends(verify_csrf_token)
-# ):
-#     conn = get_db_connection()
-#     conn.execute("DELETE FROM cameras WHERE id = ?", (camera_id,))
-#     conn.commit()
-#     conn.close()
-#     
-#     # Return updated camera list
-#     conn = get_db_connection()
-#     cameras = conn.execute("SELECT id, name, rtsp_url, active FROM cameras").fetchall()
-#     conn.close()
-#     
-#     response = templates.TemplateResponse("_camera_list.html", {
-#         "request": request, 
-#         "cameras": [dict(camera) for camera in cameras],
-#         "message": "Camera deleted successfully!"
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# Routes for contact management UI
-# @app.get("/contacts/list", response_class=HTMLResponse)
-# async def get_contact_list(request: Request, username: str = Depends(get_current_user_from_cookie)):
-#     conn = get_db_connection()
-#     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
-#     conn.close()
-#     response = templates.TemplateResponse("_contact_list.html", {
-#         "request": request, 
-#         "contacts": [dict(contact) for contact in contacts]
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.get("/contacts/form", response_class=HTMLResponse)
-# async def get_contact_form(request: Request, username: str = Depends(get_current_user_from_cookie)):
-#     csrf_token = generate_csrf_token(request)
-#     response = templates.TemplateResponse("_contact_form.html", {
-#         "request": request, 
-#         "csrf_token": csrf_token
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.get("/contacts/edit-form/{contact_id}", response_class=HTMLResponse)
-# async def get_edit_contact_form(request: Request, contact_id: int, username: str = Depends(get_current_user_from_cookie)):
-#     conn = get_db_connection()
-#     contact = conn.execute("SELECT id, name, phone FROM contacts WHERE id = ?", (contact_id,)).fetchone()
-#     conn.close()
-#     
-#     if contact is None:
-#         raise HTTPException(status_code=404, detail="Contact not found")
-#     
-#     response = templates.TemplateResponse("_contact_form.html", {
-#         "request": request, 
-#         "contact": dict(contact), 
-#         "csrf_token": generate_csrf_token(request)
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
-
-# @app.post("/contacts/add-or-update", response_class=HTMLResponse)
-# async def add_or_update_contact(
-#     request: Request,
-#     username: str = Depends(get_current_user_from_cookie),
-#     csrf_token: str = Depends(verify_csrf_token)
-# ):
-#     form = await request.form()
-#     contact_id = form.get("contact_id")
-#     name = form.get("name")
-#     phone = form.get("phone")
-#     
-#     conn = get_db_connection()
-#     if contact_id:
-#         # Update existing contact
-#         conn.execute(
-#             "UPDATE contacts SET name = ?, phone = ? WHERE id = ?",
-#             (name, phone, contact_id)
-#         )
-#         message = f"Contact '{name}' updated successfully!"
-#     else:
-#         # Add new contact
-#         conn.execute(
-#             "INSERT INTO contacts (name, phone) VALUES (?, ?)",
-#             (name, phone)
-#         )
-#         message = f"Contact '{name}' added successfully!"
-#     
-#     conn.commit()
-#     conn.close()
-#     
-#     # Return updated contact list
-#     conn = get_db_connection()
-#     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
-#     conn.close()
-#     
-#     response = templates.TemplateResponse("_contact_list.html", {
-#         "request": request, 
-#         "contacts": [dict(contact) for contact in contacts],
-#         "message": message
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     response.headers["HX-Trigger"] = "close-modal"
-#     return response
-
-# @app.delete("/contacts/{contact_id}", response_class=HTMLResponse)
-# async def delete_contact_htmx(
-#     request: Request,
-#     contact_id: int,
-#     username: str = Depends(get_current_user_from_cookie),
-#     csrf_token: str = Depends(verify_csrf_token)
-# ):
-#     conn = get_db_connection()
-#     conn.execute("DELETE FROM contacts WHERE id = ?", (contact_id,))
-#     conn.commit()
-#     conn.close()
-#     
-#     # Return updated contact list
-#     conn = get_db_connection()
-#     contacts = conn.execute("SELECT id, name, phone FROM contacts").fetchall()
-#     conn.close()
-#     
-#     response = templates.TemplateResponse("_contact_list.html", {
-#         "request": request, 
-#         "contacts": [dict(contact) for contact in contacts],
-#         "message": "Contact deleted successfully!"
-#     })
-#     # Add cache control headers to prevent caching of sensitive API responses
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
 
 
 # Configuration API endpoints
@@ -1093,8 +646,7 @@ async def get_config(username: str = Depends(get_current_user_from_cookie)):
 @app.post("/api/config")
 async def update_config(
     request: Request,
-    username: str = Depends(get_current_user_from_cookie),
-    csrf_token: str = Depends(verify_csrf_token)
+    username: str = Depends(get_current_user_from_cookie)
 ):
     """Update configuration values"""
     try:
@@ -1324,8 +876,7 @@ async def list_workers(
 @app.post("/api/backup")
 async def create_backup(
     request: Request,
-    username: str = Depends(get_current_user_from_cookie),
-    csrf_token: str = Depends(verify_csrf_token)
+    username: str = Depends(get_current_user_from_cookie)
 ):
     """Create a backup of the database and configuration files"""
     try:
@@ -1448,19 +999,7 @@ def format_file_size(size_bytes):
     return f"{size_bytes:.1f} {size_names[i]}"
 
 
-@app.get("/{full_path:path}", response_class=HTMLResponse)
-async def serve_spa(request: Request, full_path: str):
-    # If it's an API route or static file, let other handlers handle it
-    if full_path.startswith("api/") or full_path.startswith("static/") or full_path.startswith("detections/") or full_path.startswith("assets/"):
-        raise HTTPException(status_code=404)
-        
-    # Serve index.html from frontend/dist
-    index_path = Path("frontend/dist/index.html")
-    if index_path.exists():
-        return FileResponse(index_path)
-    
-    # If index.html doesn't exist, return a generic 404
-    raise HTTPException(status_code=404, detail="SPA not found")
+
 
 
 

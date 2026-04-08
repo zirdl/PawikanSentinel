@@ -1,8 +1,11 @@
 <script>
   import { onMount } from 'svelte';
+  import Modal from './Modal.svelte';
 
   let images = [];
   let loading = true;
+  let selectedImage = null;
+  let isModalOpen = false;
 
   async function fetchGallery() {
     try {
@@ -23,6 +26,16 @@
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
+  function openModal(img) {
+    selectedImage = img;
+    isModalOpen = true;
+  }
+
+  function closeModal() {
+    isModalOpen = false;
+    selectedImage = null;
+  }
+
   onMount(fetchGallery);
 </script>
 
@@ -36,7 +49,14 @@
   {:else if images.length > 0}
     <div class="grid grid-cols-2 gap-3">
       {#each images.slice(0, 4) as img}
-        <div class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer shadow-sm">
+        <div 
+          class="aspect-square rounded-lg overflow-hidden relative group cursor-pointer shadow-sm" 
+          on:click={() => openModal(img)}
+          on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && openModal(img)}
+          role="button"
+          tabindex="0"
+          aria-label="View detection detail for {img.camera_name}"
+        >
           <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                src={img.path} 
                alt={img.camera_name} />
@@ -60,3 +80,30 @@
     </div>
   {/if}
 </div>
+
+{#if selectedImage}
+  <Modal title="Detection Detail" isOpen={isModalOpen} on:close={closeModal}>
+    <div class="flex flex-col gap-4">
+      <div class="rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[300px]">
+        <img src={selectedImage.path} alt={selectedImage.camera_name} class="max-w-full max-h-[60vh] object-contain" />
+      </div>
+      <div class="flex justify-between items-center py-2 border-t border-outline-variant/10">
+        <div class="flex flex-col">
+          <span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Source Camera</span>
+          <span class="font-bold text-primary">{selectedImage.camera_name}</span>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Captured At</span>
+          <span class="text-on-surface font-medium">{new Date(selectedImage.modified * 1000).toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+    <div slot="footer" class="flex gap-3">
+      <button on:click={closeModal} class="btn-secondary text-xs px-6">Close</button>
+      <a href={selectedImage.path} download class="btn-gradient-primary text-xs px-6 py-2.5 flex items-center gap-2 rounded-xl transition-all hover:shadow-lg">
+        <span class="material-symbols-outlined text-sm">download</span>
+        Download
+      </a>
+    </div>
+  </Modal>
+{/if}

@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from pydantic import BaseModel
+
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from datetime import timedelta
@@ -86,10 +88,14 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 
 
 
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
+
 @router.post("/auth/change-password")
-async def change_password(old_password: str, new_password: str, current_user: User = Depends(get_current_user)):
+async def change_password(data: PasswordChange, current_user: User = Depends(get_current_user)):
     # Validate new password strength
-    if len(new_password) < 8:
+    if len(data.new_password) < 8:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must be at least 8 characters long")
     
     conn = get_db_connection()
@@ -98,10 +104,10 @@ async def change_password(old_password: str, new_password: str, current_user: Us
     user_data = c.fetchone()
     conn.close()
 
-    if not verify_password(old_password, user_data["hashed_password"]):
+    if not verify_password(data.old_password, user_data["hashed_password"]):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect old password")
 
-    hashed_new_password = get_password_hash(new_password)
+    hashed_new_password = get_password_hash(data.new_password)
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("UPDATE users SET hashed_password = ? WHERE id = ?", (hashed_new_password, current_user.id))

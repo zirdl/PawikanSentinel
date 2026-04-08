@@ -63,3 +63,23 @@ export async function logout() {
     console.error("Logout failed:", e);
   }
 }
+
+export async function changePassword(old_password, new_password) {
+  try {
+    const res = await fetch('/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_password, new_password }),
+      credentials: 'include'
+    });
+    if (res.ok) {
+      return { success: true };
+    } else {
+      const data = await res.json();
+      return { success: false, error: data.detail || "Failed to change password" };
+    }
+  } catch (e) {
+    console.error("Change password error:", e);
+    return { success: false, error: "Network error" };
+  }
+}

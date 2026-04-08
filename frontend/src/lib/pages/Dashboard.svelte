@@ -12,7 +12,6 @@
   });
 </script>
 
-<div class="page-content">
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
     <div>
@@ -35,7 +34,7 @@
   </div>
 
   <!-- Stats Grid -->
-  <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6 my-10">
     <StatCard 
       label="Total Detections" 
       value={$stats.total.toLocaleString()} 
@@ -60,7 +59,7 @@
   </section>
 
   <!-- Middle Section: Chart & Gallery -->
-  <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 my-10">
     <div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl shadow-sm flex flex-col">
       <div class="flex items-center justify-between mb-8">
         <div>
@@ -89,7 +88,6 @@
   </section>
 
   <!-- Recent Detections Table -->
-  <section>
+  <section class="mt-4 mb-20">
     <DetectionTable />
   </section>
-</div>

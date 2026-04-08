@@ -1,8 +1,24 @@
 <script>
   import { onMount } from 'svelte';
-  import { config, fetchSettings, updateConfig, createBackup, backups, contacts } from '../stores/settings';
-  import { cameras, fetchCameras } from '../stores/cameras';
+  import { config, fetchSettings, updateConfig, createBackup, backups, contacts, addContact, updateContact, deleteContact } from '../stores/settings';
+  import { cameras, fetchCameras, addCamera, updateCamera, deleteCamera } from '../stores/cameras';
+  import { changePassword, user } from '../stores/auth';
   import Badge from '../components/Badge.svelte';
+  import Modal from '../components/Modal.svelte';
+  import CameraModal from '../components/CameraModal.svelte';
+
+  let isCameraModalOpen = false;
+  let isContactModalOpen = false;
+  
+  let cameraForm = { name: '', rtsp_url: '', active: true };
+  let contactForm = { name: '', phone: '' };
+  
+  let editingCameraId = null;
+  let editingContactId = null;
+
+  let oldPassword = '';
+  let newPassword = '';
+  let passwordStatus = '';
 
   onMount(() => {
     fetchSettings();
@@ -22,9 +38,72 @@
       alert("Backup created!");
     }
   }
+
+  // Camera Handlers
+  function openCameraModal(cam = null) {
+    if (cam) {
+      cameraForm = { name: cam.name, rtsp_url: cam.rtsp_url, active: cam.active };
+      editingCameraId = cam.id;
+    } else {
+      cameraForm = { name: '', rtsp_url: '', active: true };
+      editingCameraId = null;
+    }
+    isCameraModalOpen = true;
+  }
+
+
+  async function removeCamera(id) {
+    if (confirm("Are you sure you want to delete this camera?")) {
+      await deleteCamera(id);
+    }
+  }
+
+  // Contact Handlers
+  function openContactModal(contact = null) {
+    if (contact) {
+      contactForm = { name: contact.name, phone: contact.phone };
+      editingContactId = contact.id;
+    } else {
+      contactForm = { name: '', phone: '' };
+      editingContactId = null;
+    }
+    isContactModalOpen = true;
+  }
+
+  async function saveContact() {
+    let success;
+    if (editingContactId) {
+      success = await updateContact(editingContactId, contactForm);
+    } else {
+      success = await addContact(contactForm);
+    }
+    if (success) {
+      isContactModalOpen = false;
+    }
+  }
+
+  async function removeContact(id) {
+    if (confirm("Are you sure you want to delete this contact?")) {
+      await deleteContact(id);
+    }
+  }
+
+  async function handlePasswordChange() {
+    if (!oldPassword || !newPassword) {
+      passwordStatus = "Please fill all fields";
+      return;
+    }
+    const result = await changePassword(oldPassword, newPassword);
+    if (result.success) {
+      passwordStatus = "Password updated successfully!";
+      oldPassword = '';
+      newPassword = '';
+    } else {
+      passwordStatus = result.error;
+    }
+  }
 </script>
 
-<div class="page-content">
   <header class="mb-10">
     <h2 class="text-3xl font-extrabold text-on-surface tracking-tight mb-2">System Settings</h2>
     <p class="text-on-surface-variant font-body">Manage sentinel configurations, surveillance streams, and conservationist contacts.</p>
@@ -85,16 +164,23 @@
         <span class="material-symbols-outlined text-primary">account_circle</span>
         <h3 class="text-xl font-bold font-headline">Account</h3>
       </div>
-      <form class="space-y-5">
+      <form class="space-y-5" on:submit|preventDefault={handlePasswordChange}>
         <div class="space-y-1">
           <label for="current-username" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Username</label>
-          <input id="current-username" type="text" class="input-surface w-full" value="conservation_admin_01" readonly />
+          <input id="current-username" type="text" class="input-surface w-full" value={$user?.username || 'admin'} readonly />
+        </div>
+        <div class="space-y-1">
+          <label for="old-password" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Current Password</label>
+          <input id="old-password" type="password" class="input-surface w-full" placeholder="••••••••••••" bind:value={oldPassword} />
         </div>
         <div class="space-y-1">
           <label for="new-password" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">New Password</label>
-          <input id="new-password" type="password" class="input-surface w-full" placeholder="••••••••••••" />
+          <input id="new-password" type="password" class="input-surface w-full" placeholder="••••••••••••" bind:value={newPassword} />
         </div>
-        <button class="btn-secondary w-full text-xs">Update Credentials</button>
+        {#if passwordStatus}
+          <p class="text-[10px] font-bold {passwordStatus.includes('successfully') ? 'text-green-500' : 'text-red-500'}">{passwordStatus}</p>
+        {/if}
+        <button class="btn-secondary w-full text-xs" type="submit">Update Credentials</button>
       </form>
     </section>
 
@@ -105,7 +191,7 @@
           <span class="material-symbols-outlined text-primary">videocam</span>
           <h3 class="text-xl font-bold font-headline">Cameras</h3>
         </div>
-        <button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline underline-offset-4">
+        <button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline underline-offset-4" on:click={() => openCameraModal()}>
           <span class="material-symbols-outlined text-sm">add_circle</span>
           Add New Stream
         </button>
@@ -114,13 +200,17 @@
         {#each $cameras as cam}
           <div class="bg-surface-container-low p-4 rounded-xl flex flex-col gap-3 group">
             <div class="flex justify-between items-start">
-              <div>
-                <h4 class="font-bold text-sm">{cam.name}</h4>
-                <p class="text-[10px] text-on-surface-variant font-mono truncate max-w-[150px]">{cam.rtsp_url}</p>
+              <div class="max-w-[70%]">
+                <h4 class="font-bold text-sm truncate">{cam.name}</h4>
+                <p class="text-[10px] text-on-surface-variant font-mono truncate">{cam.rtsp_url}</p>
               </div>
-              <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button class="p-1 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>
-                <button class="p-1 text-on-surface-variant hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button class="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-container-high transition-all" on:click={() => openCameraModal(cam)}>
+                  <span class="material-symbols-outlined text-lg">edit</span>
+                </button>
+                <button class="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-surface-container-high transition-all" on:click={() => removeCamera(cam.id)}>
+                  <span class="material-symbols-outlined text-lg">delete</span>
+                </button>
               </div>
             </div>
             <div class="flex items-center gap-2">
@@ -139,23 +229,33 @@
           <span class="material-symbols-outlined text-primary">contact_mail</span>
           <h3 class="text-xl font-bold font-headline">Contacts</h3>
         </div>
-        <button class="bg-surface-container-low p-2 rounded-lg hover:bg-surface-container-high transition-colors">
+        <button class="bg-surface-container-low p-2 rounded-lg hover:bg-primary-fixed hover:text-primary transition-all active:scale-90" on:click={() => openContactModal()}>
           <span class="material-symbols-outlined text-lg">person_add</span>
         </button>
       </div>
       <div class="space-y-3">
         {#each $contacts as contact}
-          <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
+          <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl group transition-all hover:shadow-md border border-transparent hover:border-outline-variant/10">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold text-xs">
+              <div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold text-xs shadow-inner">
                 {contact.name.split(' ').map(n => n[0]).join('')}
               </div>
               <div>
                 <p class="text-sm font-bold">{contact.name}</p>
-                <p class="text-[10px] text-on-surface-variant">{contact.phone}</p>
+                <p class="text-[10px] text-on-surface-variant flex items-center gap-1">
+                   <span class="material-symbols-outlined text-[10px]">call</span>
+                   {contact.phone}
+                </p>
               </div>
             </div>
-            <span class="material-symbols-outlined text-on-surface-variant text-sm cursor-pointer">more_vert</span>
+            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button class="p-1.5 text-on-surface-variant hover:text-primary rounded-lg transition-all" on:click={() => openContactModal(contact)}>
+                <span class="material-symbols-outlined text-lg">edit</span>
+              </button>
+              <button class="p-1.5 text-on-surface-variant hover:text-error rounded-lg transition-all" on:click={() => removeContact(contact.id)}>
+                <span class="material-symbols-outlined text-lg">delete</span>
+              </button>
+            </div>
           </div>
         {/each}
       </div>
@@ -206,4 +306,23 @@
       </div>
     </section>
   </div>
-</div>
+
+<CameraModal bind:isOpen={isCameraModalOpen} bind:camera={cameraForm} bind:cameraId={editingCameraId} onSave={fetchCameras} />
+
+<!-- Contact Modal -->
+<Modal title={editingContactId ? "Update Contact" : "Register Sentinel"} isOpen={isContactModalOpen} on:close={() => isContactModalOpen = false}>
+  <div class="space-y-4">
+    <div class="space-y-1">
+      <label for="contact-name" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Full Name</label>
+      <input id="contact-name" type="text" class="input-surface w-full" placeholder="Juan Dela Cruz" bind:value={contactForm.name} />
+    </div>
+    <div class="space-y-1">
+      <label for="contact-phone" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mobile Number</label>
+      <input id="contact-phone" type="text" class="input-surface w-full font-mono text-xs" placeholder="+63 900 000 0000" bind:value={contactForm.phone} />
+    </div>
+  </div>
+  <div slot="footer" class="flex gap-3">
+    <button class="btn-secondary text-xs" on:click={() => isContactModalOpen = false}>Discard</button>
+    <button class="btn-gradient-primary text-xs px-6" on:click={saveContact}>Save Sentinel</button>
+  </div>
+</Modal>

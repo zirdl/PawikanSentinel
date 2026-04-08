@@ -40,7 +40,9 @@ IPROG_SENDER_NAME = os.getenv("IPROG_SENDER_NAME", "PawikanSentinel")
 SMS_NOTIFICATION_COOLDOWN = int(os.getenv("SMS_NOTIFICATION_COOLDOWN", "10"))  # Default 10 minutes cooldown
 
 # Detection configuration
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))  # Default 80% confidence threshold
+_conf_raw = float(os.getenv("CONFIDENCE_THRESHOLD", "0.8"))
+# Normalize: if > 1, assume it's a percentage (e.g. 80 instead of 0.8)
+CONFIDENCE_THRESHOLD = _conf_raw / 100.0 if _conf_raw > 1.0 else _conf_raw
 FRAME_SKIP = int(os.getenv("FRAME_SKIP", "5"))  # Default frame skip of 5
 
 # System health configuration
@@ -63,6 +65,14 @@ sms_sender = IprogSMSSender()
 _yolo_model: Optional[YOLOModel] = None
 _model_lock = threading.Lock()
 _inference_lock = threading.Lock()  # Lock to ensure only one inference runs at a time on limited CPU
+
+# Shared system health cache to avoid jitter and redundant psutil calls
+_health_cache = {
+    "cpu": 0.0,
+    "temp": 0.0,
+    "last_check": 0.0,
+    "lock": threading.Lock()
+}
 
 
 def get_yolo_model() -> YOLOModel:
@@ -519,36 +529,52 @@ class RTSPInferenceWorker(threading.Thread):
         logger.info(f"Camera {self.camera_id}: Resumed inference worker")
 
     def _check_throttle(self) -> bool:
-        """Check if the system should be throttled based on CPU or Temperature"""
-        try:
-            # Check CPU usage
-            cpu_percent = psutil.cpu_percent(interval=None)
-            if cpu_percent > CPU_THRESHOLD:
-                if not self.throttled:
-                    logger.warning(f"Camera {self.camera_id}: CPU usage at {cpu_percent}%, throttling inference...")
-                    self.throttled = True
-                return True
+        """Check if the system should be throttled based on CPU or Temperature (using cached values)."""
+        global _health_cache
+        
+        now = time.time()
+        
+        # Update cache if it's older than 2 seconds
+        if now - _health_cache["last_check"] > 2.0:
+            with _health_cache["lock"]:
+                # Re-check inside lock
+                if now - _health_cache["last_check"] > 2.0:
+                    try:
+                        _health_cache["cpu"] = psutil.cpu_percent(interval=0.1)
+                        
+                        _health_cache["temp"] = 0.0
+                        if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
+                            try:
+                                with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+                                    _health_cache["temp"] = float(f.read().strip()) / 1000.0
+                            except:
+                                pass
+                        
+                        _health_cache["last_check"] = time.time()
+                    except Exception as e:
+                        logger.error(f"Error updating health cache: {e}")
 
-            # Check Temperature (Pi specific)
-            temp = None
-            if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
-                with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-                    temp = float(f.read().strip()) / 1000.0
-            
-            if temp and temp > TEMP_THRESHOLD:
-                if not self.throttled:
-                    logger.warning(f"Camera {self.camera_id}: CPU temperature at {temp}C, throttling inference...")
-                    self.throttled = True
-                return True
+        # Evaluate against the cached values
+        cpu_percent = _health_cache["cpu"]
+        temp = _health_cache["temp"]
+        
+        if cpu_percent > CPU_THRESHOLD:
+            if not self.throttled:
+                logger.warning(f"Camera {self.camera_id}: CPU usage high ({cpu_percent}%), entering throttle...")
+                self.throttled = True
+            return True
 
-            if self.throttled:
-                logger.info(f"Camera {self.camera_id}: System recovered (CPU: {cpu_percent}%, Temp: {temp if temp else 'N/A'}C), resuming normal operation.")
-                self.throttled = False
-            
-            return False
-        except Exception as e:
-            logger.error(f"Error checking system throttle: {e}")
-            return False
+        if temp and temp > TEMP_THRESHOLD:
+            if not self.throttled:
+                logger.warning(f"Camera {self.camera_id}: CPU temperature high ({temp}C), entering throttle...")
+                self.throttled = True
+            return True
+
+        if self.throttled:
+            logger.info(f"Camera {self.camera_id}: System recovered, resuming normal operation.")
+            self.throttled = False
+        
+        return False
 
     def get_stats(self) -> Dict:
         """Get worker statistics"""

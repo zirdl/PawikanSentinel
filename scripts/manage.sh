@@ -103,7 +103,7 @@ case "${1:-}" in
         fi
         
         echo -e "${CYAN}Starting backend FastAPI server (port 8000)...${NC}"
-        uv run uvicorn src.core.main:app --host 0.0.0.0 --port 8000 --reload &
+        uv run uvicorn src.core.main:app --host 127.0.0.1 --port 8000 --reload &
         BACKEND_PID=$!
         
         echo -e "${CYAN}Starting frontend Vite server (port 5173)...${NC}"
