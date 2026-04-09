@@ -50,7 +50,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return User(**user)
 
 @router.post("/auth/login", response_model=Token)
-@limiter.limit("5/15minutes")
+# @limiter.limit("5/15minutes")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     conn = get_db_connection()
     c = conn.cursor()

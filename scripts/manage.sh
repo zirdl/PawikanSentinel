@@ -121,7 +121,7 @@ case "${1:-}" in
         echo -e "${GREEN}Development servers are running!${NC}"
         echo -e "Local:            http://localhost:5173"
         echo -e "Network:          http://$(hostname -I | awk '{print $1}'):5173"
-        echo -e "Backend (API):    http://localhost:8000"
+        echo -e "Backend (API):    http://localhost:8001"
         echo -e "Press Ctrl+C to stop both servers."
         
         # Wait indefinitely for processes to finish

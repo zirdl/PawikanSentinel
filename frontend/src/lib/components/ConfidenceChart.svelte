@@ -71,6 +71,34 @@
   };
 
   async function fetchChartData() {
+    /* --- DUMMY DATA FOR DEMO PURPOSES ---
+    let dummyData = [];
+    if (period === 'day') {
+      const times = ['00:00','02:00','04:00','06:00','08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
+      dummyData = times.map((t, i) => ({ date: t, confidence: Math.min(99.2, 85 + Math.sin(i) * 10 + Math.random() * 3) }));
+    } else if (period === 'month') {
+      const days = Array.from({length: 30}, (_, i) => i + 1);
+      dummyData = days.map((d, i) => ({ date: d.toString(), confidence: Math.min(99.5, 82 + Math.sin(i / 2) * 12 + Math.random() * 5) }));
+    } else if (period === 'year') {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      dummyData = monthNames.map((m, i) => ({ date: m, confidence: Math.min(99.8, 88 + Math.cos(i) * 8 + Math.random() * 2) }));
+    } else if (period === 'all') {
+      const years = ['2019', '2020', '2021', '2022', '2023', '2024'];
+      dummyData = years.map((y, i) => ({ date: y, confidence: Math.min(99.9, 75 + (i * 4) + Math.random() * 4) }));
+    }
+
+    let labels = dummyData.map(d => d.date);
+
+    chartData = {
+      labels: labels,
+      datasets: [{
+        ...chartData.datasets[0],
+        data: dummyData.map(d => d.confidence)
+      }]
+    };
+    return;
+    --- END DUMMY DATA --- */
+
     try {
       const res = await fetch(`/api/detections/chart?period=${period}`, { credentials: 'include' });
       if (res.ok) {

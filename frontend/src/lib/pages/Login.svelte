@@ -48,7 +48,7 @@
       <p
         class="text-on-primary/80 text-sm mt-1 uppercase tracking-widest font-bold"
       >
-        Conservation Surveillance
+        ML-Powered Surveillance
       </p>
     </div>
 
@@ -141,7 +141,7 @@
         <p
           class="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold"
         >
-          © 2026 Coastal Conservation Tech
+          © 2026 Pawikan Sentinel
         </p>
       </div>
     </div>

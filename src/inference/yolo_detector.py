@@ -146,26 +146,57 @@ class YOLOModel:
             confidences = result.boxes.conf.cpu().numpy()
             class_ids = result.boxes.cls.cpu().numpy().astype(int)
 
+            # 1. Collect all detected parts (heads, flippers, turtles)
+            raw_boxes = []
             for box, conf, cls_id in zip(boxes, confidences, class_ids):
-                class_name = self.class_names.get(cls_id, f"class_{cls_id}")
+                raw_boxes.append({
+                    "x1": float(box[0]), "y1": float(box[1]),
+                    "x2": float(box[2]), "y2": float(box[3]),
+                    "conf": float(conf)
+                })
 
-                # Only keep turtle body detections; skip flipper/keypoint classes
-                if class_name != TARGET_CLASS:
-                    continue
+            # 2. Merge overlapping boxes (treating all parts as one turtle)
+            # We use a pixel margin to group parts that are close but not perfectly touching
+            def check_overlap(b1, b2, margin=30):
+                return not (
+                    b1["x2"] + margin < b2["x1"] - margin or
+                    b1["x1"] - margin > b2["x2"] + margin or
+                    b1["y2"] + margin < b2["y1"] - margin or
+                    b1["y1"] - margin > b2["y2"] + margin
+                )
 
-                x1, y1, x2, y2 = box
-                center_x = int((x1 + x2) / 2)
-                center_y = int((y1 + y2) / 2)
-                width = int(x2 - x1)
-                height = int(y2 - y1)
+            merged_boxes = []
+            while raw_boxes:
+                current = raw_boxes.pop(0)
+                still_merging = True
+                while still_merging:
+                    still_merging = False
+                    for i in range(len(raw_boxes) - 1, -1, -1):
+                        if check_overlap(current, raw_boxes[i]):
+                            overlap = raw_boxes.pop(i)
+                            current["x1"] = min(current["x1"], overlap["x1"])
+                            current["y1"] = min(current["y1"], overlap["y1"])
+                            current["x2"] = max(current["x2"], overlap["x2"])
+                            current["y2"] = max(current["y2"], overlap["y2"])
+                            # Take highest confidence
+                            current["conf"] = max(current["conf"], overlap["conf"])
+                            still_merging = True
+                merged_boxes.append(current)
+
+            # 3. Format merged bounding boxes into the API schema as full "turtles"
+            for b in merged_boxes:
+                width = int(b["x2"] - b["x1"])
+                height = int(b["y2"] - b["y1"])
+                center_x = int((b["x1"] + b["x2"]) / 2)
+                center_y = int((b["y1"] + b["y2"]) / 2)
 
                 predictions.append({
                     "x": center_x,
                     "y": center_y,
                     "width": width,
                     "height": height,
-                    "class": class_name,
-                    "confidence": float(conf),
+                    "class": "turtle",  # Force classification as a whole turtle
+                    "confidence": float(b["conf"]),
                 })
 
         return {"predictions": predictions}
