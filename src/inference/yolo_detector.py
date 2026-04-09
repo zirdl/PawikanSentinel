@@ -135,6 +135,7 @@ class YOLOModel:
             conf=confidence,
             verbose=False,  # Suppress ultralytics console output
             device="cpu",
+            save=False,
         )
 
         predictions = []
