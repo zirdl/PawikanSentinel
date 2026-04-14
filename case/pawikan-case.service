@@ -1,0 +1,14 @@
+[Unit]
+Description=Pawikan Sentinel Case Daemon (OLED, RGB, Fan)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/PawikanSentinel/case/daemon
+ExecStart=/usr/bin/env python3 /opt/PawikanSentinel/case/daemon/pawikan_daemon.py --rgb-mode breathing --media /opt/PawikanSentinel/case/turtle.gif
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
